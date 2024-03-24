@@ -1,0 +1,14 @@
+{
+  "name": "None",
+  "category": "pwn",
+  "author": "None",
+  "description": "None",
+  "container_image": "a_pyjail3",
+  "flag": "flag{y0u_g0t_1t}",
+  "points": 0,
+  "internal_port": 31137,
+  "box": "https://github.com/ventusfortis/pyjail/blob/main/pyjail",
+  "files": [
+    "a_pyjai3.py"
+  ]
+}

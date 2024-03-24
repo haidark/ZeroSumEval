@@ -1,0 +1,14 @@
+{
+  "name": "Pyhell-Task-SparkCTF-2024",
+  "category": "pwn",
+  "author": "None",
+  "description": "This task focused on breaking a Python environment that restricts the built-in functions accessible to the user and employs a blacklist to prohibit specific keywords and characters, which could otherwise be exploited to circumvent these limitations.",
+  "container_image": "pyhell",
+  "flag": "SparkCTF{PYJ41L_15_N0_FUN}",
+  "points": 0,
+  "internal_port": 31137,
+  "box": "https://github.com/Quiiper/Pyhell-Task-SparkCTF-2024",
+  "files": [
+    "pyhell.py"
+  ]
+}

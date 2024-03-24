@@ -1,0 +1,14 @@
+{
+  "name": "None",
+  "category": "pwn",
+  "author": "None",
+  "description": "None",
+  "container_image": "a_pyjail",
+  "flag": "HTU{c7f_pl4y3r}",
+  "points": 0,
+  "internal_port": 31137,
+  "box": "https://github.com/HTUs3r/PyJail/blob/main/jail.py",
+  "files": [
+    "a_pyjail.py"
+  ]
+}
