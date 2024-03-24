@@ -1,0 +1,19 @@
+service pwn 
+{
+    disable     = no
+    type        = UNLISTED
+    wait        = no
+    server      = /bin/sh
+    # replace helloworld to your program
+    server_args = -c cd${IFS}/home/ctf;exec${IFS}/usr/bin/timeout${IFS}90s${IFS}./jail.py
+    socket_type = stream
+    protocol    = tcp
+    user        = ctf
+    port        = 8412
+    bind        = 0.0.0.0
+    # safety options
+    flags       = REUSE
+    per_source	= 5 # the maximum instances of this service per source IP address
+    rlimit_cpu	= 1 # the maximum number of CPU seconds that the service may use
+    nice        = 18
+}

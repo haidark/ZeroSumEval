@@ -1,0 +1,14 @@
+{
+  "name": "big_blacklist",
+  "category": "pwn",
+  "author": "NoobMaster",
+  "description": "That's a big blacklist for a pyjail challenge, don't you think?",
+  "container_image": "big_blacklist",
+  "flag": "n00bz{blacklist.pop()_ftw!_7a5d2f8b}",
+  "points": 440,
+  "internal_port": 8412,
+  "box": "pwn.chal.csaw.io",
+  "files": [
+    "big_blacklist.py"
+  ]
+}

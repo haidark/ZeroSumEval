@@ -1,0 +1,10 @@
+version: '3'
+services:
+  pyjail1:
+    build:
+      context: .
+    image: pyjail1
+    working_dir: /home/ctf
+    container_name: misc_pyjail1
+    ports:
+      - "8412:8412"

