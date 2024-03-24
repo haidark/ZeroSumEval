@@ -1,0 +1,14 @@
+{
+  "name": "quack",
+  "category": "misc",
+  "author": "pjg11",
+  "description": "A sleepy duck is blocking the way to my files. can you wake it up (gently) and ask it for flag.txt? Thanks!",
+  "container_image": "quack",
+  "flag": "CTF{th4nks_f0r_p14y1ng!}",
+  "points": 100,
+  "internal_port": 9999,
+  "box": "pwn.chal.csaw.io",
+  "files": [
+    "quack.py"
+  ]
+}

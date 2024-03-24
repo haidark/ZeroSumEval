@@ -1,0 +1,14 @@
+{
+  "name": "A_Horse_with_No_Neighs",
+  "category": "pwn",
+  "author": "nikosChalk",
+  "description": "*horse wearing an eyepatch* Can you beat a dead horse?",
+  "container_image": "a_horse_with_no_neighs",
+  "flag": "uiuctf{my_challenges_always_have_unintended_solutions_and_i_am_less_okay_with_that}",
+  "points": 332,
+  "internal_port": 1337,
+  "box": "https://github.com/nikosChalk/ctf-writeups/tree/master/uiuctf22/jail/a-horse-with-no-neighs",
+  "files": [
+    "desert.py"
+  ]
+}

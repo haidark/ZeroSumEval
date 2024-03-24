@@ -1,0 +1,14 @@
+{
+  "name": "safepy",
+  "category": "pyjail",
+  "author": "tow_nater",
+  "description": "My calculator won't be getting pwned again...",
+  "container_image": "safepy",
+  "flag": "uiuctf{na1v3_0r_mal1ci0u5_chang3?}",
+  "points": 50,
+  "internal_port": 8000,
+  "box": "https://github.com/nikosChalk/ctf-writeups/blob/master/uiuctf22/jail/safepy/src/flag",
+  "files": [
+    "app.py"
+  ]
+}

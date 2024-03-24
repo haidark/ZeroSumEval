@@ -1,0 +1,14 @@
+{
+  "name": "slithery",
+  "category": "pwn",
+  "author": "roerohan and thebongy",
+  "description": "Setting up a new coding environment for my data science students. Some of them are l33t h4ck3rs that got RCE and crashed my machine a few times :(. Can you help test this before I use it for my class? Two sandboxes should be better than one...  ",
+  "container_image": "slithery",
+  "flag": "flag{y4_sl1th3r3d_0ut}",
+  "points": 25,
+  "internal_port": 31137,
+  "box": "https://github.com/csivitu/CTF-Write-ups/tree/master/CSAW%20Quals%202020/Pwn/slithery",
+  "files": [
+    "sandbox.py"
+  ]
+}
