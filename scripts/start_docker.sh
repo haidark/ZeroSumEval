@@ -1,4 +1,4 @@
-d=./data/my_first_pwnie;
+d=./data/generated_pyjail;
 echo "Building $d"
 image_name=$(jq -r .container_image < "$d"/challenge.json)
 sudo docker build -t "$image_name" "$d"
