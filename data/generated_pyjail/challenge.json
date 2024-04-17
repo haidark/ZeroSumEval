@@ -1,0 +1,14 @@
+{
+  "name": "generated_pyjail",
+  "category": "pwn",
+  "author": "GPT4",
+  "description": "You must be this 👉 high to ride.",
+  "container_image": "generated_pyjail",
+  "flag": "csawctf{neigh______}",
+  "points": 25,
+  "internal_port": 31137,
+  "box": "pwn.chal.csaw.io",
+  "files": [
+    "generated_pyjail.py"
+  ]
+}
