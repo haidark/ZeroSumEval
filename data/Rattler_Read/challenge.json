@@ -1,0 +1,14 @@
+{
+  "name": "Rattler_Read",
+  "category": "pwn",
+  "author": "Pete Stenger",
+  "description": "All these poisonous snakes keep biting me. Good think I remembered to bring restrictedpython to keep me safe!",
+  "container_image": "Rattler_Read",
+  "flag": "uiuctf{damn_1_8te_my_ta1l_ag41n}",
+  "points": 25,
+  "internal_port": 31137,
+  "box": "https://github.com/nikosChalk/ctf-writeups/tree/master/uiuctf23/pyjail/rattler-read/writeup",
+  "files": [
+    "main.py"
+  ]
+}

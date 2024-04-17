@@ -6,7 +6,7 @@
   "container_image": "my_first_pwnie",
   "flag": "csawctf{neigh______}",
   "points": 25,
-  "internal_port": 31137,
+  "internal_port": 31137, 
   "box": "pwn.chal.csaw.io",
   "files": [
     "my_first_pwnie.py"
