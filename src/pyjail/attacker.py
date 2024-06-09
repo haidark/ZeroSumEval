@@ -3,7 +3,7 @@ import os
 import openai
 import json
 import subprocess
-from src.verification import submit_solution
+from src.pyjail.verification import submit_solution
 
 
 def attack():

@@ -6,9 +6,9 @@ import json
 import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 from dspy.teleprompt import BootstrapFewShotWithRandomSearch
-from src.verification import verify_solution
-from src.dummy_challenge import challenge, code
-from src.attacker_dspy import AttackerCoT
+from src.pyjail.verification import verify_solution
+from src.pyjail.dummy_challenge import challenge, code
+from src.pyjail.attacker_dspy import AttackerCoT
 
 
 def valid_json(input_str):
