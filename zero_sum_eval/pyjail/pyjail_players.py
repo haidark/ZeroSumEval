@@ -1,4 +1,4 @@
-from src.player import Player
+from zero_sum_eval.player import Player
 from .attacker_dspy import AttackerCoT
 from .defender_dspy import DefenderCoT
 # from .attacker_prompting import attack

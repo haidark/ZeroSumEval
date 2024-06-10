@@ -1,4 +1,4 @@
-from src.game_manager import GameManager
+from zero_sum_eval.game_manager import GameManager
 
 class PyjailManager(GameManager):
     def __init__(self, players, max_turns, win_conditions):

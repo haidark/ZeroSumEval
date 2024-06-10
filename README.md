@@ -1,4 +1,4 @@
-# CTF eval for LLMs
+# Zero Sum Eval (ZSEval)
 
 The goal of this work is to understand how Capture the Flag type problems/competitions can be used the evaluate/improve the reasoning ability of LLMs
 
