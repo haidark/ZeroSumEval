@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 # abstract class for game environments
-class GameEnvironment(ABC):
+class GameManager(ABC):
     def __init__(self, players, max_turns, win_conditions):
         self.players = players
         self.max_turns = max_turns
