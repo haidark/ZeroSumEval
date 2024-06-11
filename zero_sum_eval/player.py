@@ -20,15 +20,15 @@ class Player(ABC):
         """
         pass
 
-    @abstractmethod
-    def receive_feedback(self, feedback):
-        """
-        Abstract method to receive feedback or updates from the game environment.
+    # @abstractmethod
+    # def receive_feedback(self, feedback):
+    #     """
+    #     Abstract method to receive feedback or updates from the game environment.
         
-        Parameters:
-        feedback (dict): Feedback or update information
+    #     Parameters:
+    #     feedback (dict): Feedback or update information
         
-        Returns:
-        None
-        """
-        pass
+    #     Returns:
+    #     None
+    #     """
+    #     pass
