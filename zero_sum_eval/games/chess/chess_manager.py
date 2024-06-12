@@ -1,7 +1,11 @@
 # I took inspiration from https://github.com/carlini/chess-llm and https://github.com/mlabonne/chessllm
 # Shout out to the maintainers and authors of these repositories!
-
+import chess
 from zero_sum_eval.game_manager import GameManager
+
+# TODO: add support for checking that only one move is made by a player at a time
+# TODO: add support for checking valid moves
+# TODO: add support for checking win/lose/draw
 
 class ChessManager(GameManager):
     def __init__(self, players, max_turns, win_conditions):
@@ -18,8 +22,18 @@ class ChessManager(GameManager):
         Returns:
         dict: The initial state of the game
         """
+        initial_board_state = \
+f"""[Event "ZeroSumEval Chess Game"]
+[Site "Online"]
+[Date "2024.06.12"]
+[Round "1"]
+[White "{self.players[0].id}"]
+[Black "{self.players[1].id}"]
+[Result "*"]
+
+1."""
         return dict(
-            board_state="",
+            board_state=initial_board_state,
         )
 
     def update_game_state(self, player, move):
