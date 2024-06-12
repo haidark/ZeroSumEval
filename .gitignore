@@ -1,3 +1,5 @@
 *.egg-info
-*.log
-src/__pycache__/*
+*/*.log
+zero_sum_eval/__pycache__/*
+zero_sum_eval.egg-info
+zero_sum_eval.egg-info/*
