@@ -3,3 +3,4 @@
 zero_sum_eval/__pycache__/*
 zero_sum_eval.egg-info
 zero_sum_eval.egg-info/*
+zero_sum_eval/games/chess/__pycache__/chess_manager.cpython-311.pyc
