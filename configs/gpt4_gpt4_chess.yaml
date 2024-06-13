@@ -1,0 +1,11 @@
+game:
+  type: "chess"
+  args:
+    max_rounds: 5
+    players:
+      - player:
+        type: chess_player
+        args:
+          id: gpt4 white
+          llm_model: 
+          dspy_module: CoT

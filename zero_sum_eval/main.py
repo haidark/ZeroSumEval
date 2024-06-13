@@ -42,5 +42,5 @@ if __name__ == "__main__":
     black_player = ChessPlayer("black", black_gpt4)
 
     # initialize the game and run the game
-    manager = ChessManager(players=[white_player, black_player], max_turns=3, win_conditions=True)
+    manager = ChessManager(players=[white_player, black_player], max_turns=40, win_conditions=True)
     manager.run_game()

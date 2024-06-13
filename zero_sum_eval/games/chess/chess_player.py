@@ -47,14 +47,14 @@ class ChessPlayer(Player):
         print(self.id, trace)
         return {"next_board_state": trace.next_board_state}
 
-    # def receive_feedback(self, feedback):
-    #     """
-    #     Abstract method to receive feedback or updates from the game environment.
+    def receive_feedback(self, feedback):
+        """
+        Abstract method to receive feedback or updates from the game environment.
         
-    #     Parameters:
-    #     feedback (dict): Feedback or update information
+        Parameters:
+        feedback (dict): Feedback or update information
         
-    #     Returns:
-    #     None
-    #     """
-    #     pass
+        Returns:
+        None
+        """
+        return
