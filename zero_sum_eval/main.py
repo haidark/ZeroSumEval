@@ -5,7 +5,6 @@ import openai
 
 from game_manager import GameManager
 from games.chess import ChessGame, ChessPlayer
-from human_player import Player
 
 def main():
     openai.api_type = "azure"
@@ -48,8 +47,10 @@ def main():
                 'max_rounds': 100,  # enough rounds for a full game
                 'win_conditions': 'Checkmate',  # Max rounds for a full game
                 'players': [
-                    {'class!': ChessPlayer, 'args':{'role': 'White', 'max_tries': 4, 'id': 'Player1', "llm_model": player1_gpt4}},
-                    {'class!': ChessPlayer, 'args':{'role': 'Black', 'max_tries': 4, 'id': 'Player2', "llm_model": player2_gpt4}}
+                    {'class!': ChessPlayer, 
+                     'args':{'role': 'White', 'max_tries': 4, 'id': 'Player1', "llm_model": player1_gpt4}},
+                    {'class!': ChessPlayer, 
+                     'args':{'role': 'Black', 'max_tries': 4, 'id': 'Player2', "llm_model": player2_gpt4}}
                 ]
             }
         }

@@ -1,5 +1,4 @@
 #file: game_manager.py
-from human_player import Player
 #TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
 from game_state import GameState
 
@@ -32,7 +31,7 @@ class GameManager:
     def do_turn(self, game_state, player):
         new_state = game_state
         for _ in range(player.max_tries):
-            move = player.make_move(new_state.export())
+            move = player.make_move(new_state)
             new_state = new_state.update_game(move)
             val = new_state.validate_game()
             if val is None:

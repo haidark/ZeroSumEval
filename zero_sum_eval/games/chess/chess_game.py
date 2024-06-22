@@ -64,8 +64,10 @@ class ChessGame(GameState):
             return "75-move rule"
         elif self.board.is_fivefold_repetition():
             return "Fivefold repetition"
+        elif not self.board.is_valid():
+            return "Invalid"
         else:
-            return self.context['message'] 
+            return self.context['message']
 
     def get_next_roles(self, fen):
         turn = fen.split()[1]  # 'w' or 'b'
