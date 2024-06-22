@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 
 # Abstract class for players
 class Player(ABC):
-    def __init__(self, id, llm_model, name):
+    def __init__(self, id, role):
         self.id = id
-        self.llm_model = llm_model
-        self.name = name
+        self.role = role
+        self.context = {}
 
     @abstractmethod
     def make_move(self, game_state):
@@ -20,15 +20,10 @@ class Player(ABC):
         """
         pass
 
-    # @abstractmethod
-    # def receive_feedback(self, feedback):
-    #     """
-    #     Abstract method to receive feedback or updates from the game environment.
-        
-    #     Parameters:
-    #     feedback (dict): Feedback or update information
-        
-    #     Returns:
-    #     None
-    #     """
-    #     pass
+class HumanPlayer(Player):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def make_move(self, game_state):
+        move = input(f"{game_state} enter your move: ")
+        return move.strip()

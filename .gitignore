@@ -1,8 +1,3 @@
-*.egg-info
+*.egg-info*
 */*.log
-zero_sum_eval/__pycache__/*
-zero_sum_eval.egg-info
-zero_sum_eval.egg-info/*
-zero_sum_eval/games/chess/__pycache__/chess_manager.cpython-311.pyc
-zero_sum_eval/games/chess/__pycache__/chess_manager.cpython-311.pyc
-zero_sum_eval/games/chess/__pycache__/chess_player.cpython-311.pyc
+**/__pycache__/
