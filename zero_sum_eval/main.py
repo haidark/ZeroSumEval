@@ -1,17 +1,20 @@
+import chess
+import dspy
 import os
 import openai
-import dspy
-from games.chess import ChessPlayer, ChessManager
 
-if __name__ == "__main__":
+from game_manager import GameManager
+from games.chess import ChessGame, ChessPlayer
+from human_player import Player
+
+def main():
     openai.api_type = "azure"
-    openai.api_base = "https://allam-swn-gpt-01.openai.azure.com/" # "https://allam-arabic-data-cleaning.openai.azure.com/"  # "https://gpt4rnd.openai.azure.com/"
-    openai.api_version = "2023-07-01-preview"  # "2023-07-01-preview"
+    openai.api_base = "https://allam-swn-gpt-01.openai.azure.com/"
+    openai.api_version = "2023-07-01-preview"  
     api_key = os.getenv("OPENAI_API_KEY")
-    api_key2 = os.getenv("OPENAI_API_KEY2")
 
     # Set up the LM
-    white_gpt4 = dspy.AzureOpenAI(
+    player1_gpt4 = dspy.AzureOpenAI(
         api_base=openai.api_base,
         api_version=openai.api_version,
         api_key=api_key,
@@ -24,7 +27,7 @@ if __name__ == "__main__":
         stop=None,
     )
 
-    black_gpt4 = dspy.AzureOpenAI(
+    player2_gpt4 = dspy.AzureOpenAI(
         api_base=openai.api_base,
         api_version=openai.api_version,
         api_key=api_key,
@@ -37,10 +40,33 @@ if __name__ == "__main__":
         stop=None,
     )
 
-    # initialize the players
-    white_player = ChessPlayer("white", white_gpt4)
-    black_player = ChessPlayer("black", black_gpt4)
+    # Configuration to play a full chess game, for now just store here
+    config = {
+        'game': {
+            'class!': ChessGame,
+            'args': {
+                'max_rounds': 100,  # enough rounds for a full game
+                'win_conditions': 'Checkmate',  # Max rounds for a full game
+                'players': [
+                    {'class!': ChessPlayer, 'args':{'role': 'White', 'max_tries': 4, 'id': 'Player1', "llm_model": player1_gpt4}},
+                    {'class!': ChessPlayer, 'args':{'role': 'Black', 'max_tries': 4, 'id': 'Player2', "llm_model": player2_gpt4}}
+                ]
+            }
+        }
+    }
 
-    # initialize the game and run the game
-    manager = ChessManager(players=[white_player, black_player], max_turns=40, win_conditions=True)
-    manager.run_game()
+    # Initialize the GameManager
+    game_manager = GameManager(config)
+
+    # Register players
+    for player_args in config['game']['args']['players']:
+        player = player_args['class!'](**player_args['args'])
+        game_manager.register_player(player)
+
+    game_state = config['game']['class!']().initialize(chess.Board().fen())
+    print("Starting a new game of chess.")
+    final_state = game_manager.do_eval(game_state)
+    print(f"\nGame over. Final state: {final_state.validate_game()}\n {final_state.export()}")
+
+if __name__ == "__main__":
+    main()

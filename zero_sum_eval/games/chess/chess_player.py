@@ -24,9 +24,10 @@ class ChessCoT(dspy.Module):
         return next_board_state
 
 class ChessPlayer(Player):
-    def __init__(self, id, llm_model):
-        self.id = id
+    def __init__(self, llm_model, max_tries=4, **kwargs):
+        super().__init__(**kwargs)
         self.llm_model = llm_model
+        self.max_tries = max_tries
         self.module = ChessCoT()
         # dspy.settings.configure(lm=llm_model)
         # dspy.configure(trace=[])
@@ -42,19 +43,7 @@ class ChessPlayer(Player):
         dict: The move made by the player
         """
         with dspy.context(lm=self.llm_model):
-            trace = self.module(board_state=game_state['board_state'])
+            trace = self.module(board_state=game_state)
         # print(self.llm_model.inspect_history(n=2))
         print(self.id, trace)
-        return {"next_board_state": trace.next_board_state}
-
-    def receive_feedback(self, feedback):
-        """
-        Abstract method to receive feedback or updates from the game environment.
-        
-        Parameters:
-        feedback (dict): Feedback or update information
-        
-        Returns:
-        None
-        """
-        return
+        return trace.next_board_state
