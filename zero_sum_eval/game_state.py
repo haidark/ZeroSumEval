@@ -12,10 +12,10 @@ class GameState(ABC):
        context = {}
 
     @abstractmethod
-    def initialize(self, roles, rules, environment):
+    def initialize(self, roles, context, environment):
         self.roles = roles
-        self.environment = environment
         self.context = context
+        self.environment = environment 
 
     @abstractmethod
     def update_game(self):

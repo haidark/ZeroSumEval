@@ -44,13 +44,13 @@ def main():
         'game': {
             'class!': ChessGame,
             'args': {
-                'max_rounds': 100,  # enough rounds for a full game
+                'max_rounds': 200,  # enough rounds for a full game
                 'win_conditions': 'Checkmate',  # Max rounds for a full game
                 'players': [
                     {'class!': ChessPlayer, 
-                     'args':{'role': 'White', 'max_tries': 4, 'id': 'Player1', "llm_model": player1_gpt4}},
+                     'args':{'role': 'White', 'max_tries': 40, 'id': 'Player1', "llm_model": player1_gpt4}},
                     {'class!': ChessPlayer, 
-                     'args':{'role': 'Black', 'max_tries': 4, 'id': 'Player2', "llm_model": player2_gpt4}}
+                     'args':{'role': 'Black', 'max_tries': 40, 'id': 'Player2', "llm_model": player2_gpt4}}
                 ]
             }
         }

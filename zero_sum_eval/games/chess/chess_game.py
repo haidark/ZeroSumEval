@@ -15,8 +15,7 @@ class ChessGame(GameState):
         return ChessGame(
             roles=roles,
             environment=environment,
-            context=context if context is not None else {"history": [], "message": None}
-
+            context=context
         )
 
     def update_game(self, move):
@@ -26,7 +25,7 @@ class ChessGame(GameState):
             chess_move = self.board.parse_san(move)
             if self.board.is_legal(chess_move):
                 self.board.push(chess_move)
-                new_context['history'].append(f"{self.roles[0]} -> {move}")
+                new_context['history'].append(f"{move}")
                 new_context['message'] = None 
                 #maybe fix message here
             else:
@@ -74,11 +73,11 @@ class ChessGame(GameState):
         return ['White', 'Black'] if turn == 'w' else ['Black', 'White']
 
     def export(self):
-        return yaml.dump({
+        return {
             'roles': self.roles,
             'environment': self.environment,
             'context': self.context
-        })
+        }
 
 if __name__ == "__main__":
     chess_game = ChessGame().initialize(chess.Board().fen())
