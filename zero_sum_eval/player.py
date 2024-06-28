@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 
 # Abstract class for players
 class Player(ABC):
-    def __init__(self, id, role):
+    def __init__(self, id, role, optimize=False):
         self.id = id
         self.role = role
         self.context = {}
+        self.optimize=optimize
 
     @abstractmethod
     def make_move(self, game_state):

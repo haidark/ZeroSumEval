@@ -48,9 +48,9 @@ def main():
                 'win_conditions': 'Checkmate',  # Max rounds for a full game
                 'players': [
                     {'class!': ChessPlayer, 
-                     'args':{'role': 'White', 'max_tries': 40, 'id': 'Player1', "llm_model": player1_gpt4}},
+                     'args':{'role': 'White', 'max_tries': 40, 'id': 'Player1', "llm_model": player1_gpt4, "optimize": True}},
                     {'class!': ChessPlayer, 
-                     'args':{'role': 'Black', 'max_tries': 40, 'id': 'Player2', "llm_model": player2_gpt4}}
+                     'args':{'role': 'Black', 'max_tries': 40, 'id': 'Player2', "llm_model": player2_gpt4, "optimize": True}}
                 ]
             }
         }
