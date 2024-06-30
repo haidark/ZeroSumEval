@@ -26,9 +26,10 @@ def validate_move(example, prediction, trace=None):
         return -1
 
 class NextMove(dspy.Signature):
-    """Given a board state, analysis, and move history, produce the next best valid move"""
+    """Given a board state, role, and move history, produce the next best valid move"""
     
     board_state = dspy.InputField(desc="FEN formatted current board state")
+    role = dspy.InputField(desc="role of the player making the next move")
     history = dspy.InputField(desc="move history")
     move = dspy.OutputField(desc="a valid SAN formatted move without move number or elipses")
 
@@ -51,9 +52,10 @@ class ChessCoT(dspy.Module):
         return formatted_history.strip()
 
 
-    def forward(self, board_state, history):
+    def forward(self, board_state, role, history):
         cot_out = self.cot_move(board_state=board_state,
-                           history=self.format_move_history(history))
+                                role=role,
+                                history=self.format_move_history(history))
         cot_out.move = cot_out.move.replace(".", "")
         try:
             board = chess.Board(board_state)
@@ -97,19 +99,21 @@ class ChessPlayer(Player):
         export = game_state.export()
         with dspy.context(lm=self.llm_model):
             if self.optimize:
-                trace = self.optimized_module(board_state=export['environment'], 
+                trace = self.optimized_module(board_state=export['environment'],
+                                              role=export['roles'][0], 
                                               history=export['context']['history'])
             else:
-                trace = self.module(board_state=export['environment'], 
+                trace = self.module(board_state=export['environment'],
+                                    role=export['roles'][0], 
                                     history=export['context']['history'])
-        print(self.id, export, trace)
-        # print(self.id, self.llm_model.inspect_history(n=5))
+        # print(self.id, export, trace)
+        print(self.id, export, self.llm_model.inspect_history(n=1))
         return trace.move
     
     def optimize_prompts(self):
         filename = 'data/chess/stockfish_examples.jsonl'
         dataset = self.create_dataset(filename)
-        config = dict(max_bootstrapped_demos=4, max_labeled_demos=4, num_candidate_programs=10, num_threads=4)
+        config = dict(max_bootstrapped_demos=4, max_labeled_demos=4, num_candidate_programs=4, num_threads=4)
         teleprompter = BootstrapFewShotWithRandomSearch(metric=validate_move, **config)
         with dspy.context(lm=self.llm_model):
             return teleprompter.compile(self.module, trainset=dataset)
@@ -124,17 +128,18 @@ class ChessPlayer(Player):
     def create_dataset(self, filename):
         examples = self.load_examples(filename)
         dataset = []
-        for example in examples[-10:]:
+        for example in examples[-4:]:
             if self.role =="White": # white to move
                 if not example['turn']:
                     continue
             else:                   # black to move
                 if example['turn']:
                     continue
-            example = dspy.Example(board_state=example['board_state'], 
-                                history=example['history'],
-                                move=example['move']
-                                ).with_inputs("board_state", "history")
+            example = dspy.Example(board_state=example['board_state'],
+                                   role=f"{self.role}",
+                                   history=example['history'],
+                                   move=example['move']
+                                   ).with_inputs("board_state", "role", "history")
             dataset.append(example)
         return dataset
     

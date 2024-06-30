@@ -43,6 +43,7 @@ class GameManager:
                 return new_state.query_game()
             else:
                 print(f"Player {player.id} made an invalid move: {move}")
+                new_state = game_state
         
         print(f"Player {player.id} failed to make a valid move after {player.max_tries} tries.")
         
