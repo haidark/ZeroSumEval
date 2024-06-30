@@ -19,6 +19,7 @@ class GameManager:
     def do_eval(self, game_state):
         round_count = 0
         while round_count < self.max_rounds:
+            print(f"Round {round_count}: {game_state.export()}")
             game_status = game_state
             if game_status.validate_game():
                 break

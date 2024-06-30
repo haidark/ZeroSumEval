@@ -107,7 +107,7 @@ class ChessPlayer(Player):
                                     role=export['roles'][0], 
                                     history=export['context']['history'])
         # print(self.id, export, trace)
-        print(self.id, export, self.llm_model.inspect_history(n=1))
+        # print(self.id, export, self.llm_model.inspect_history(n=1))
         return trace.move
     
     def optimize_prompts(self):
