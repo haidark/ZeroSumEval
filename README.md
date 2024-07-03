@@ -1,8 +1,53 @@
 # Zero Sum Eval (ZSEval)
 
-The goal of this work is to understand how Capture the Flag type problems/competitions can be used the evaluate/improve the reasoning ability of LLMs
+The goal of this work is to understand how two player games/problems/challenges can be used the evaluate/improve the reasoning ability of LLMs
 
 # High level Plan
+
+## Current Plan
+
+1. Define the framework for two player games: including the components, interactions, and overall flow
+    1. Abstractions that captures the players in the games, win conditions, and interactions between players
+        1. Player: captures the essential parts of a player in the game, including the LLM driving the player and abstract methods which prepare the player to play its role in the game
+        2. GameEnvironment: captures the setup of the game, controls information provided to each player, the progress of each player in the game, tracks tries/retries, win/loss conditions, ends the game
+        
+        ### UML DIagram
+        
+        ```html
+        +-------------------+          +--------------------+
+        |   GameManager     |          |       Player       |
+        +-------------------+          +--------------------+
+        | - players         |1        n| - id               |
+        | - game_state      |<-------->| - llm_model        |
+        | - max_turns       |          | - name             |
+        | - current_turn    |          +--------------------+
+        | - win_conditions  |          | + initlaize()      |
+        +-------------------+          | + make_move()      |
+        | + initialize()    |          +--------------------+
+        | + update_state()  |       
+        | + check_win()     |       
+        | + run_game()      |
+        +-------------------+
+        ```
+        
+2. Implement DSPy for prompt optimization (Haidar)
+3. Implement simple CTF game FuzzMe (Colton)
+4. Implement text based two player game
+    1. mathquiz
+    2. codequiz 
+5. Implement chess and other board games
+6. First round of eval on 3-5 current models on the implemented games
+7. Analyze results (end of July)
+8. Implement tool usage
+9. Implement complex CTF games
+10. Iterate on the games, design of framework.
+11. Harden framework and generalize it
+12. Second round of evals on 5-7 current models.
+13. Analyze results
+14. Write plan to open source
+15. Write paper
+
+### Initial plan (outdated)
 
 1. Develop an understanding of Capture the Flag
     1. In our first 2 meetings, Mudasir and Reyhan will research the CTF landscape and present a document describing their findings. Some aspects of interest to this project:
@@ -19,7 +64,7 @@ The goal of this work is to understand how Capture the Flag type problems/compet
     2. Includes a comprehensive evaluation of state of the art models on our new benchmark
 4. Create training data for LLMs based on CTF
 
-# Defender-Attacker CTF Evaluation
+# Two Player LLM Evaluation
 
 Evaluation of LLMs is one of the primary challenges researchers and practitioners face today, the existing suite of LLM evaluations can be categorized into four broad categories:
 
@@ -30,7 +75,7 @@ Evaluation of LLMs is one of the primary challenges researchers and practitioner
 
 The last type of evaluation is particularly attractive as it doesn’t rely on (i) a pre-defined set of inputs/references or (ii) incur the expense of human evaluation. One can determine ELO ratings based on wins and losses.
 
-For the context of CTF, let’s focus on this type of evaluation.
+Let’s focus on this type of evaluation in the context of CTF
 
 In this setting, there are two players in the game - a defender and an attacker. The defender creates a CTF challenge and proves the challenge is solvable. The attacker examines the CTF challenge and must retrieve the hidden flag. The defender and attacker are limited in the number of attempts to generate a valid challenge and solve the challenge respectively.
 
@@ -87,5 +132,3 @@ If the attacker fails to retrieve the flag, it is allowed to retry.
 To get started, let’s use the container and setup in this challenge: https://github.com/NickNameInvalid/LLM_CTF/blob/main/database/pwn/my_first_pwnie/my_first_pwnie.py
 
 it is the simplest pyjail without any constraints but the useful bit is the container to run the script and interact with.
-
-## Examples CTF
