@@ -72,12 +72,32 @@ class ChessGame(GameState):
         turn = fen.split()[1]  # 'w' or 'b'
         return ['White', 'Black'] if turn == 'w' else ['Black', 'White']
 
+    def formatted_move_history(self):
+        history = self.context['history']
+        formatted_history = ""
+        moves = len(history)//2+1
+        for i in range(1, moves+1):
+            j = (i-1)*2
+            formatted_history+=f"{i}."
+            if j < len(history):
+                formatted_history+=f"{history[j]} "
+            if j+1 < len(history):
+                formatted_history+=f"{history[j+1]} "
+        return formatted_history.strip()
+
     def export(self):
         return {
             'roles': self.roles,
             'environment': self.environment,
             'context': self.context
         }
+    
+    def display(self):
+        display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
+        display_str += f"{self.formatted_move_history()}\n"
+        display_str += f"{self.board}\n"
+        return display_str
+
 
 if __name__ == "__main__":
     chess_game = ChessGame().initialize(chess.Board().fen())

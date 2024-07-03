@@ -6,6 +6,19 @@ import openai
 from game_manager import GameManager
 from games.chess import ChessGame, ChessPlayer
 
+import logging
+
+GAMES = {
+    "chess": {
+        "class!": ChessGame,
+        "chess player": {
+            "class!": ChessPlayer,
+        }
+    }
+}
+
+
+
 def main():
     openai.api_type = "azure"
     openai.api_base = "https://allam-swn-gpt-01.openai.azure.com/"
@@ -42,32 +55,31 @@ def main():
     # Configuration to play a full chess game, for now just store here
     config = {
         'game': {
-            'class!': ChessGame,
+            'name': "chess",
             'args': {
                 'max_rounds': 200,  # enough rounds for a full game
                 'win_conditions': 'Checkmate',  # Max rounds for a full game
                 'players': [
-                    {'class!': ChessPlayer, 
+                    {'name': "chess player", 
                      'args':{'role': 'White', 'max_tries': 40, 'id': 'Player1', "llm_model": player1_gpt4, "optimize": True}},
-                    {'class!': ChessPlayer, 
-                     'args':{'role': 'Black', 'max_tries': 40, 'id': 'Player2', "llm_model": player2_gpt4, "optimize": True}}
+                    {'name': "chess player", 
+                     'args':{'role': 'Black', 'max_tries': 40, 'id': 'Player2', "llm_model": player2_gpt4, "optimize": False}}
                 ]
             }
         }
     }
-
-    # Initialize the GameManager
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)    # Initialize the GameManager
     game_manager = GameManager(config)
-
     # Register players
     for player_args in config['game']['args']['players']:
-        player = player_args['class!'](**player_args['args'])
+        player = GAMES[config['game']['name']][player_args['name']]['class!'](**player_args['args'])
         game_manager.register_player(player)
 
-    game_state = config['game']['class!']().initialize(chess.Board().fen())
-    print("Starting a new game of chess.")
+    game_state = GAMES[config['game']['name']]['class!']().initialize(chess.Board().fen())
+    logger.info("Starting a new game of chess.")
     final_state = game_manager.do_eval(game_state)
-    print(f"\nGame over. Final state: {final_state.validate_game()}\n {final_state.export()}")
+    logger.info(f"\nGame over. Final state: {final_state.validate_game()}\n{final_state.display()}")
 
 if __name__ == "__main__":
     main()

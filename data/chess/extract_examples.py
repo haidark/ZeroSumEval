@@ -28,7 +28,7 @@ if __name__ == "__main__":
                 board = game.board()
                 for move in moves[:i]:
                     board.push_san(move)
-                example = dict(board_state=board.board_fen(), 
+                example = dict(board_state=board.fen(), 
                                history=format_move_history(moves[:i]), 
                                move=moves[i],
                                turn=board.turn)

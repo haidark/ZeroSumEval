@@ -1,6 +1,6 @@
 #file: game_manager.py
 #TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
-from game_state import GameState
+from logging import getLogger
 
 class GameManager:
     def __init__(self, config):
@@ -17,19 +17,22 @@ class GameManager:
         return game
 
     def do_eval(self, game_state):
+        logger = getLogger()
         round_count = 0
         while round_count < self.max_rounds:
-            print(f"Round {round_count}: {game_state.export()}")
+            turn_count = round_count // len(self.players) + 1
             game_status = game_state
             if game_status.validate_game():
                 break
             game_status = game_state.query_game()
             player = self.players[game_status.roles[0]]
+            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             game_state = self.do_turn(game_status, player)
             round_count += 1
         return game_state
 
     def do_turn(self, game_state, player):
+        logger = getLogger()
         new_state = game_state
         for _ in range(player.max_tries):
             move = player.make_move(new_state)
@@ -43,10 +46,10 @@ class GameManager:
                 #
                 return new_state.query_game()
             else:
-                print(f"Player {player.id} made an invalid move: {move}")
+                logger.warn(f"Player {player.id} made an invalid move: {move}")
                 new_state = game_state
         
-        print(f"Player {player.id} failed to make a valid move after {player.max_tries} tries.")
+        logger.error(f"Player {player.id} failed to make a valid move after {player.max_tries} tries.")
         
         return game_state  # Return the original state if all tries fail
 

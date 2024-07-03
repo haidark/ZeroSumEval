@@ -4,14 +4,14 @@
 from zero_sum_eval.player import Player
 import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy.teleprompt import BootstrapFewShotWithRandomSearch
+from dspy.teleprompt import LabeledFewShot, BootstrapFewShot, MIPROv2, BootstrapFewShotWithRandomSearch
 import copy
 import chess
 from chess import IllegalMoveError, InvalidMoveError, AmbiguousMoveError
 import functools, json
+from random import shuffle
 
 # TODO: add support for resigning
-# TODO: add support for checking win/lose/draw
 
 def validate_move(example, prediction, trace=None):
     pred_move = prediction.move
@@ -39,23 +39,11 @@ class ChessCoT(dspy.Module):
         super().__init__()
         self.cot_move = dspy.ChainOfThought(NextMove)
 
-    def format_move_history(self, history):
-        formatted_history = ""
-        moves = len(history)//2+1
-        for i in range(1, moves+1):
-            j = (i-1)*2
-            formatted_history+=f"{i}."
-            if j < len(history):
-                formatted_history+=f"{history[j]} "
-            if j+1 < len(history):
-                formatted_history+=f"{history[j+1]} "
-        return formatted_history.strip()
-
 
     def forward(self, board_state, role, history):
         cot_out = self.cot_move(board_state=board_state,
                                 role=role,
-                                history=self.format_move_history(history))
+                                history=history)
         cot_out.move = cot_out.move.replace(".", "")
         try:
             board = chess.Board(board_state)
@@ -101,22 +89,26 @@ class ChessPlayer(Player):
             if self.optimize:
                 trace = self.optimized_module(board_state=export['environment'],
                                               role=export['roles'][0], 
-                                              history=export['context']['history'])
+                                              history=game_state.formatted_move_history())
             else:
                 trace = self.module(board_state=export['environment'],
                                     role=export['roles'][0], 
-                                    history=export['context']['history'])
-        # print(self.id, export, trace)
-        # print(self.id, export, self.llm_model.inspect_history(n=1))
+                                    history=game_state.formatted_move_history())
         return trace.move
     
     def optimize_prompts(self):
         filename = 'data/chess/stockfish_examples.jsonl'
         dataset = self.create_dataset(filename)
-        config = dict(max_bootstrapped_demos=4, max_labeled_demos=4, num_candidate_programs=4, num_threads=4)
-        teleprompter = BootstrapFewShotWithRandomSearch(metric=validate_move, **config)
+        shuffle(dataset)
+        # config = dict(max_bootstrapped_demos=4, max_labeled_demos=16)
+        # teleprompter = BootstrapFewShot(metric=validate_move, **config)
         with dspy.context(lm=self.llm_model):
-            return teleprompter.compile(self.module, trainset=dataset)
+            
+            teleprompter = MIPROv2(metric=validate_move, prompt_model=self.llm_model, task_model=self.llm_model,
+                                   num_candidates=5, minibatch_size=20, minibatch_full_eval_steps=10, 
+                                   verbose=True)
+            return teleprompter.compile(self.module, max_bootstrapped_demos=1, max_labeled_demos=1, 
+                                        trainset=dataset, eval_kwargs={})
 
     def load_examples(self, filename):
         examples = []
@@ -128,7 +120,7 @@ class ChessPlayer(Player):
     def create_dataset(self, filename):
         examples = self.load_examples(filename)
         dataset = []
-        for example in examples[-4:]:
+        for example in [examples[i] for i in range(0, len(examples), len(examples)//10)]:
             if self.role =="White": # white to move
                 if not example['turn']:
                     continue
