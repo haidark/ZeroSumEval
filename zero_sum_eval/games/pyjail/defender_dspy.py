@@ -6,9 +6,9 @@ import json
 import dspy
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 from dspy.teleprompt import BootstrapFewShotWithRandomSearch
-from zero_sum_eval.pyjail.verification import verify_solution
-from zero_sum_eval.pyjail.dummy_challenge import challenge, code
-from zero_sum_eval.pyjail.attacker_dspy import AttackerCoT
+from zero_sum_eval.games.pyjail.verification import verify_solution
+from zero_sum_eval.games.pyjail.dummy_challenge import challenge, code
+from zero_sum_eval.games.pyjail.attacker_dspy import AttackerCoT
 
 
 def valid_json(input_str):
@@ -40,7 +40,7 @@ class DefenderCoT(dspy.Module):
     def __init__(self):
         super().__init__()
         self.cot = dspy.ChainOfThought(CTFChallenge)
-        
+
         self.attacker = assert_transform_module(
             AttackerCoT(), partial(backtrack_handler, max_backtracks=5)
         )

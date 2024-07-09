@@ -1,20 +1,38 @@
-#file: game_manager.py
-#TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
+# file: game_manager.py
+# TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
 from logging import getLogger
+from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
+from collections import defaultdict
+
 
 class GameManager:
     def __init__(self, config):
         self.config = config
         self.games = []
         self.players = {}
-        self.max_rounds = config['game']['args']['max_rounds']
+        self.max_rounds = self.config["manager"]["args"]["max_rounds"]
+        self.win_conditions = self.config["manager"]["args"]["win_conditions"]
+        self._init_game()
+        self._init_players()
 
-    def initialize_game(self, game_class):
-        environment = self.config['game']['args'].get('environment', None)
-        game = game_class().initialize(environment)
-        self.roles = game.query_game()  
+    def _init_game(self):
+        game_config = (
+            self.config["game"]["args"] if "args" in self.config["game"] else {}
+        )
+        game = GAME_REGISTRY.build(self.config["game"]["name"], **game_config)
         self.games.append(game)
-        return game
+
+    def _init_players(self):
+        for player_config in self.config["game"]["players"]:
+            player = PLAYER_REGISTRY.build(
+                self.config["game"]["name"],
+                player_config["name"],
+                **player_config["args"],
+            )
+            self.players[player.role] = player
+
+    def start(self):
+        return self.do_eval(self.games[0])
 
     def do_eval(self, game_state):
         logger = getLogger()
@@ -40,7 +58,7 @@ class GameManager:
             val = new_state.validate_game()
             if val is None:
                 return new_state
-            if val in self.config['game']['args']['win_conditions']:
+            if val in self.win_conditions:
                 #
                 # Here maybe call the scoring function?
                 #
@@ -48,13 +66,9 @@ class GameManager:
             else:
                 logger.warn(f"Player {player.id} made an invalid move: {move}")
                 new_state = game_state
-        
-        logger.error(f"Player {player.id} failed to make a valid move after {player.max_tries} tries.")
-        
+
+        logger.error(
+            f"Player {player.id} failed to make a valid move after {player.max_tries} tries."
+        )
+
         return game_state  # Return the original state if all tries fail
-
-
-    def register_player(self, player):
-        self.players[player.role] = player
-
-

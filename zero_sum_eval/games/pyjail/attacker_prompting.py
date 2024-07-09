@@ -3,7 +3,7 @@ import os
 import openai
 import json
 import subprocess
-from zero_sum_eval.pyjail.verification import submit_solution
+from zero_sum_eval.games.pyjail.verification import submit_solution
 
 
 def attack():
