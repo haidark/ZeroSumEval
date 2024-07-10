@@ -1,45 +1,65 @@
 from zero_sum_eval.game_state import GameState
+from random import randint
+
 
 class MathQuizGame(GameState):
-    def __init__(self, roles=None, environment=None, context=None):
+    """
+    This is a two player game where the players take turns to answer math questions.
+    In each round:
+        1. the environment is initialized with a target number
+        2. The first player to move creates a math question with the answer as the target number
+        and proves that the question is valid.
+        3. If the first player succeeds, the second player is given a chance to answer the question.
+        4. The game continues for a fixed number of rounds.
+
+    The roles for this game are:
+        TeacherGenerateQuestion
+        TeacherAnswerQuestion
+        StudentAnswerQuestion
+
+    The environment for this game is:
+        question: a math question
+        teacher_answer: the teacher's answer to the math question
+        student_answer: the student's answer to the math question
+    """
+    def __init__(self, roles=None, environment=None, context=None, target=None):
         super().__init__()
-        self.environment = environment
+        self.environment = environment if environment is not None else \
+            {"question": None, "teacher_answer": None, "student_answer": None}
         self.roles = self.get_next_roles(self.environment) if roles is None else roles
         self.context = context if context is not None else {"history": [], "message": None}
+        self.target = target if target is not None else randint(1, 1000)
 
-    def initialize(self, environment, context=None ,roles=None):
+    def initialize(self, roles=None, environment=None, context=None, target=None):
         return MathQuizGame(
             roles=roles,
             environment=environment,
-            context=context
+            context=context,
+            target=target
         )
 
     def update_game(self, move):
         new_context = self.context.copy()
+        new_environment = self.environment.copy()
+        if self.roles[0] == "TeacherGenerateQuestion":
+            new_environment['question'] = move
+        elif self.roles[0] == "TeacherAnswerQuestion":
+            new_environment['teacher_answer'] = move
+        elif self.roles[0] == "StudentAnswerQuestion":
+            new_environment['student_answer'] = move
 
-        try:
-            chess_move = self.board.parse_san(move)
-            if self.board.is_legal(chess_move):
-                self.board.push(chess_move)
-                new_context['history'].append(f"{move}")
-                new_context['message'] = None 
-                #maybe fix message here
-            else:
-                new_context['message'] = f"Your move {move} is an illegal move"
-        except ValueError as e:
-            new_context['message'] = f"Your move {move} caused an error: {str(e)} "
-
-        new_environment = self.board.fen()
         return self.initialize(
+            roles=self.roles,
             environment=new_environment,
-            context=new_context
+            context=new_context,
+            target=self.target
         )
 
     def query_game(self):  
         new_context = self.context.copy()
-        new_roles = [self.roles[0]]
+        new_roles = self.get_next_roles(self.environment)
         msg = self.validate_game() 
-        new_context['message'] = msg if msg is not None else f"You will move as {self.get_next_roles(self.environment)[0]}" 
+        new_context['message'] = msg if msg is not None else f"You will move as {new_roles[0]}" 
 
         return self.initialize(
             environment=self.environment,
@@ -47,38 +67,32 @@ class MathQuizGame(GameState):
             roles=new_roles
         )
 
+    def verify_answer(self, answer):
+        return answer == self.target
+
     def validate_game(self):
-        if self.board.is_checkmate():
-            return "Checkmate"
-        elif self.board.is_stalemate():
-            return "Stalemate"
-        elif self.board.is_insufficient_material():
-            return "Insufficient material"
-        elif self.board.is_seventyfive_moves():
-            return "75-move rule"
-        elif self.board.is_fivefold_repetition():
-            return "Fivefold repetition"
-        elif not self.board.is_valid():
-            return "Invalid"
+        current_role = self.roles[0]
+        if self.environment['teacher_answer'] is not None:
+            if current_role == "TeacherAnswerQuestion":
+                if self.verify_answer(self.environment['teacher_answer']):
+                    return "TeacherCorrect"
+                else:
+                    return "TeacherIncorrect"
+            elif current_role == "StudentAnswerQuestion":
+                if self.verify_answer(self.environment['teacher_answer']):
+                    return "StudentCorrect"
+                else:
+                    return "StudentIncorrect"
         else:
             return self.context['message']
 
-    def get_next_roles(self, fen):
-        turn = fen.split()[1]  # 'w' or 'b'
-        return ['White', 'Black'] if turn == 'w' else ['Black', 'White']
-
-    def formatted_move_history(self):
-        history = self.context['history']
-        formatted_history = ""
-        moves = len(history)//2+1
-        for i in range(1, moves+1):
-            j = (i-1)*2
-            formatted_history+=f"{i}."
-            if j < len(history):
-                formatted_history+=f"{history[j]} "
-            if j+1 < len(history):
-                formatted_history+=f"{history[j+1]} "
-        return formatted_history.strip()
+    def get_next_roles(self, environment):
+        if environment['question'] is None:
+            return ['TeacherGenerateQuestion', 'TeacherAnswerQuestion', 'StudentAnswerQuestion']
+        elif environment['teacher_answer'] is None:
+            return ['TeacherAnswerQuestion', 'StudentAnswerQuestion']
+        else:
+            return ['StudentAnswerQuestion']
 
     def export(self):
         return {
@@ -95,31 +109,4 @@ class MathQuizGame(GameState):
 
 
 if __name__ == "__main__":
-    chess_game = ChessGame().initialize(chess.Board().fen())
-    print(chess_game.export())
-
-    # 1. e4 e5
-    chess_game = chess_game.update_game("e4")
-    print(chess_game.export())
-
-    print(chess_game.query_game().export())
-    chess_game = chess_game.update_game("e5")
-    print(chess_game.export())
-
-    # 2. Nf3 Nc6
-    chess_game = chess_game.update_game("Nf3")
-    print(chess_game.query_game().export())
-    chess_game = chess_game.update_game("Nc6")
-    print(chess_game.export())
-
-    # 3. Nxe5
-    chess_game = chess_game.update_game("Nxe5")
-    print(chess_game.export())
-
-    validation_result = chess_game.validate_game()
-    if validation_result:
-        print(f"Game validation result: {validation_result}")
-    else:
-        print("Game is valid.")
-
-
+    pass
