@@ -1,8 +1,14 @@
 import subprocess
 
+
+def submit_solution():
+    pass
+
+
 def print_verbose(message, verbose):
     if verbose:
         print(message)
+
 
 def verify_solution(soln, verbose=False):
     """ verify the solution to the challenge """
@@ -31,4 +37,3 @@ def verify_solution(soln, verbose=False):
         return True
     else:
         return False
-    

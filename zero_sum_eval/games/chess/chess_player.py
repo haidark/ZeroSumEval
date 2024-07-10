@@ -10,6 +10,7 @@ import chess
 from chess import IllegalMoveError, InvalidMoveError, AmbiguousMoveError
 import functools, json
 from random import shuffle
+from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY
 
 # TODO: add support for resigning
 
@@ -65,10 +66,13 @@ class ChessCoT(dspy.Module):
             )
         return cot_out
 
+
+@PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def __init__(self, llm_model, max_tries=4, **kwargs):
+    def __init__(self, lm, max_tries=4, **kwargs):
         super().__init__(**kwargs)
-        self.llm_model = llm_model
+        lm_args = lm["args"] if "args" in lm else {}
+        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
         self.module = assert_transform_module(ChessCoT(), functools.partial(backtrack_handler, max_backtracks=max_tries))
         self.optimized_module = self.optimize_prompts() if self.optimize else None
@@ -134,7 +138,3 @@ class ChessPlayer(Player):
                                    ).with_inputs("board_state", "role", "history")
             dataset.append(example)
         return dataset
-    
-
-        
-    

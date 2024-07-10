@@ -1,8 +1,11 @@
 import chess
 import yaml
-from game_manager import GameManager
-from game_state import GameState
+from zero_sum_eval.game_manager import GameManager
+from zero_sum_eval.game_state import GameState
+from zero_sum_eval.registry import GAME_REGISTRY
 
+
+@GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
     def __init__(self, roles=None, environment=None, context=None):
         super().__init__()
@@ -126,5 +129,4 @@ if __name__ == "__main__":
         print(f"Game validation result: {validation_result}")
     else:
         print("Game is valid.")
-
 
