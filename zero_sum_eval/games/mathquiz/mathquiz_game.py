@@ -1,7 +1,9 @@
 from zero_sum_eval.game_state import GameState
 from random import randint
+from zero_sum_eval.registry import GAME_REGISTRY
 
 
+@GAME_REGISTRY.register("mathquiz")
 class MathQuizGame(GameState):
     """
     This is a two player game where the players take turns to answer math questions.

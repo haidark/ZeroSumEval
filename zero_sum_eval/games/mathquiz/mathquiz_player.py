@@ -7,7 +7,7 @@ from dspy.primitives.assertions import assert_transform_module, backtrack_handle
 from dspy.teleprompt import LabeledFewShot, BootstrapFewShot, MIPROv2, BootstrapFewShotWithRandomSearch
 import functools, json
 from random import shuffle
-
+from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY
 
 class GenerateQuestion(dspy.Signature):
     """Given a target answer, generate a challenging math question that has the target answer"""
@@ -40,6 +40,7 @@ class AnswerQuestionCoT(dspy.Module):
         cot_out = self.cot_answer(math_question=math_question)
         return cot_out
 
+@PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
 class MathQuizTeacher(Player):
     def __init__(self, llm_model, max_tries=4, **kwargs):
         super().__init__(**kwargs)
@@ -69,8 +70,9 @@ class MathQuizTeacher(Player):
             elif current_role == "TeacherAnswerQuestion":
                 trace = self.answer_module(export['environment'])
                 return trace.answer
-    
-class MathQuizQuestion(Player):
+
+@PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
+class MathQuizAnswer(Player):
     def __init__(self, llm_model, max_tries=4, **kwargs):
         super().__init__(**kwargs)
         self.llm_model = llm_model
