@@ -1,0 +1,34 @@
+manager:
+  args:
+    max_rounds: 200
+    win_conditions: 
+      - Checkmate
+game:
+  name: chess
+  players:
+    - name: chess_player
+      args:
+        id: gpt4 white
+        role: White
+        optimize: true
+        dataset: chess_dataset
+        dataset_args:
+          filename: /Users/hisham/Codebases/ZeroSumEval/data/chess/stockfish_examples.jsonl
+          role: White
+        optimizer: MIPROv2
+        module: chess_cot
+        lm:
+          type: OpenAI
+    - name: chess_player
+      args:
+        id: gpt4 black
+        role: Black
+        optimize: true
+        dataset: chess_dataset
+        dataset_args:
+          filename: /Users/hisham/Codebases/ZeroSumEval/data/chess/stockfish_examples.jsonl
+          role: Black
+        optimizer: MIPROv2
+        module: chess_cot
+        lm:
+          type: OpenAI
