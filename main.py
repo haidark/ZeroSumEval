@@ -27,7 +27,7 @@ def main():
 
     game_manager = GameManager(config)
 
-    logger.info("Starting a new game of chess.")
+    logger.info("Starting a new game!")
 
     final_state = game_manager.start()
 

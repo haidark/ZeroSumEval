@@ -42,9 +42,10 @@ class AnswerQuestionCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
 class MathQuizTeacher(Player):
-    def __init__(self, llm_model, max_tries=4, **kwargs):
+    def __init__(self, lm, max_tries=4, **kwargs):
         super().__init__(**kwargs)
-        self.llm_model = llm_model
+        lm_args = lm["args"] if "args" in lm else {}
+        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
         self.question_module = GenerateQuestionCoT()
         self.answer_module = AnswerQuestionCoT()
@@ -65,17 +66,20 @@ class MathQuizTeacher(Player):
         current_role = game_state.roles[0]
         with dspy.context(lm=self.llm_model):
             if current_role == "TeacherGenerateQuestion":
-                trace = self.question_module(export['target'])
+                trace = self.question_module(export['environment'])
                 return trace.math_question
             elif current_role == "TeacherAnswerQuestion":
                 trace = self.answer_module(export['environment'])
                 return trace.answer
+            else:
+                raise ValueError(f"Invalid role for teacher: {current_role}")
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
-class MathQuizAnswer(Player):
-    def __init__(self, llm_model, max_tries=4, **kwargs):
+class MathQuizStudent(Player):
+    def __init__(self, lm, max_tries=4, **kwargs):
         super().__init__(**kwargs)
-        self.llm_model = llm_model
+        lm_args = lm["args"] if "args" in lm else {}
+        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
         self.answer_module = AnswerQuestionCoT()
         # self.optimized_module = self.optimize_prompts() if self.optimize else None
@@ -92,9 +96,13 @@ class MathQuizAnswer(Player):
         str: The move made by the player
         """
         export = game_state.export()
+        current_role = game_state.roles[0]
         with dspy.context(lm=self.llm_model):
-            trace = self.answer_module(export['environment'])
-            return trace.answer
+            if current_role == "StudentAnswerQuestion":
+                trace = self.answer_module(export['environment'])
+                return trace.answer
+            else:
+                raise ValueError(f"Invalid role for student: {current_role}")
 
         
     

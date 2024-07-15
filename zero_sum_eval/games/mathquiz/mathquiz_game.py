@@ -30,7 +30,7 @@ class MathQuizGame(GameState):
             {"question": None, "teacher_answer": None, "student_answer": None}
         self.roles = self.get_next_roles(self.environment) if roles is None else roles
         self.context = context if context is not None else {"history": [], "message": None}
-        self.target = target if target is not None else randint(1, 1000)
+        self.target = target if target is not None else str(randint(1, 1000))
 
     def initialize(self, roles=None, environment=None, context=None, target=None):
         return MathQuizGame(
@@ -70,10 +70,12 @@ class MathQuizGame(GameState):
         )
 
     def verify_answer(self, answer):
-        return answer == self.target
+        return str(answer) == str(self.target.strip())
 
     def validate_game(self):
         current_role = self.roles[0]
+        if current_role == "TeacherGenerateQuestion":
+            return None
         if self.environment['teacher_answer'] is not None:
             if current_role == "TeacherAnswerQuestion":
                 if self.verify_answer(self.environment['teacher_answer']):
@@ -97,16 +99,26 @@ class MathQuizGame(GameState):
             return ['StudentAnswerQuestion']
 
     def export(self):
-        return {
-            'roles': self.roles,
-            'environment': self.environment,
-            'context': self.context
-        }
+        current_role = self.roles[0]
+        if current_role == "TeacherGenerateQuestion":
+            return {
+                'role': self.roles[0],
+                'environment': self.target,
+                'context': self.context
+            }
+        elif current_role  in ("TeacherAnswerQuestion", "StudentAnswerQuestion"):
+            return {
+                'role': self.roles[0],
+                'environment': self.environment['question'],
+                'context': self.context
+            }
+        else:
+            raise ValueError("Invalid role")
     
     def display(self):
         display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
-        display_str += f"{self.formatted_move_history()}\n"
-        display_str += f"{self.board}\n"
+        display_str += f"{self.environment}\n"
+        display_str += f"Target: {self.target}\n"
         return display_str
 
 
