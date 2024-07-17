@@ -1,13 +1,15 @@
 #file: crackme.py
-import pyyaml
+#TODO: figure out multi line inputs
+import yaml
 import ast
 import random
 import concurrent.futures
-from game_manager import GameManager
-from game_state import GameState
+from zero_sum_eval.game_manager import GameManager
+from zero_sum_eval.game_state import GameState
+from zero_sum_eval.registry import GAME_REGISTRY
 
 
-
+@GAME_REGISTRY.register("crackme")
 class CrackMeGame(GameState):
     '''
     This is a two player game where one player creates an obfoscation program,
@@ -26,158 +28,229 @@ class CrackMeGame(GameState):
         AttackerReverseEngineer
 
     The environment for this game is:
-        base_program: a program which takes an input and returns an output
-    
-    
-    key: a randomly generated number
+        code: a program which takes an input and returns an output
+
+    key: a randomly generated number (not stored) 
     obfoscated_key: the result of base_program(key)
 
     '''
-    def __init__(self, roles=None, environment=None, context=None, key=None):
+    def __init__(self, roles=None, environment=None, context=None):
         super().__init__()
-        self.environment = environment if environment is not None else "" 
+        self.environment = environment if environment is not None else {"code":""}
+        self.context = context if context is not None else {"annotation": "", "message": None}
         self.roles = roles if roles is not None else self.get_next_roles()
-        self.context = context if context is not None else {"history": [], "message": None}
-        self.key = key if key is not None else random.random() 
 
-    def initilize(self, environment, context=None ,roles=None, key=None):
+    def initialize(self, environment=None, context=None ,roles=None):
         return CrackMeGame(
             roles=roles,
             environment=environment,
             context=context,
-            key=key
         )
 
     def update_game(self, move):
         new_context = self.context.copy()
-        new_environment = self.environment.copy() 
-        #TODO: verify that self.roles[0] is the current move 
+        new_environment = self.environment.copy()
 
         if self.roles[0] == "AttackerAnnotateTarget":
-            new_context['message'] = None          
-            new_context.get('annotation','').append(f"\n {move}")
+            new_context['message'] = None
+            new_context['annotation'] = new_context.get('annotation',"") + f"\n {move}"
+
 
         else:
-            key_in = self.key if self.roles[0] is "DefenderObfoscateKey" else self.context['obfoscated_key']
+            key_in = random.randint(1000,100000) if self.roles[0] == "DefenderObfoscateKey" else self.context['obfoscated_key']
             success, result = self.execute_and_verify(move, key_in)
-            if success: 
+            if success:
                 if self.roles[0] == "DefenderObfoscateKey":
+                    new_environment['code'] = move
                     new_context['obfoscated_key'] = result
-                    new_context['annotation_target'] = self.environment
-                    new_context['annotation'] = None
+                #    new_environment['annotation_target'] = new_environment['code']
+                    new_context['annotation'] = '' 
                     new_context['message'] = None
-                     
+
                 if self.roles[0] == "AttackerReverseEngineer":
-                    if self.key == result:
-                        #ATTACKER WINS!! reset the game here
+                    
+                    # verify by checking if original_code( deobfoscation_code( obfoscated_key ) ) == obfoscated_key
+                    _ , orig_result = self.execute_and_verify(self.environment['code'], result)
+                    # this should be verified but it is possible to have an error if the gamestate is not correct 
+                    #TODO: look into ways to make this more efficent... maybe  
+
+                    if orig_result == new_context['obfoscated_key']:
+                        #ATTACKER WINS!! 
                         # update history with a tuple (defender_code,annotation,attacker_code)
-                        new_context['history'].append((new_context['annotation_target'],new_context['annotation'], self.environment))
-                        new_context['message'] = None
+                        history = new_context.get('history', [])
+                        new_environment['code'] = move
+                        history.append((self.environment['code'],new_context['annotation'],new_environment['code']))
+                        new_context.update({'history': history})
+
+                        #reset 
+                        new_context['obfoscated_key'] = None 
+                        new_context['message'] = "Attacker Success" 
+
+                        # move this to environment incase 
+                        #new_environment.update({'status':"Attacker Success"})
                         return self.initialize(
                             environment=new_environment,
                             context=new_context
                         )
-                          
+
                     else:
-                        new_context['message'] = f"result {result} is incorrect. ACCESS DENIED"        
-            else: 
-                new_context['message'] = result # this will return error from verify and execute 
+                        new_context['message'] = f"result {result} is incorrect. ACCESS DENIED"
+            else:
+                new_context['message'] = result # this will return error from verify_and_execute
 
         return self.initialize(
             roles=self.roles,
             environment=new_environment,
             context=new_context,
-            key=self.key #maybe change?
         )
 
 
     def query_game(self):
-        #TODO: change the message and context for each role so info does not leak 
-    
+        instructions = {
+            "DefenderObfoscateKey": "Implement a code snippit to scramble and obfoscate a given input to prevent reverse engineering.",
+            "AttackerReverseEngineer": "Reverse the provided code snippit such that reversed_code( code( key ) ) == key == reversed_code( obfoscated_key ) ",
+            "AttackerAnnotateTarget": "Describe the target code to assist in reverse engineering later"
+        }
+
         new_context = self.context.copy()
         new_roles = self.get_next_roles()
         msg = self.validate_game()
-        new_context['message'] = msg if msg is not None else f"You will move as {new_roles[0]}" 
-        # add specific 
+        new_context['message'] = msg if msg is not None else f"You will move as {new_roles[0]}.\n GOAL: {instructions[new_roles[0]]}"
+
+
         return self.initialize(
             environment=self.environment,
             context=new_context,
-            roles=new_roles
+            roles=[new_roles[0]],
         )
 
     def validate_game(self):
-        ''' 
-            TODO:
-            put win conditions here depending on current message etc. 
-            for now just have failure of either exceeding turn # mean end
         '''
+            can put win conditions here relating to current environment, if nessiscary  
+            attacker success is the only win case (game can also end in failure)
+        '''
+        #do not need right now
+#        if self.environment.get('status',None) != None:
+#            return self.environment['status']
         return self.context['message']
 
 
+    def get_next_roles(self):
+        #verify these are correct
+        #if self.context.get('annotation_target',None) == None:
+        if self.context.get('obfoscated_key',None) == None:
+            return ["DefenderObfoscateKey","AttackerAnnotateTarget","AttackerReverseEngineer"]
+        elif self.context.get('annotation',"") != "":
+            return ["AttackerReverseEngineer","DefenderObfoscateKey","AttackerAnnotateTarget"]
+        else:
+            return ["AttackerAnnotateTarget","AttackerReverseEngineer","DefenderObfoscateKey"]
 
-        
-        
-    def execute_and_verify(code_str, key_in, timeout=1):
-    '''
-        this function can be overwritten/overloaded to change/expand the representation(s) 
-        and method(s) of exectuion
-    '''
-    code_str = f"{code_str}"
 
+    def export(self):
+        return yaml.dump(self.__dict__)
+    
+
+    def execute_and_verify(self, code_str, input_value, timeout = 1):
+
+       # this function can be overwritten/overloaded to change/expand the representation(s) and method(s) of exectuion
+       
         def validate_nodes(tree):
             allowed_nodes = {
                 ast.Module, ast.Expr, ast.BinOp, ast.UnaryOp, ast.Num, ast.Load, ast.Add,
                 ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod, ast.UAdd, ast.USub, ast.Assign,
                 ast.Name, ast.Constant, ast.For, ast.While, ast.If, ast.Compare, ast.Lt, ast.LtE,
                 ast.Gt, ast.GtE, ast.Eq, ast.NotEq, ast.In, ast.NotIn, ast.Break, ast.Continue,
-                ast.Pass
+                ast.Pass, ast.Store, ast.AugAssign, ast.FloorDiv, ast.Call
             }
-            
             for node in ast.walk(tree):
                 if type(node) not in allowed_nodes:
                     raise ValueError(f"Operation {type(node).__name__} is not allowed")
+
         def restricted_exec(code_str, input_value):
 
-            # this may need to be modified...
-            allowed_builtins = {'__builtins__': {}}
-            restricted_globals = {'__builtins__': allowed_builtins}
-            restricted_locals = {'input_value': input_value}
+            # These are the functions that can be called 
+            restricted_globals = {
+                '__builtins__': {
+                    'abs': abs, 'all': all, 'any': any, 'bin': bin, 'bool': bool,
+                    'int': int, 'float': float, 'len': len, 'list': list, 'max': max,
+                    'min': min, 'pow': pow, 'range': range, 'round': round, 'sum': sum, 'int': int
+                }
+            }
+            restricted_locals = {'input_value': input_value, 'result': input_value}
 
-            # wrapper code to capture the output
-            #TODO: fix this wrapper to work with above restrictions
             wrapper_code = f"""
-    result = None
-    def wrapper():
-        global result = {key_in}
-        {code_str}
-        return result
+def wrapper(input):
+    res=input
+    {code_str}
+    return res
 
-    result = wrapper()
+input_hidden = {input_value}
+result = wrapper(input_hidden)
     """
+            exec(wrapper_code, restricted_globals, restricted_locals)
+            return restricted_locals['result']
+
         try:
-            tree = ast.parse(move)
+            if not isinstance(code_str, (str, bytes, ast.AST)):
+                raise TypeError(f"code_str must be a string, bytes or AST object, not {type(code_str)}")
+            
+            tree = ast.parse(code_str)
             validate_nodes(tree)
         except SyntaxError as e:
-            return False, f"Syntax error at line {e.lineno}, column {e.offset}: {e.text}"      
-        except Exception as e
-            new_context['message'] = f"Error during parsing: {str(e)}"
+            return False, f"Syntax error at line {e.lineno}, column {e.offset}: {e.text}"
+        except Exception as e:
+            return False, f"Error during parsing: {str(e)}"
 
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-
-            # make sure this works, maybe use ast.compile() 
-            future = executor.submit(restricted_exec, wrapper_code, key_in)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(restricted_exec, code_str, input_value)
             try:
-                result, error = future.result(timeout=timeout)
-                if error:
-                    return False, error
-                else: 
-                    return True, result
+                result = future.result(timeout=timeout)
+                return True, result
             except concurrent.futures.TimeoutError:
                 return False, "Timeout occurred"
+            except Exception as e:
+                # for now dont leak error details to llm
+                return False, f"Error during execution: {type(e).__name__}"
 
-            except Exception as e
-                # for now dont leak error info to llm
-                return False, f"Error during execution"
-                # maybe use logger here?
+if __name__ == "__main__":
 
-    #TODO: impliment export later
+'''
+example with human player: 
+     for defender input: res=input**2
+     some correct inputs for attacker:
+        res=int(input**1/2)
+        res=(input**(1/2) - ((input**(1/2)) % 1)) // 1
+'''
+    from zero_sum_eval.player import HumanPlayer, Player
+    config = {
+        "game": {
+            "name": "crackme_challenge",
+                "args": {
+                    "win_conditions": ["Attacker Success"],
+                    "max_rounds": 10,
+                    "players": [{"id":"defender", "role":"DefenderObfoscateKey"},
+                                {"id":"attacker", "role":"AttackerAnnotateTarget"},
+                                {"id":"attacker", "role":"AttackerReverseEngineer"}],
+
+                    "challenges": [
+                    {
+                        "environment": None
+                    },
+                ],
+            },
+        }
+    }
+
+    game_manager = GameManager(config)
+    for player_config in config["game"]["args"]["players"]:
+        player = HumanPlayer(**player_config)
+        
+        player.max_tries = 2
+        game_manager.register_player(player)
+
+    game_state = CrackMeGame().initialize(None)
+    result = game_manager.do_eval(game_state)
+    
+    print(result.query_game().export()) 
+
+
