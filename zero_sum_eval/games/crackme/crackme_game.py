@@ -12,18 +12,18 @@ from zero_sum_eval.registry import GAME_REGISTRY
 @GAME_REGISTRY.register("crackme")
 class CrackMeGame(GameState):
     '''
-    This is a two player game where one player creates an obfoscation program,
+    This is a two player game where one player creates an obfuscation program,
     and another attempts to reverse it.
 
     In each round:
-        1. The environment is initilized with a key and a base program.
-        2. The first player inserts operations into the base program to obfoscate the key.
-        3. If the new program is valid, the second player annotates the new program ( with obfoscated key )
-        4. The second player creates a new program which outputs the original key given the obfoscated key.
-        5. If the second player suceeds, the new program may become the base program to continue the game.
+        1. The environment is initialized with a key and a base program.
+        2. The first player inserts operations into the base program to obfuscate the key.
+        3. If the new program is valid, the second player annotates the new program ( with obfuscated key )
+        4. The second player creates a new program which outputs the original key given the obfuscated key.
+        5. If the second player succeeds, the new program may become the base program to continue the game.
 
     The roles for this game are:
-        DefenderObfoscateKey
+        DefenderobfuscateKey
         AttackerAnnotateTarget
         AttackerReverseEngineer
 
@@ -31,7 +31,7 @@ class CrackMeGame(GameState):
         code: a program which takes an input and returns an output
 
     key: a randomly generated number (not stored) 
-    obfoscated_key: the result of base_program(key)
+    obfuscated_key: the result of base_program(key)
 
     '''
     def __init__(self, roles=None, environment=None, context=None):
@@ -57,24 +57,24 @@ class CrackMeGame(GameState):
 
 
         else:
-            key_in = random.randint(1000,100000) if self.roles[0] == "DefenderObfoscateKey" else self.context['obfoscated_key']
+            key_in = random.randint(1000,100000) if self.roles[0] == "DefenderobfuscateKey" else self.context['obfuscated_key']
             success, result = self.execute_and_verify(move, key_in)
             if success:
-                if self.roles[0] == "DefenderObfoscateKey":
+                if self.roles[0] == "DefenderobfuscateKey":
                     new_environment['code'] = move
-                    new_context['obfoscated_key'] = result
+                    new_context['obfuscated_key'] = result
                 #    new_environment['annotation_target'] = new_environment['code']
                     new_context['annotation'] = '' 
                     new_context['message'] = None
 
                 if self.roles[0] == "AttackerReverseEngineer":
                     
-                    # verify by checking if original_code( deobfoscation_code( obfoscated_key ) ) == obfoscated_key
+                    # verify by checking if original_code( deobfuscation_code( obfuscated_key ) ) == obfuscated_key
                     _ , orig_result = self.execute_and_verify(self.environment['code'], result)
                     # this should be verified but it is possible to have an error if the gamestate is not correct 
                     #TODO: look into ways to make this more efficent... maybe  
 
-                    if orig_result == new_context['obfoscated_key']:
+                    if orig_result == new_context['obfuscated_key']:
                         #ATTACKER WINS!! 
                         # update history with a tuple (defender_code,annotation,attacker_code)
                         history = new_context.get('history', [])
@@ -83,7 +83,7 @@ class CrackMeGame(GameState):
                         new_context.update({'history': history})
 
                         #reset 
-                        new_context['obfoscated_key'] = None 
+                        new_context['obfuscated_key'] = None 
                         new_context['message'] = "Attacker Success" 
 
                         # move this to environment incase 
@@ -107,8 +107,8 @@ class CrackMeGame(GameState):
 
     def query_game(self):
         instructions = {
-            "DefenderObfoscateKey": "Implement a code snippit to scramble and obfoscate a given input to prevent reverse engineering.",
-            "AttackerReverseEngineer": "Reverse the provided code snippit such that reversed_code( code( key ) ) == key == reversed_code( obfoscated_key ) ",
+            "DefenderobfuscateKey": "Implement a code snippit to scramble and obfuscate a given input to prevent reverse engineering.",
+            "AttackerReverseEngineer": "Reverse the provided code snippit such that reversed_code( code( key ) ) == key == reversed_code( obfuscated_key ) ",
             "AttackerAnnotateTarget": "Describe the target code to assist in reverse engineering later"
         }
 
@@ -138,12 +138,12 @@ class CrackMeGame(GameState):
     def get_next_roles(self):
         #verify these are correct
         #if self.context.get('annotation_target',None) == None:
-        if self.context.get('obfoscated_key',None) == None:
-            return ["DefenderObfoscateKey","AttackerAnnotateTarget","AttackerReverseEngineer"]
+        if self.context.get('obfuscated_key',None) == None:
+            return ["DefenderobfuscateKey","AttackerAnnotateTarget","AttackerReverseEngineer"]
         elif self.context.get('annotation',"") != "":
-            return ["AttackerReverseEngineer","DefenderObfoscateKey","AttackerAnnotateTarget"]
+            return ["AttackerReverseEngineer","DefenderobfuscateKey","AttackerAnnotateTarget"]
         else:
-            return ["AttackerAnnotateTarget","AttackerReverseEngineer","DefenderObfoscateKey"]
+            return ["AttackerAnnotateTarget","AttackerReverseEngineer","DefenderobfuscateKey"]
 
 
     def export(self):
@@ -228,7 +228,7 @@ example with human player:
                 "args": {
                     "win_conditions": ["Attacker Success"],
                     "max_rounds": 10,
-                    "players": [{"id":"defender", "role":"DefenderObfoscateKey"},
+                    "players": [{"id":"defender", "role":"DefenderobfuscateKey"},
                                 {"id":"attacker", "role":"AttackerAnnotateTarget"},
                                 {"id":"attacker", "role":"AttackerReverseEngineer"}],
 
