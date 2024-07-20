@@ -2,10 +2,7 @@ manager:
   args:
     max_rounds: 10
     win_conditions:
-      - TeacherCorrect
-      - TeacherIncorrect
       - StudentCorrect
-      - StudentIncorrect
 game:
   name: mathquiz
   players:

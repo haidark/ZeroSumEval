@@ -66,29 +66,27 @@ class MathQuizGame(GameState):
         return self.initialize(
             environment=self.environment,
             context=new_context,
-            roles=new_roles
+            roles=new_roles,
+            target=self.target
         )
 
     def verify_answer(self, answer):
-        return str(answer) == str(self.target.strip())
+        return str(answer) == str(self.target)
 
     def validate_game(self):
         current_role = self.roles[0]
         if current_role == "TeacherGenerateQuestion":
             return None
-        if self.environment['teacher_answer'] is not None:
-            if current_role == "TeacherAnswerQuestion":
-                if self.verify_answer(self.environment['teacher_answer']):
-                    return "TeacherCorrect"
-                else:
-                    return "TeacherIncorrect"
-            elif current_role == "StudentAnswerQuestion":
-                if self.verify_answer(self.environment['teacher_answer']):
-                    return "StudentCorrect"
-                else:
-                    return "StudentIncorrect"
-        else:
-            return self.context['message']
+        elif current_role == "TeacherAnswerQuestion":
+            if self.verify_answer(self.environment['teacher_answer']):
+                return None
+            else:
+                return "TeacherIncorrect"
+        elif current_role == "StudentAnswerQuestion":
+            if self.verify_answer(self.environment['teacher_answer']):
+                return "StudentCorrect"
+            else:
+                return "StudentIncorrect"
 
     def get_next_roles(self, environment):
         if environment['question'] is None:

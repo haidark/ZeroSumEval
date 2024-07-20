@@ -10,16 +10,16 @@ from random import shuffle
 from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY
 
 class GenerateQuestion(dspy.Signature):
-    """Given a target answer, generate a challenging math question that has the target answer"""
+    """Given a target number, generate a challenging math question with the target number as the answer. Make sure not to include the answer in the question."""
     
-    target_answer = dspy.InputField(desc="target answer for the question")
-    math_question = dspy.OutputField(desc="math question with the target answer")
+    target_number = dspy.InputField(desc="target number")
+    math_question = dspy.OutputField(desc="math question with the target number as the answer")
 
 class AnswerQuestion(dspy.Signature):
-    """Given a math question, answer the question"""
+    """Given a math question, give the answer to the question as a number only"""
     
-    math_question = dspy.InputField(desc="math question to answer")
-    answer = dspy.OutputField(desc="answer to the math question")
+    math_question = dspy.InputField(desc="math question")
+    answer = dspy.OutputField(desc="answer to the math question with number only")
 
 class GenerateQuestionCoT(dspy.Module):
     def __init__(self):
@@ -27,8 +27,8 @@ class GenerateQuestionCoT(dspy.Module):
         self.cot_question = dspy.ChainOfThought(GenerateQuestion)
 
 
-    def forward(self, target_answer):
-        cot_out = self.cot_question(target_answer=target_answer)
+    def forward(self, target_number):
+        cot_out = self.cot_question(target_number=target_number)
         return cot_out
 
 class AnswerQuestionCoT(dspy.Module):

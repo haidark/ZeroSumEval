@@ -52,8 +52,8 @@ class GameManager:
                 break
             game_status = game_state.query_game()
             player = self.players[game_status.roles[0]]
-            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             game_state = self.do_turn(game_status, player)
+            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             round_count += 1
         return game_state
 
