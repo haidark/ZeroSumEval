@@ -35,12 +35,12 @@ game:
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
-        max_tries: 10
+        max_tries: 30
     - name: chess_player
       args:
         id: gpt4 black
         role: Black
-        optimize: true
+        optimize: false
         dataset: chess_dataset
         dataset_args:
           filename: ./data/chess/stockfish_examples.jsonl
@@ -65,3 +65,4 @@ game:
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
+        max_tries: 30
