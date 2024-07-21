@@ -105,17 +105,6 @@ class PlayerRegistry:
 
 PLAYER_REGISTRY = PlayerRegistry("PLAYER_REGISTRY")
 
-##### Module Registry ####
-MODULE_REGISTRY = Registry("MODULE_REGISTRY", Module)
-
-def populate_module_registry():
-    import dspy
-
-    for name, module in inspect.getmembers(dspy, inspect.isclass):
-        if issubclass(module, Module) and module is not Module:
-            MODULE_REGISTRY.register(name)(module)
-populate_module_registry()
-
 ##### LM Registry ####
 LM_REGISTRY = Registry("LM_REGISTRY", LM)
 
@@ -170,16 +159,18 @@ class MetricRegistry:
             )
 
         metric = self._metrics_dict[key]
-        return self._metric_wrapper(*args, func=metric, output_key=output_key, **kwargs)
+        return metric
+    # TODO fix this wrapper or remove it if it isnt needed.
+    #     return self._metric_wrapper(*args, func=metric, output_key=output_key, **kwargs)
 
-    def _metric_wrapper(self, func, output_key):
-        """
-        This function wraps a function that takes strings as input to one that takes dspy.Example objects as input.
-        This allows for the user to write functions that compare strings without needing to worry about what the output key is for the dataset.
-        """
-        def new_func(pred, gt):
-            return func(getattr(pred, output_key), getattr(gt, output_key))
-        return new_func
+    # def _metric_wrapper(self, func, output_key):
+    #     """
+    #     This function wraps a function that takes strings as input to one that takes dspy.Example objects as input.
+    #     This allows for the user to write functions that compare strings without needing to worry about what the output key is for the dataset.
+    #     """
+    #     def new_func(pred, gt, trace=None):
+    #         return func(getattr(pred, output_key), getattr(gt, output_key))
+    #     return new_func
 
     def __contains__(self, key: str):
         if key is None:

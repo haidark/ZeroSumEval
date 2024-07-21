@@ -3,17 +3,13 @@
 
 from zero_sum_eval.player import Player
 import dspy
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy.teleprompt import LabeledFewShot, BootstrapFewShot, MIPROv2, BootstrapFewShotWithRandomSearch
-import copy
 import chess
 from chess import IllegalMoveError, InvalidMoveError, AmbiguousMoveError
-import functools, json
-from random import shuffle
-from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY, MODULE_REGISTRY
+from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 
 # TODO: add support for resigning
 
+@METRIC_REGISTRY.register("chess_move_validation_metric")
 def validate_move(example, prediction, trace=None):
     pred_move = prediction.move
     true_move = example.move
@@ -34,12 +30,10 @@ class NextMove(dspy.Signature):
     history = dspy.InputField(desc="move history")
     move = dspy.OutputField(desc="a valid SAN formatted move without move number or elipses")
 
-@MODULE_REGISTRY.register("chess_cot")
 class ChessCoT(dspy.Module):
     def __init__(self):
         super().__init__()
         self.cot_move = dspy.ChainOfThought(NextMove)
-
 
     def forward(self, board_state, role, history):
         cot_out = self.cot_move(board_state=board_state,
@@ -69,6 +63,9 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
+    def build_module(self, **module_args):
+        return ChessCoT()
+
     def make_move(self, game_state):
         """
         Abstract method for making a move based on the current game state.

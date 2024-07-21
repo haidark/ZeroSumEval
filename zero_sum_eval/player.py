@@ -26,7 +26,7 @@ class Player(ABC):
         dataset_args: dict = {},
         max_tries: int = 10,
     ):
-        from zero_sum_eval.registry import LM_REGISTRY, MODULE_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
+        from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
         self.id = id
         self.role = role
@@ -34,17 +34,30 @@ class Player(ABC):
         lm_args = lm["args"] if "args" in lm else {}
         self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
-        self.module = MODULE_REGISTRY.build(module, **module_args)
+        self.module = self.build_module(**module_args)
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
             assert dataset, "A dataset must be passed for players with 'optimize = True'"
             self.dataset = DATASET_REGISTRY.build(dataset, **dataset_args)
             self.metric = METRIC_REGISTRY.build(metric, output_key=self.dataset.output_key)
-            self.optimizer = OPTIMIZER_REGISTRY.build(optimizer, prompt_model=self.llm_model, task_model=self.llm_model, **optimizer_args)
+            self.optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=self.metric, prompt_model=self.llm_model, task_model=self.llm_model, **optimizer_args)
             # Optimize
             dspy.configure(trace=[])
             with dspy.context(lm=self.llm_model):
                 self.module = self.optimizer.compile(self.module, trainset=self.dataset.get_dataset(), **compilation_args)
+
+    @abstractmethod
+    def build_module(self, **module_args):
+        """
+        Abstract method for building the main dspy module for the player
+        
+        Parameters:
+        None
+        
+        Returns:
+        dspy.Module: The module
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def make_move(self, game_state):
@@ -57,7 +70,7 @@ class Player(ABC):
         Returns:
         dict: The move made by the player
         """
-        pass
+        raise NotImplementedError
 
 class HumanPlayer(Player):
     def make_move(self, game_state):
