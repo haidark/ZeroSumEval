@@ -3,17 +3,13 @@
 
 from zero_sum_eval.player import Player
 import dspy
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy.teleprompt import LabeledFewShot, BootstrapFewShot, MIPROv2, BootstrapFewShotWithRandomSearch
-import copy
 import chess
 from chess import IllegalMoveError, InvalidMoveError, AmbiguousMoveError
-import functools, json
-from random import shuffle
-from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY
+from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 
 # TODO: add support for resigning
 
+@METRIC_REGISTRY.register("chess_move_validation_metric")
 def validate_move(example, prediction, trace=None):
     pred_move = prediction.move
     true_move = example.move
@@ -34,12 +30,10 @@ class NextMove(dspy.Signature):
     history = dspy.InputField(desc="move history")
     move = dspy.OutputField(desc="a valid SAN formatted move without move number or elipses")
 
-
 class ChessCoT(dspy.Module):
     def __init__(self):
         super().__init__()
         self.cot_move = dspy.ChainOfThought(NextMove)
-
 
     def forward(self, board_state, role, history):
         cot_out = self.cot_move(board_state=board_state,
@@ -69,14 +63,8 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def __init__(self, lm, max_tries=4, **kwargs):
-        super().__init__(**kwargs)
-        lm_args = lm["args"] if "args" in lm else {}
-        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
-        self.max_tries = max_tries
-        self.module = assert_transform_module(ChessCoT(), functools.partial(backtrack_handler, max_backtracks=max_tries))
-        self.optimized_module = self.optimize_prompts() if self.optimize else None
-        dspy.configure(trace=[])
+    def _build_module(self, **module_args):
+        return ChessCoT(**module_args)
 
     def make_move(self, game_state):
         """
@@ -89,52 +77,8 @@ class ChessPlayer(Player):
         str: The move made by the player
         """
         export = game_state.export()
-        with dspy.context(lm=self.llm_model):
-            if self.optimize:
-                trace = self.optimized_module(board_state=export['environment'],
-                                              role=export['roles'][0], 
-                                              history=game_state.formatted_move_history())
-            else:
-                trace = self.module(board_state=export['environment'],
+        trace = self.module(board_state=export['environment'],
                                     role=export['roles'][0], 
-                                    history=game_state.formatted_move_history())
+                                    history=game_state.formatted_move_history()) 
         return trace.move
     
-    def optimize_prompts(self):
-        filename = 'data/chess/stockfish_examples.jsonl'
-        dataset = self.create_dataset(filename)
-        shuffle(dataset)
-        # config = dict(max_bootstrapped_demos=4, max_labeled_demos=16)
-        # teleprompter = BootstrapFewShot(metric=validate_move, **config)
-        with dspy.context(lm=self.llm_model):
-            
-            teleprompter = MIPROv2(metric=validate_move, prompt_model=self.llm_model, task_model=self.llm_model,
-                                   num_candidates=5, minibatch_size=20, minibatch_full_eval_steps=10, 
-                                   verbose=True)
-            return teleprompter.compile(self.module, max_bootstrapped_demos=1, max_labeled_demos=1, 
-                                        trainset=dataset, eval_kwargs={})
-
-    def load_examples(self, filename):
-        examples = []
-        with open(filename, 'r') as f:
-            for line in f:
-                examples.append(json.loads(line))
-        return examples
-
-    def create_dataset(self, filename):
-        examples = self.load_examples(filename)
-        dataset = []
-        for example in [examples[i] for i in range(0, len(examples), len(examples)//10)]:
-            if self.role =="White": # white to move
-                if not example['turn']:
-                    continue
-            else:                   # black to move
-                if example['turn']:
-                    continue
-            example = dspy.Example(board_state=example['board_state'],
-                                   role=f"{self.role}",
-                                   history=example['history'],
-                                   move=example['move']
-                                   ).with_inputs("board_state", "role", "history")
-            dataset.append(example)
-        return dataset

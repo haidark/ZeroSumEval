@@ -1,0 +1,68 @@
+manager:
+  args:
+    max_rounds: 200
+    win_conditions: 
+      - Checkmate
+game:
+  name: chess
+  players:
+    - name: chess_player
+      args:
+        id: gpt4 white
+        role: White
+        optimize: false
+        dataset: chess_dataset
+        dataset_args:
+          filename: ./data/chess/stockfish_examples.jsonl
+          role: White
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: chess_move_validation_metric
+        lm:
+          type: AzureOpenAI
+          args:
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
+            max_tokens: 800
+            temperature: 0.8
+            top_p: 0.95
+            frequency_penalty: 0
+            presence_penalty: 0
+        max_tries: 30
+    - name: chess_player
+      args:
+        id: gpt4 black
+        role: Black
+        optimize: false
+        dataset: chess_dataset
+        dataset_args:
+          filename: ./data/chess/stockfish_examples.jsonl
+          role: Black
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: chess_move_validation_metric
+        lm:
+          type: AzureOpenAI
+          args:
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
+            max_tokens: 800
+            temperature: 0.8
+            top_p: 0.95
+            frequency_penalty: 0
+            presence_penalty: 0
+        max_tries: 30
