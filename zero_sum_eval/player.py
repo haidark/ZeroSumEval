@@ -37,7 +37,9 @@ class Player(ABC):
         self.module = self.build_module(**module_args)
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
-            assert dataset, "A dataset must be passed for players with 'optimize = True'"
+            if not dataset:
+                raise ValueError("A dataset must be passed for players with 'optimize = True'")
+            
             self.dataset = DATASET_REGISTRY.build(dataset, **dataset_args)
             self.metric = METRIC_REGISTRY.build(metric, output_key=self.dataset.output_key)
             self.optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=self.metric, prompt_model=self.llm_model, task_model=self.llm_model, **optimizer_args)

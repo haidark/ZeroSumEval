@@ -34,7 +34,9 @@ class GameManager:
                 player_config["name"],
                 **player_config["args"],
             )
-            assert player.role in self.games[0].roles, f"Role {player.role} is not defined in {self.games[0].__class__.__name__}"
+            if player.role not in self.games[0].roles: 
+                raise ValueError(f"Role {player.role} is not defined in {self.games[0].__class__.__name__}")
+
             self.players[player.role] = player
 
     def start(self):
