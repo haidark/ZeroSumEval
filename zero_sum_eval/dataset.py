@@ -1,7 +1,6 @@
 from typing import Iterable, Iterator
 from abc import ABC, abstractmethod
 from dspy import Example
-from functools import cache
 
 
 class Dataset(ABC):
