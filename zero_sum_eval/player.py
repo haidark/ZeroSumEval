@@ -33,7 +33,7 @@ class Player(ABC):
         lm_args = lm["args"] if "args" in lm else {}
         self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
-        self.module = self.build_module(**module_args)
+        self.module = self._build_module(**module_args)
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
             if not dataset:
@@ -48,7 +48,7 @@ class Player(ABC):
                 self.module = self.optimizer.compile(self.module, trainset=self.dataset.get_dataset(), **compilation_args)
 
     @abstractmethod
-    def build_module(self, **module_args):
+    def _build_module(self, **module_args):
         """
         Abstract method for building the main dspy module for the player
         
