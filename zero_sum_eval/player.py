@@ -15,7 +15,6 @@ class Player(ABC):
         id: str,
         role: str,
         lm: dict,
-        module: str = "ChainOfThought",
         module_args: dict = {},
         optimize: bool = False,
         optimizer: str = "MIPROv2",
