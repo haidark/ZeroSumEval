@@ -42,15 +42,10 @@ class AnswerQuestionCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
 class MathQuizTeacher(Player):
-    def __init__(self, lm, max_tries=4, **kwargs):
-        super().__init__(**kwargs)
-        lm_args = lm["args"] if "args" in lm else {}
-        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
-        self.max_tries = max_tries
+    def _build_module(self, **module_args):
         self.question_module = GenerateQuestionCoT()
         self.answer_module = AnswerQuestionCoT()
-        # self.optimized_module = self.optimize_prompts() if self.optimize else None
-        dspy.configure(trace=[])
+        return [self.question_module, self.answer_module]
 
     def make_move(self, game_state):
         """
@@ -74,16 +69,12 @@ class MathQuizTeacher(Player):
             else:
                 raise ValueError(f"Invalid role for teacher: {current_role}")
 
+
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
 class MathQuizStudent(Player):
-    def __init__(self, lm, max_tries=4, **kwargs):
-        super().__init__(**kwargs)
-        lm_args = lm["args"] if "args" in lm else {}
-        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
-        self.max_tries = max_tries
+    def _build_module(self, **module_args):
         self.answer_module = AnswerQuestionCoT()
-        # self.optimized_module = self.optimize_prompts() if self.optimize else None
-        dspy.configure(trace=[])
+        return [self.answer_module]
 
     def make_move(self, game_state):
         """

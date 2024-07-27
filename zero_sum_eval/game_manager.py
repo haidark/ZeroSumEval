@@ -34,10 +34,10 @@ class GameManager:
                 player_config["name"],
                 **player_config["args"],
             )
-            if player.role not in self.games[0].roles: 
+            if player.roles[0] not in self.games[0].roles: 
                 raise ValueError(f"Role {player.role} is not defined in {self.games[0].__class__.__name__}")
-
-            self.players[player.role] = player
+            for role in player.roles:
+                self.players[role] = player
 
     def start(self):
         return self.do_eval(self.games[0])
