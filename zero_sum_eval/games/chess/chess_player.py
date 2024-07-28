@@ -78,7 +78,7 @@ class ChessPlayer(Player):
         str: The move made by the player
         """
         export = game_state.export()
-        trace = self.module(board_state=export['environment'],
+        trace = self.main_module(board_state=export['environment'],
                                     role=export['roles'][0], 
                                     history=game_state.formatted_move_history()) 
         return trace.move
