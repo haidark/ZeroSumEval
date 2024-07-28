@@ -1,36 +1,39 @@
 manager:
   args:
-    max_rounds: 200
+    max_rounds: 10
     win_conditions:
-      - Checkmate
+      - StudentCorrect
 game:
-  name: chess
+  name: mathquiz
   players:
-    - name: chess_player
+    - name: mathquiz_teacher
       args:
-        id: gpt4 white
-        role: White
+        id: gpt4 teacher
+        roles: 
+          - TeacherGenerateQuestion
+          - TeacherAnswerQuestion
         lm:
           type: AzureOpenAI
           args:
             api_base: https://allam-swn-gpt-01.openai.azure.com/
             api_version: 2023-07-01-preview
-            deployment_id: gpt-4-900ptu
+            deployment_id: gpt-4o-900ptu
             max_tokens: 800
             temperature: 0.8
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
-    - name: chess_player
+    - name: mathquiz_student
       args:
-        id: gpt4 black
-        role: Black
+        id: gpt4 student
+        roles: 
+          - StudentAnswerQuestion
         lm:
           type: AzureOpenAI
           args:
             api_base: https://allam-swn-gpt-01.openai.azure.com/
             api_version: 2023-07-01-preview
-            deployment_id: gpt-4-900ptu
+            deployment_id: gpt-4o-900ptu
             max_tokens: 800
             temperature: 0.8
             top_p: 0.95

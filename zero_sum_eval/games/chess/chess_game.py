@@ -1,6 +1,4 @@
 import chess
-import yaml
-from zero_sum_eval.game_manager import GameManager
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
 

@@ -1,14 +1,19 @@
 # file: game_manager.py
 # TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
+from typing import List
+
 from logging import getLogger
 from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
+from zero_sum_eval.game_state import GameState
 from collections import defaultdict
+
+import dspy
 
 
 class GameManager:
     def __init__(self, config):
         self.config = config
-        self.games = []
+        self.games: List[GameState] = []
         self.players = {}
         self.max_rounds = self.config["manager"]["args"]["max_rounds"]
         self.win_conditions = self.config["manager"]["args"]["win_conditions"]
@@ -29,7 +34,10 @@ class GameManager:
                 player_config["name"],
                 **player_config["args"],
             )
-            self.players[player.role] = player
+            if player.roles[0] not in self.games[0].roles: 
+                raise ValueError(f"Role {player.role} is not defined in {self.games[0].__class__.__name__}")
+            for role in player.roles:
+                self.players[role] = player
 
     def start(self):
         return self.do_eval(self.games[0])
@@ -44,8 +52,8 @@ class GameManager:
                 break
             game_status = game_state.query_game()
             player = self.players[game_status.roles[0]]
-            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             game_state = self.do_turn(game_status, player)
+            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             round_count += 1
         return game_state
 
@@ -53,7 +61,8 @@ class GameManager:
         logger = getLogger()
         new_state = game_state
         for _ in range(player.max_tries):
-            move = player.make_move(new_state)
+            with dspy.context(lm=player.llm_model):
+                move = player.make_move(new_state)
             new_state = new_state.update_game(move)
             val = new_state.validate_game()
             if val is None:

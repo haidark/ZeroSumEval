@@ -1,7 +1,3 @@
-import chess
-import dspy
-import os
-import openai
 import argparse
 import yaml
 from collections import defaultdict
@@ -31,7 +27,7 @@ def main():
 
     game_manager = GameManager(config)
 
-    logger.info("Starting a new game of chess.")
+    logger.info("Starting a new game!")
 
     final_state = game_manager.start()
 
