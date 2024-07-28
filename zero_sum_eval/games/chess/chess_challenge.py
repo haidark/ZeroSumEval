@@ -1,6 +1,6 @@
 # file: chess_challenge.py
 import chess
-from zero_sum_eval.game_manager import GameManager
+from zero_sum_eval.managers.game_manager import GameManager
 from zero_sum_eval.games.chess.chess_game import ChessGame
 from zero_sum_eval.player import Player
 

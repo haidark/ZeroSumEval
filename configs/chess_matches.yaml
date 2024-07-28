@@ -1,8 +1,8 @@
 manager:
-  name: tournament
+  name: rating_games
   args:
-    max_matches: 2
-    max_rounds: 1
+    max_matches: 5
+    max_rounds: 1000
     starting_elo: 800
     matching: round_robin
     out_csv_path: chess_leaderboard.csv
@@ -53,10 +53,9 @@ llms:
   - type: AzureOpenAI
     name: gpt-4o
     args:
-      api_base: ...
-      api_version: ...
+      api_base: https://allam-swn-gpt-01.openai.azure.com/
+      api_version: 2023-07-01-preview
       deployment_id: gpt-4o-900ptu
-      api_key: ...
       max_tokens: 800
       temperature: 0.8
       top_p: 0.95
@@ -65,7 +64,6 @@ llms:
   - type: Claude
     name: claude-3-5-sonnet
     args:
-      api_key: ...
       model: claude-3-5-sonnet-20240620
       max_tokens: 800
       temperature: 0.8

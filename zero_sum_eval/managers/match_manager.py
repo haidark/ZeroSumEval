@@ -53,7 +53,7 @@ class RoundRobin(Matcher):
         self.pair_index += 1
         return next_match
 
-class TournamentManager:
+class MatchManager:
     def __init__(self, config):
         self.config = config
         

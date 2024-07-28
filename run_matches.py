@@ -2,8 +2,7 @@ import argparse
 import yaml
 from collections import defaultdict
 
-from zero_sum_eval.game_manager import GameManager
-
+from zero_sum_eval.managers import MatchManager
 import logging
 
 logger = logging.getLogger()
@@ -20,19 +19,21 @@ def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-c", "--config", type=str)
-
+    #TODO: add optional match series history datafile
+    
     args = parser.parse_args()
 
     config = read_config(args.config)
 
-    game_manager = GameManager(config)
+    match_manager = MatchManager(config)
 
-    logger.info("Starting a new game of chess.")
+    logger.info("Starting a new match series!")
 
-    final_state = game_manager.start()
+    final_elos = match_manager.start()
+
 
     logger.info(
-        f"\nGame over. Final state: {final_state.validate_game()}\n{final_state.display()}"
+        f"\Match series over. Final elos: {final_elos}"
     )
 
 
