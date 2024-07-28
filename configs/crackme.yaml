@@ -1,0 +1,43 @@
+manager:
+  args:
+    max_rounds: 4
+    win_conditions: 
+      - Attacker Success
+game:
+  name: crackme
+  players:
+    - name: crackme_player
+      args:
+        id: gpt41
+        roles: 
+          - DefenderobfuscateKey
+        lm:
+          type: AzureOpenAI
+          args:
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
+            max_tokens: 800
+            temperature: 0.8
+            top_p: 0.95
+            frequency_penalty: 0
+            presence_penalty: 0
+        max_tries: 30
+    - name: crackme_player
+      args:
+        id: gpt42
+        roles: 
+          - AttackerAnnotateTarget
+          - AttackerReverseEngineer
+        lm:
+          type: AzureOpenAI
+          args:
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
+            max_tokens: 800
+            temperature: 0.8
+            top_p: 0.95
+            frequency_penalty: 0
+            presence_penalty: 0
+        max_tries: 30
