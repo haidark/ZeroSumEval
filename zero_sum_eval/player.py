@@ -33,22 +33,25 @@ class Player(ABC):
         lm_args = lm["args"] if "args" in lm else {}
         self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
-        self.module = self._build_module(**module_args)
-        # self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
-        # if optimize:
-        #     if not dataset:
-        #         raise ValueError("A dataset must be passed for players with 'optimize = True'")
+        self.modules = self._build_modules(**module_args)
+        self.modules = [assert_transform_module(module, functools.partial(backtrack_handler, 
+                                                                          max_backtracks=max_tries))
+                                                                            for module in self.modules]
+        if optimize:
+            if not dataset:
+                raise ValueError("A dataset must be passed for players with 'optimize = True'")
             
-        #     self.dataset = DATASET_REGISTRY.build(dataset, **dataset_args)
-        #     self.metric = METRIC_REGISTRY.build(metric, output_key=self.dataset.output_key)
-        #     self.optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=self.metric, prompt_model=self.llm_model, task_model=self.llm_model, **optimizer_args)
-        #     # Optimize
-        #     dspy.configure(trace=[])
-        #     with dspy.context(lm=self.llm_model):
-        #         self.module = self.optimizer.compile(self.module, trainset=self.dataset.get_dataset(), **compilation_args)
+            self.dataset = DATASET_REGISTRY.build(dataset, **dataset_args)
+            self.metric = METRIC_REGISTRY.build(metric, output_key=self.dataset.output_key)
+            self.optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=self.metric, prompt_model=self.llm_model, task_model=self.llm_model, **optimizer_args)
+            # Optimize
+            dspy.configure(trace=[])
+            with dspy.context(lm=self.llm_model):
+                self.modules = [self.optimizer.compile(module, trainset=self.dataset.get_dataset(), 
+                                                       **compilation_args) for module in self.modules]
 
     @abstractmethod
-    def _build_module(self, **module_args):
+    def _build_modules(self, **module_args):
         """
         Abstract method for building the main dspy module for the player
         

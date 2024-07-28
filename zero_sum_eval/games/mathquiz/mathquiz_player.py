@@ -1,13 +1,6 @@
-# I took inspiration from https://github.com/carlini/chess-llm and https://github.com/mlabonne/chessllm
-# Shout out to the maintainers and authors of these repositories!
-
-from zero_sum_eval.player import Player
 import dspy
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from dspy.teleprompt import LabeledFewShot, BootstrapFewShot, MIPROv2, BootstrapFewShotWithRandomSearch
-import functools, json
-from random import shuffle
-from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY
+from zero_sum_eval.player import Player
+from zero_sum_eval.registry import PLAYER_REGISTRY
 
 class GenerateQuestion(dspy.Signature):
     """Given a target number, generate a challenging math question with the target number as the answer. Make sure not to include the answer in the question."""
@@ -42,7 +35,7 @@ class AnswerQuestionCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
 class MathQuizTeacher(Player):
-    def _build_module(self, **module_args):
+    def _build_modules(self, **module_args):
         self.question_module = GenerateQuestionCoT()
         self.answer_module = AnswerQuestionCoT()
         return [self.question_module, self.answer_module]
@@ -72,7 +65,7 @@ class MathQuizTeacher(Player):
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
 class MathQuizStudent(Player):
-    def _build_module(self, **module_args):
+    def _build_modules(self, **module_args):
         self.answer_module = AnswerQuestionCoT()
         return [self.answer_module]
 
