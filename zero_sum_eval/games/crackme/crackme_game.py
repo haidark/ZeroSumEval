@@ -213,14 +213,13 @@ result = wrapper(input_hidden)
                 return False, f"Error during execution: {type(e).__name__}"
 
 if __name__ == "__main__":
-
-'''
-example with human player: 
-     for defender input: res=input**2
-     some correct inputs for attacker:
-        res=int(input**1/2)
-        res=(input**(1/2) - ((input**(1/2)) % 1)) // 1
-'''
+    '''
+    example with human player: 
+        for defender input: res=input**2
+        some correct inputs for attacker:
+            res=int(input**1/2)
+            res=(input**(1/2) - ((input**(1/2)) % 1)) // 1
+    '''
     from zero_sum_eval.player import HumanPlayer, Player
     config = {
         "game": {

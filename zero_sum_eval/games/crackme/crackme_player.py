@@ -1,7 +1,6 @@
 from zero_sum_eval.player import Player
 import dspy
-from zero_sum_eval.registry import PLAYER_REGISTRY, LM_REGISTRY
-
+from zero_sum_eval.registry import PLAYER_REGISTRY
 
 
 class NextMove(dspy.Signature):
@@ -26,12 +25,9 @@ class CrackMeCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("crackme", "crackme_player")
 class CrackMePlayer(Player):
-    def __init__(self, lm, max_tries=4, **kwargs):
-        super().__init__(**kwargs)
-        lm_args = lm["args"] if "args" in lm else {}
-        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
-        self.max_tries = max_tries
-        self.module = CrackMeCoT()
+    def _build_modules(self, **module_args):
+        self.main_module = CrackMeCoT()
+        return [self.main_module]
 
     def make_move(self, game_state):
         """
@@ -44,12 +40,12 @@ class CrackMePlayer(Player):
         str: The move made by the player
         """
 
-        code = {game_state.environment.get('code','')
+        code = game_state.environment.get('code','')
         role = f"{game_state.roles}" 
         context = f"{game_state.context}"
 
         with dspy.context(lm=self.llm_model):
-                trace = self.module(code, role, context)
+                trace = self.main_module(code, role, context)
         return trace.move
     
 
