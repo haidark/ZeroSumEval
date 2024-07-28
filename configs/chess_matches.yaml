@@ -1,0 +1,70 @@
+manager:
+  name: rating_games
+  args:
+    max_matches: 5
+    max_rounds: 1000
+    starting_elo: 800
+    matching: round_robin
+    out_csv_path: chess_leaderboard.csv
+game:
+  name: chess
+  players:
+    - name: chess_player
+      args:
+        id: white
+        role: White
+        optimize: false
+        dataset: chess_dataset
+        dataset_args:
+          filename: ./data/chess/stockfish_examples.jsonl
+          role: White
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: chess_move_validation_metric
+        max_tries: 1
+
+    - name: chess_player
+      args:
+        id: black
+        role: Black
+        optimize: false
+        dataset: chess_dataset
+        dataset_args:
+          filename: ./data/chess/stockfish_examples.jsonl
+          role: Black
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: chess_move_validation_metric
+        max_tries: 1
+
+llms:
+  - type: AzureOpenAI
+    name: gpt-4o
+    args:
+      api_base: https://allam-swn-gpt-01.openai.azure.com/
+      api_version: 2023-07-01-preview
+      deployment_id: gpt-4o-900ptu
+      max_tokens: 800
+      temperature: 0.8
+      top_p: 0.95
+      frequency_penalty: 0
+      presence_penalty: 0
+  - type: Claude
+    name: claude-3-5-sonnet
+    args:
+      model: claude-3-5-sonnet-20240620
+      max_tokens: 800
+      temperature: 0.8
+      top_p: 0.95

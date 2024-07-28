@@ -43,7 +43,7 @@ class ChessGame(GameState):
     def query_game(self):
         
         new_context = self.context.copy()
-        new_roles = [self.roles[0]]
+        new_roles = [self.roles[0], self.roles[1]]
         msg = self.validate_game() 
         new_context['message'] = msg if msg is not None else f"You will move as {self.get_next_roles(self.environment)[0]}" 
 
@@ -52,7 +52,19 @@ class ChessGame(GameState):
             context=new_context,
             roles=new_roles
         )
-
+        
+    def is_over(self):
+        return self.board.is_game_over()
+        
+    def is_win(self):
+        return self.board.is_checkmate()
+        
+    def is_draw(self):
+        return self.board.is_stalemate() or self.board.is_insufficient_material() or self.board.is_seventyfive_moves() or self.board.is_fivefold_repetition()
+    
+    def is_valid(self):
+        return self.board.is_valid()
+    
     def validate_game(self):
         if self.board.is_checkmate():
             return "Checkmate"

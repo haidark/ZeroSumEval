@@ -25,6 +25,7 @@ def validate_move(example, prediction, trace=None):
 class NextMove(dspy.Signature):
     """Given a board state, role, and move history, produce the next best valid move"""
     
+    board_visualization = dspy.InputField(desc="visualization of the board")
     board_state = dspy.InputField(desc="FEN formatted current board state")
     role = dspy.InputField(desc="role of the player making the next move")
     history = dspy.InputField(desc="move history")
@@ -35,8 +36,9 @@ class ChessCoT(dspy.Module):
         super().__init__()
         self.cot_move = dspy.ChainOfThought(NextMove)
 
-    def forward(self, board_state, role, history):
-        cot_out = self.cot_move(board_state=board_state,
+    def forward(self, board_visualization, board_state, role, history):
+        cot_out = self.cot_move(board_visualization=board_visualization,
+                                board_state=board_state,
                                 role=role,
                                 history=history)
         cot_out.move = cot_out.move.replace(".", "")
@@ -77,7 +79,8 @@ class ChessPlayer(Player):
         str: The move made by the player
         """
         export = game_state.export()
-        trace = self.module(board_state=export['environment'],
+        trace = self.module(board_visualization="BLACK SIDE\n" + str(game_state.board) + "\nWHITE SIDE\n",
+                                    board_state=export['environment'],
                                     role=export['roles'][0], 
                                     history=game_state.formatted_move_history()) 
         return trace.move
