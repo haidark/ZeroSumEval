@@ -1,30 +1,16 @@
 manager:
   args:
-    max_rounds: 200
+    max_rounds: 4
     win_conditions: 
-      - Checkmate
+      - Attacker Success
 game:
-  name: chess
+  name: crackme
   players:
-    - name: chess_player
+    - name: crackme_player
       args:
-        id: gpt4 white
+        id: gpt41
         roles: 
-          - White
-        optimize: false
-        dataset: chess_dataset
-        dataset_args:
-          filename: ./data/chess/stockfish_examples.jsonl
-          role: White
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: chess_move_validation_metric
+          - DefenderobfuscateKey
         lm:
           type: AzureOpenAI
           args:
@@ -37,25 +23,12 @@ game:
             frequency_penalty: 0
             presence_penalty: 0
         max_tries: 30
-    - name: chess_player
+    - name: crackme_player
       args:
-        id: gpt4 black
+        id: gpt42
         roles: 
-          - Black
-        optimize: false
-        dataset: chess_dataset
-        dataset_args:
-          filename: ./data/chess/stockfish_examples.jsonl
-          role: Black
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: chess_move_validation_metric
+          - AttackerAnnotateTarget
+          - AttackerReverseEngineer
         lm:
           type: AzureOpenAI
           args:

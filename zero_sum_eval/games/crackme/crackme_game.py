@@ -149,7 +149,9 @@ class CrackMeGame(GameState):
     def export(self):
         return yaml.dump(self.__dict__)
     
-
+    def display(self):
+        return yaml.dump(self.environment)
+    
     def execute_and_verify(self, code_str, input_value, timeout = 1):
 
        # this function can be overwritten/overloaded to change/expand the representation(s) and method(s) of exectuion
@@ -212,44 +214,44 @@ result = wrapper(input_hidden)
                 # for now dont leak error details to llm
                 return False, f"Error during execution: {type(e).__name__}"
 
-if __name__ == "__main__":
-    '''
-    example with human player: 
-        for defender input: res=input**2
-        some correct inputs for attacker:
-            res=int(input**1/2)
-            res=(input**(1/2) - ((input**(1/2)) % 1)) // 1
-    '''
-    from zero_sum_eval.player import HumanPlayer, Player
-    config = {
-        "game": {
-            "name": "crackme_challenge",
-                "args": {
-                    "win_conditions": ["Attacker Success"],
-                    "max_rounds": 10,
-                    "players": [{"id":"defender", "role":"DefenderobfuscateKey"},
-                                {"id":"attacker", "role":"AttackerAnnotateTarget"},
-                                {"id":"attacker", "role":"AttackerReverseEngineer"}],
+# if __name__ == "__main__":
+#     '''
+#     example with human player: 
+#         for defender input: res=input**2
+#         some correct inputs for attacker:
+#             res=int(input**1/2)
+#             res=(input**(1/2) - ((input**(1/2)) % 1)) // 1
+#     '''
+#     from zero_sum_eval.player import HumanPlayer, Player
+#     config = {
+#         "game": {
+#             "name": "crackme_challenge",
+#                 "args": {
+#                     "win_conditions": ["Attacker Success"],
+#                     "max_rounds": 10,
+#                     "players": [{"id":"defender", "role":"DefenderobfuscateKey"},
+#                                 {"id":"attacker", "role":"AttackerAnnotateTarget"},
+#                                 {"id":"attacker", "role":"AttackerReverseEngineer"}],
 
-                    "challenges": [
-                    {
-                        "environment": None
-                    },
-                ],
-            },
-        }
-    }
+#                     "challenges": [
+#                     {
+#                         "environment": None
+#                     },
+#                 ],
+#             },
+#         }
+#     }
 
-    game_manager = GameManager(config)
-    for player_config in config["game"]["args"]["players"]:
-        player = HumanPlayer(**player_config)
+#     game_manager = GameManager(config)
+#     for player_config in config["game"]["args"]["players"]:
+#         player = HumanPlayer(**player_config)
         
-        player.max_tries = 2
-        game_manager.register_player(player)
+#         player.max_tries = 2
+#         game_manager.register_player(player)
 
-    game_state = CrackMeGame().initialize(None)
-    result = game_manager.do_eval(game_state)
+#     game_state = CrackMeGame().initialize(None)
+#     result = game_manager.do_eval(game_state)
     
-    print(result.query_game().export()) 
+#     print(result.query_game().export()) 
 
 
