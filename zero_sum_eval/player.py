@@ -53,13 +53,15 @@ class Player(ABC):
     @abstractmethod
     def _build_modules(self, **module_args):
         """
-        Abstract method for building the main dspy module for the player
+        Abstract method for building the main dspy modules for the Player
+        
+        TODO: I added support for multiple modules but I am not very happy with it. 
         
         Parameters:
         None
         
         Returns:
-        dspy.Module: The module
+        List[dspy.Module]: The modules
         """
         raise NotImplementedError
 
