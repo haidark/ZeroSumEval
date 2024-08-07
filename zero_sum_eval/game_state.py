@@ -1,58 +1,91 @@
 '''
-Abstract class to define minumum API to represent a game
+Abstract class to define minimum API to represent a game
 '''
 import yaml
 from abc import ABC, abstractmethod
-
+from typing import Dict, List 
 
 class GameState(ABC):
-    def __init__(self):
-       roles = [] # a queue of players 
-       environment = {} 
-       context = {}
+    def __init__(self, **kwargs) -> GameState:
+       environment: Dict = {} # a representation of the game state 
+       context: Dict = {"message": ""} # a dictionary with required key: "message" and other additional keys
+       roles: List[str] = []  # a queue of players 
+       self.instantiate(environment, context, roles, **kwargs)
 
     @abstractmethod
-    def initialize(self, roles, context, environment):
-        self.roles = roles
-        self.context = context
-        self.environment = environment 
+    def instantiate(self, environment: Dict, context: Dict, roles: List[str], **kwargs) -> None:
+        """
+        Initialize the game state with the given environment, context, and roles.
+
+        Args:
+            environment (Dict): A representation of the game state.
+            context (Dict): A dictionary with required key "message" and other additional keys.
+            roles (List[str]): A queue of players.
+        """
+        pass
+        
 
     @abstractmethod
-    def update_game(self):
-        '''
-            returns: 
-                - if the move is valid: a new gameState with context and environment updated to match new move and roles ordered in the updated order of play 
-                - if the move is invalid: a gamestate that is the same as the move, but with an explination added in context for why it is invalid 
-                - if a win condition is met: a gamestate detailing the game thus far, with the condition added  
-        '''
+    def update_game(self, move: str) -> GameState:
+        """
+        Update the game state based on the given move.
+
+        Args:
+            move (str): The move to be applied to the game state.
+
+        Returns:
+            GameState: A new GameState object representing the updated game state.
+
+        This method advances the game given a move compatible with the current environment.
+        If the move is invalid, the game state remains the same and the context is updated.
+        """
         pass
 
     @abstractmethod
-    def query_game(self):
-        '''
-            returns a game_state relevant to the next move
-                - includes list of roles that player should act for  
-                - includes a message with instructions for the move
-                - environment should be the current state
-                - anything else may be added since it will be passed directly to the player
-        '''
+    def query_game(self) -> GameState:
+        """
+        Get the game state relevant to the next role to move.
+
+        Returns:
+            GameState: A GameState object containing all information needed by the role-to-move.
+
+        This method returns a game state with all information relevant to the game's next role-to-move.
+        Any context["message"] in self will be relevant to the role.
+        """
         pass
 
     @abstractmethod
-    def validate_game(self):
-        '''
-            to validate a state of the game
-            requires: a gameState
-            returns: None if valid move and game continues, anything else if invalid move or finished 
-        '''
+    def validate_game(self) -> str | None:
+        """
+        Check if the game should continue or end based on the current state.
+
+        Returns:
+            str | None: A string describing the reason if the game should end, or None if it should continue.
+
+        This method forwards non-continue conditions from the last move or returns new non-continue conditions
+        in the environment, specific to the game implementation.
+        """
         pass
+
+    @abstractmethod
+    def get_next_roles(self) -> List[str]:
+        """
+        Determine the list of roles given the current state of the game.
+
+        Returns:
+            List[str]: A valid ordered list of roles.
+        """
+        pass
+
     
     @abstractmethod
     def export(self):
-        ''' 
-            returns a text based representation of the gameSatate object
-            default is yaml 
-        ''' 
+        """
+        Provide a complete representation of the current game state in a compatible game config format.
+
+        Returns:
+            str: A YAML-formatted string representation of the game state.
+        """
         return yaml.dump(self.__dict__)
 
 
