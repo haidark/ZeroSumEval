@@ -1,7 +1,7 @@
 import chess
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
-
+from typing import Dict, List, Optional
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
@@ -44,7 +44,7 @@ class ChessGame(GameState):
 
         return new_state
 
-    def validate_game(self) -> str | None:
+    def validate_game(self) -> Optional[str]:
         message = None
         if self.board.is_checkmate():
             message = "Checkmate"
@@ -62,7 +62,7 @@ class ChessGame(GameState):
             self.context['message'] = message
         return message
 
-    def get_next_roles(self) -> list[str]:
+    def get_next_roles(self) -> List[str]:
         turn = self.board.turn
         return ['White', 'Black'] if turn else ['Black', 'White']
 
@@ -79,15 +79,15 @@ class ChessGame(GameState):
                 formatted_history += f"{history[j+1]} "
         return formatted_history.strip()
 
-    def export(self):
+    def player_inputs(self) -> Dict[str, str]:
         return {
-            'roles': self.roles,
-            'environment': self.environment['fen'],
-            'context': self.context
+            'message': self.context['message'],
+            'board_state': self.environment['fen'],
+            'role': self.roles[0],
+            'history': self.formatted_move_history()
         }
-
     
-    def display(self):
+    def display(self) -> None:
         display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
         display_str += f"{self.formatted_move_history()}\n"
         display_str += f"{self.board}\n"

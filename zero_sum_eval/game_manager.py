@@ -7,7 +7,7 @@ from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.player import Player
 from collections import defaultdict
-
+from copy import copy
 import dspy
 
 
@@ -73,7 +73,7 @@ class GameManager:
         and win conditions. It returns the original state if all attempts fail.
         """
         logger = getLogger()
-        new_state: GameState = game_state
+        new_state: GameState = copy(game_state)
         player_attempts = 0
         for _ in range(player.max_tries):
             with dspy.context(lm=player.llm_model):

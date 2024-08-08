@@ -7,9 +7,9 @@ from typing import Dict, List, Self, Optional
 
 class GameState(ABC):
     def __init__(self, **kwargs) -> Self:
-       environment = None               # a representation of the game state 
-       context = None                   # a dictionary with required key: "message" and other additional keys
-       roles = None                     # a queue of players 
+       environment = None         
+       context = None          
+       roles = None
        self.instantiate(environment, context, roles, **kwargs)
 
     @abstractmethod
@@ -79,9 +79,17 @@ class GameState(ABC):
             List[str]: A valid ordered list of roles.
         """
         raise NotImplementedError
-
     
     @abstractmethod
+    def player_inputs(self) -> Dict[str, str]:
+        """
+        Provides a representation of the game state according to the current role
+
+        Returns:
+            dict
+        """
+        raise NotImplementedError
+
     def export(self):
         """
         Provide a complete representation of the current game state in a compatible game config format.
@@ -90,6 +98,8 @@ class GameState(ABC):
             str: A YAML-formatted string representation of the game state.
         """
         return yaml.dump(self.__dict__)
+    
+    
 
 
 

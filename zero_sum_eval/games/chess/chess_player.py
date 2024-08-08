@@ -80,12 +80,6 @@ class ChessPlayer(Player):
         Returns:
         str: The move made by the player
         """
-        export = game_state.export()
-        trace = self.main_module(
-            message=export['context']['message'],
-            board_state=export['environment'],
-            role=export['roles'][0], 
-            history=game_state.formatted_move_history()
-        ) 
+        trace = self.main_module(**game_state.player_inputs()) 
         return trace.move
     
