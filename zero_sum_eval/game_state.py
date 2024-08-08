@@ -3,13 +3,13 @@ Abstract class to define minimum API to represent a game
 '''
 import yaml
 from abc import ABC, abstractmethod
-from typing import Dict, List 
+from typing import Dict, List, Self, Optional 
 
 class GameState(ABC):
-    def __init__(self, **kwargs) -> GameState:
-       environment: Dict = {} # a representation of the game state 
-       context: Dict = {"message": ""} # a dictionary with required key: "message" and other additional keys
-       roles: List[str] = []  # a queue of players 
+    def __init__(self, **kwargs) -> Self:
+       environment = None               # a representation of the game state 
+       context = None                   # a dictionary with required key: "message" and other additional keys
+       roles = None                     # a queue of players 
        self.instantiate(environment, context, roles, **kwargs)
 
     @abstractmethod
@@ -22,11 +22,11 @@ class GameState(ABC):
             context (Dict): A dictionary with required key "message" and other additional keys.
             roles (List[str]): A queue of players.
         """
-        pass
+        raise NotImplementedError
         
 
     @abstractmethod
-    def update_game(self, move: str) -> GameState:
+    def update_game(self, move: str) -> Self:
         """
         Update the game state based on the given move.
 
@@ -36,13 +36,16 @@ class GameState(ABC):
         Returns:
             GameState: A new GameState object representing the updated game state.
 
+        Raises:
+            ValueError if the GameState cannot be updated
+
         This method advances the game given a move compatible with the current environment.
         If the move is invalid, the game state remains the same and the context is updated.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def query_game(self) -> GameState:
+    def query_game(self) -> Self:
         """
         Get the game state relevant to the next role to move.
 
@@ -52,7 +55,7 @@ class GameState(ABC):
         This method returns a game state with all information relevant to the game's next role-to-move.
         Any context["message"] in self will be relevant to the role.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def validate_game(self) -> str | None:
@@ -65,7 +68,7 @@ class GameState(ABC):
         This method forwards non-continue conditions from the last move or returns new non-continue conditions
         in the environment, specific to the game implementation.
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_next_roles(self) -> List[str]:
@@ -75,7 +78,7 @@ class GameState(ABC):
         Returns:
             List[str]: A valid ordered list of roles.
         """
-        pass
+        raise NotImplementedError
 
     
     @abstractmethod

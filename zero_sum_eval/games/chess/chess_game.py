@@ -6,62 +6,61 @@ from zero_sum_eval.registry import GAME_REGISTRY
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
 
-    def instantiate(self, environment: dict, context: dict, roles: list[str], board: chess.Board) -> None:
-        self.environment = environment if environment else {"fen": chess.Board().fen()}
+    def instantiate(self, environment: dict, context: dict, roles: list[str], board: chess.Board = None) -> None:
+        self.board = board if board else chess.Board()
+        self.environment = environment if environment else {"fen": self.board.fen()}
         self.context = context if context else {"message": "", "history": []}
         self.roles = roles if roles else self.get_next_roles()
-        self.board = board if board else chess.Board(self.environment["fen"])
 
     def update_game(self, move: str) -> GameState:
-        new_game = ChessGame().instantiate(
+        new_state = ChessGame()
+        new_state.instantiate(
             self.environment.copy(), 
             self.context.copy(), 
             self.roles.copy(), 
             self.board.copy()
         )
 
-        try:
-            chess_move = new_game.board.parse_san(move)
-            if new_game.board.is_legal(chess_move):
-                new_game.board.push(chess_move)
-                new_game.context['history'].append(move)
-                new_game.context['message'] = ""
-                new_game.environment["fen"] = new_game.board.fen()
-                new_game.roles = new_game.get_next_roles()
-            else:
-                new_game.context['message'] = f"Your move {move} is an illegal move"
-        except ValueError as e:
-            new_game.context['message'] = f"Your move {move} caused an error: {str(e)}"
-
-        return new_game
+        chess_move = new_state.board.parse_san(move)
+        san = new_state.board.san(chess_move)
+        new_state.board.push(chess_move)
+        new_state.context['history'].append(san)
+        new_state.context['message'] = ""
+        new_state.environment["fen"] = new_state.board.fen()
+        new_state.roles = new_state.get_next_roles()
+        return new_state
 
     def query_game(self) -> GameState:
-        new_game = ChessGame().instantiate(
-            self.environment.copy(), 
-            self.context.copy(), 
-            self.roles.copy(), 
-            self.board.copy()
+        new_state = ChessGame()
+        new_state.instantiate(
+            environment=self.environment.copy(), 
+            context=self.context.copy(), 
+            roles=self.roles.copy(), 
+            board=self.board.copy()
         )
         
-        msg = new_game.validate_game()
-        new_game.context['message'] = msg if msg else f"You will move as {new_game.roles[0]}"
+        msg = new_state.validate_game()
+        new_state.context['message'] = msg if msg else f"You will move as {new_state.roles[0]}"
 
-        return new_game
+        return new_state
 
     def validate_game(self) -> str | None:
+        message = None
         if self.board.is_checkmate():
-            return "Checkmate"
+            message = "Checkmate"
         elif self.board.is_stalemate():
-            return "Stalemate"
+            message = "Stalemate"
         elif self.board.is_insufficient_material():
-            return "Insufficient material"
+            message = "Insufficient material"
         elif self.board.is_seventyfive_moves():
-            return "75-move rule"
+            message = "75-move rule"
         elif self.board.is_fivefold_repetition():
-            return "Fivefold repetition"
+            message = "Fivefold repetition"
         elif not self.board.is_valid():
-            return "Invalid"
-        return None
+            message = "Invalid"
+        if message:
+            self.context['message'] = message
+        return message
 
     def get_next_roles(self) -> list[str]:
         turn = self.board.turn
@@ -83,9 +82,10 @@ class ChessGame(GameState):
     def export(self):
         return {
             'roles': self.roles,
-            'environment': self.environment,
+            'environment': self.environment['fen'],
             'context': self.context
         }
+
     
     def display(self):
         display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"

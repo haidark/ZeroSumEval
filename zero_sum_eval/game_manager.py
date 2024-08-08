@@ -74,27 +74,26 @@ class GameManager:
         """
         logger = getLogger()
         new_state: GameState = game_state
+        player_attempts = 0
         for _ in range(player.max_tries):
             with dspy.context(lm=player.llm_model):
                 move: str = player.make_move(new_state)
-            new_state = new_state.update_game(move)
+            player_attempts+=1
+            try:
+                new_state = new_state.update_game(move)
+            except ValueError as e:
+                new_state.context['message'] = f"Move {move} caused an error: {str(e)}"
+                continue
             val: Optional[str] = new_state.validate_game()
             if val is None:
-                return new_state
+                return new_state, player_attempts
             if val in self.win_conditions:
                 #
                 # Here maybe call the scoring function?
                 #
-                return new_state.query_game()
-            else:
-                logger.warn(f"Player {player.id} made an invalid move: {move}")
-                new_state = game_state
-
-        logger.error(
-            f"Player {player.id} failed to make a valid move after {player.max_tries} tries."
-        )
-
-        return game_state  # Return the original state if all tries fail
+                return new_state.query_game(), player_attempts
+            
+        return game_state, player_attempts  # Return the original state if all tries fail
 
     def _run_game_loop(self, game_state: GameState) -> GameState:
         """
@@ -113,13 +112,15 @@ class GameManager:
         round_count: int = 0
         while round_count < self.max_rounds:
             turn_count: int = round_count // len(self.players) + 1
-            game_status: GameState = game_state
-            if game_status.validate_game():
+            if game_state.validate_game():
                 break
-            game_status = game_state.query_game()
-            player: Player = self.players[game_status.roles[0]]
-            game_state = self._process_turn(game_status, player)
-            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
+            game_state = game_state.query_game()
+            player: Player = self.players[game_state.roles[0]]
+            game_state, attempts = self._process_turn(game_state, player)
+            if attempts >= player.max_tries:
+                logger.info(f"{player.id} exceeded maximum attempts ({player.max_tries})")
+                break
+            logger.info(f"{player.id} (attempts {attempts}) turn {turn_count}:\n{game_state.display()}")
             round_count += 1
         return game_state
 
