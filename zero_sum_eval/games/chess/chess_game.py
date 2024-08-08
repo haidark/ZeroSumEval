@@ -1,99 +1,94 @@
 import chess
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
-
+from typing import Dict, List, Optional
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
-    def __init__(self, roles=None, environment=None, context=None):
-        super().__init__()
-        self.environment = environment if environment is not None else chess.Board().fen()
-        self.roles = self.get_next_roles(self.environment) if roles is None else roles
-        self.context = context if context is not None else {"history": [], "message": None}
-        self.board = chess.Board(self.environment)  # Cache the board state
 
-    def initialize(self, environment, context=None ,roles=None):
-        return ChessGame(
-            roles=roles,
-            environment=environment,
-            context=context
+    def instantiate(self, environment: dict, context: dict, roles: list[str], board: chess.Board = None) -> None:
+        self.board = board if board else chess.Board()
+        self.environment = environment if environment else {"fen": self.board.fen()}
+        self.context = context if context else {"message": "", "history": []}
+        self.roles = roles if roles else self.get_next_roles()
+
+    def update_game(self, move: str) -> GameState:
+        new_state = ChessGame()
+        new_state.instantiate(
+            self.environment.copy(), 
+            self.context.copy(), 
+            self.roles.copy(), 
+            self.board.copy()
         )
-
-    def update_game(self, move):
-        new_context = self.context.copy()
-
         try:
-            chess_move = self.board.parse_san(move)
-            if self.board.is_legal(chess_move):
-                self.board.push(chess_move)
-                new_context['history'].append(f"{move}")
-                new_context['message'] = None 
-                #maybe fix message here
-            else:
-                new_context['message'] = f"Your move {move} is an illegal move"
+            chess_move = new_state.board.parse_san(move)
+            san = new_state.board.san(chess_move)
+            new_state.board.push(chess_move)
+            new_state.context['history'].append(san)
+            new_state.context['message'] = None
+            new_state.environment["fen"] = new_state.board.fen()
+            new_state.roles = new_state.get_next_roles()
         except ValueError as e:
-            new_context['message'] = f"Your move {move} caused an error: {str(e)} "
+            new_state.context['message'] = f"Move {move} caused an error: {e}"
+        return new_state
 
-        new_environment = self.board.fen()
-        return self.initialize(
-            environment=new_environment,
-            context=new_context
+    def query_game(self) -> GameState:
+        new_state = ChessGame()
+        new_state.instantiate(
+            environment=self.environment.copy(), 
+            context=self.context.copy(), 
+            roles=self.roles.copy(), 
+            board=self.board.copy()
         )
-
-    def query_game(self):
         
-        new_context = self.context.copy()
-        new_roles = [self.roles[0]]
-        msg = self.validate_game() 
-        new_context['message'] = msg if msg is not None else f"You will move as {self.get_next_roles(self.environment)[0]}" 
+        msg = new_state.validate_game()
+        new_state.context['message'] = msg if msg else f"You will move as {new_state.roles[0]}"
 
-        return self.initialize(
-            environment=self.environment,
-            context=new_context,
-            roles=new_roles
-        )
+        return new_state
 
-    def validate_game(self):
+    def validate_game(self) -> Optional[str]:
         if self.board.is_checkmate():
-            return "Checkmate"
+            message = "Checkmate"
         elif self.board.is_stalemate():
-            return "Stalemate"
+            message = "Stalemate"
         elif self.board.is_insufficient_material():
-            return "Insufficient material"
+            message = "Insufficient material"
         elif self.board.is_seventyfive_moves():
-            return "75-move rule"
+            message = "75-move rule"
         elif self.board.is_fivefold_repetition():
-            return "Fivefold repetition"
+            message = "Fivefold repetition"
         elif not self.board.is_valid():
-            return "Invalid"
+            message = "Invalid"
         else:
-            return self.context['message']
+            message = self.context['message']
+        return message
 
-    def get_next_roles(self, fen):
-        turn = fen.split()[1]  # 'w' or 'b'
-        return ['White', 'Black'] if turn == 'w' else ['Black', 'White']
+    def get_next_roles(self) -> List[str]:
+        turn = self.board.turn
+        return ['White', 'Black'] if turn else ['Black', 'White']
 
-    def formatted_move_history(self):
+    def formatted_move_history(self) -> str:
         history = self.context['history']
         formatted_history = ""
         moves = len(history)//2+1
         for i in range(1, moves+1):
             j = (i-1)*2
-            formatted_history+=f"{i}."
+            formatted_history += f"{i}."
             if j < len(history):
-                formatted_history+=f"{history[j]} "
+                formatted_history += f"{history[j]} "
             if j+1 < len(history):
-                formatted_history+=f"{history[j+1]} "
+                formatted_history += f"{history[j+1]} "
         return formatted_history.strip()
 
-    def export(self):
+    def player_inputs(self) -> Dict[str, str]:
         return {
-            'roles': self.roles,
-            'environment': self.environment,
-            'context': self.context
+            'message': self.context['message'],
+            'board_state': self.environment['fen'],
+            'role': self.roles[0],
+            'history': self.formatted_move_history()
         }
     
-    def display(self):
+    def display(self) -> None:
         display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
         display_str += f"{self.formatted_move_history()}\n"
         display_str += f"{self.board}\n"
@@ -101,7 +96,8 @@ class ChessGame(GameState):
 
 
 if __name__ == "__main__":
-    chess_game = ChessGame().initialize(chess.Board().fen())
+    chess_game = ChessGame()
+    chess_game.instantiate({"fen": chess.Board().fen()}, None, None)
     print(chess_game.export())
 
     # 1. e4 e5
@@ -127,4 +123,3 @@ if __name__ == "__main__":
         print(f"Game validation result: {validation_result}")
     else:
         print("Game is valid.")
-
