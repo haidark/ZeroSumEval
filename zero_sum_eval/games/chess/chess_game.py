@@ -20,14 +20,16 @@ class ChessGame(GameState):
             self.roles.copy(), 
             self.board.copy()
         )
-
-        chess_move = new_state.board.parse_san(move)
-        san = new_state.board.san(chess_move)
-        new_state.board.push(chess_move)
-        new_state.context['history'].append(san)
-        new_state.context['message'] = ""
-        new_state.environment["fen"] = new_state.board.fen()
-        new_state.roles = new_state.get_next_roles()
+        try:
+            chess_move = new_state.board.parse_san(move)
+            san = new_state.board.san(chess_move)
+            new_state.board.push(chess_move)
+            new_state.context['history'].append(san)
+            new_state.context['message'] = None
+            new_state.environment["fen"] = new_state.board.fen()
+            new_state.roles = new_state.get_next_roles()
+        except ValueError as e:
+            new_state.context['message'] = f"Move {move} caused an error: {e}"
         return new_state
 
     def query_game(self) -> GameState:
@@ -45,7 +47,6 @@ class ChessGame(GameState):
         return new_state
 
     def validate_game(self) -> Optional[str]:
-        message = None
         if self.board.is_checkmate():
             message = "Checkmate"
         elif self.board.is_stalemate():
@@ -58,8 +59,8 @@ class ChessGame(GameState):
             message = "Fivefold repetition"
         elif not self.board.is_valid():
             message = "Invalid"
-        if message:
-            self.context['message'] = message
+        else:
+            message = self.context['message']
         return message
 
     def get_next_roles(self) -> List[str]:

@@ -46,20 +46,16 @@ class ChessCoT(dspy.Module):
         try:
             board = chess.Board(board_state)
             move = board.parse_san(cot_out.move)
-        except IllegalMoveError:
+        except (IllegalMoveError, InvalidMoveError, AmbiguousMoveError) as e:
+            error_messages = {
+                IllegalMoveError: "illegal",
+                InvalidMoveError: "invalid",
+                AmbiguousMoveError: "ambiguous"
+            }
+            error_type = type(e)
             dspy.Suggest(
                 False,
-                f"{cot_out.move} is an illegal move, choose a different move.",
-            )
-        except InvalidMoveError:
-            dspy.Suggest(
-                False,
-                f"{cot_out.move} is an invalid move, choose a different move."
-            )
-        except AmbiguousMoveError:
-            dspy.Suggest(
-                False,
-                f"{cot_out.move} is an ambiguous move, choose a different move."
+                f"{cot_out.move} is an {error_messages[error_type]} move, choose a different move."
             )
         return cot_out
 
@@ -70,7 +66,7 @@ class ChessPlayer(Player):
         self.main_module = ChessCoT(**module_args)
         return [self.main_module]
 
-    def make_move(self, game_state):
+    def _make_move(self, game_state):
         """
         Abstract method for making a move based on the current game state.
         

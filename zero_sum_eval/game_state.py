@@ -24,7 +24,6 @@ class GameState(ABC):
         """
         raise NotImplementedError
         
-
     @abstractmethod
     def update_game(self, move: str) -> Self:
         """
