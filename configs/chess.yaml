@@ -9,7 +9,8 @@ game:
     - name: chess_player
       args:
         id: gpt4 white
-        role: White
+        roles: 
+          - White
         optimize: false
         dataset: chess_dataset
         dataset_args:
@@ -39,7 +40,8 @@ game:
     - name: chess_player
       args:
         id: gpt4 black
-        role: Black
+        roles: 
+          - Black
         optimize: false
         dataset: chess_dataset
         dataset_args:

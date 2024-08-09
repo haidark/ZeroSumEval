@@ -34,10 +34,10 @@ class GameManager:
                 player_config["name"],
                 **player_config["args"],
             )
-            if player.role not in self.games[0].roles: 
+            if player.roles[0] not in self.games[0].roles: 
                 raise ValueError(f"Role {player.role} is not defined in {self.games[0].__class__.__name__}")
-
-            self.players[player.role] = player
+            for role in player.roles:
+                self.players[role] = player
 
     def start(self):
         return self.do_eval(self.games[0])
@@ -52,8 +52,8 @@ class GameManager:
                 break
             game_status = game_state.query_game()
             player = self.players[game_status.roles[0]]
-            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             game_state = self.do_turn(game_status, player)
+            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
             round_count += 1
         return game_state
 

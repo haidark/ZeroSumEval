@@ -65,8 +65,9 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def _build_module(self, **module_args):
-        return ChessCoT(**module_args)
+    def _build_modules(self, **module_args):
+        self.main_module = ChessCoT(**module_args)
+        return [self.main_module]
 
     def make_move(self, game_state):
         """
