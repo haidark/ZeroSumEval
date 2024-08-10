@@ -4,7 +4,10 @@ from typing import List, Dict
 
 from logging import getLogger
 from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
+from .game_manager import GameManager
 from tabulate import tabulate
+from collections import defaultdict
+from copy import copy
 
 import dspy
 
@@ -56,15 +59,16 @@ class RoundRobin(Matcher):
 class MatchManager:
     def __init__(self, config):
         self.config = config
-        
-        self.llm_elos = {llm["name"]: config["manager"]["args"]["starting_elo"] for llm in config["llms"]}
+        self.match_manager_args = config["manager"]["match_manager_args"]
+        self.game_manager_args = config["manager"]["game_manager_args"]
+        self.llm_elos = {llm["name"]: self.match_manager_args["starting_elo"] for llm in config["llms"]}
         self.llm_configs = {llm["name"]: llm for llm in config["llms"]}
         self.llm_wdl = {llm["name"]: {"wins": 0, "losses": 0, "draws": 0} for llm in config["llms"]}
         
         self.players = dict()
         self.roles = dict()
         
-        if matching := self.config["manager"]["args"]["matching"]:
+        if matching := self.match_manager_args["matching"]:
             if matching == "round_robin":
                 self.matcher = RoundRobin(self.llm_elos)
             else:
@@ -73,32 +77,19 @@ class MatchManager:
             # default is round robin
             self.matcher = RoundRobin(self.llm_elos)
 
-        self.max_matches = self.config["manager"]["args"]["max_matches"]
-        self.max_rounds = self.config["manager"]["args"]["max_rounds"]
+        self.max_matches = self.match_manager_args["max_matches"]
         
-        self.out_csv_path = config["manager"]["args"]["out_csv_path"]
+        self.out_csv_path = self.match_manager_args["out_csv_path"]
 
-    def _init_game(self):
-        game_config = (
-            self.config["game"]["args"] if "args" in self.config["game"] else {}
-        )
-        self.game = GAME_REGISTRY.build(self.config["game"]["name"], **game_config)
+    def _build_game_manager(self, lms: List[str]):
+        config = defaultdict(dict)
+        config["game"] = copy(self.config["game"])
+        for lm_name, player_config in zip(lms, config["game"]["players"]):
+            player_config["args"]["lm"] = self.llm_configs[lm_name]
         
+        config["manager"]["args"] = self.config["manager"]["game_manager_args"]
 
-    def _init_players(self, lms):
-        for lm_name, player_config in zip(lms, self.config["game"]["players"]):
-            player = PLAYER_REGISTRY.build(
-                self.config["game"]["name"],
-                player_config["name"],
-                **player_config["args"],
-                lm=self.llm_configs[lm_name]
-            )
-            if not set(player.roles).issubset(self.game.roles): 
-                raise ValueError(f"Roles {player.roles} is not defined in {self.game.__class__.__name__}")
-
-            for role in player.roles:
-                self.players[role] = player
-                self.roles[role] = lm_name
+        return GameManager(config)
 
     def calculate_elo_rating(self, rating_a, rating_b, result_a, k=32):
         """
@@ -148,19 +139,19 @@ class MatchManager:
                 writer.writerow([model, f"{elo:.2f}", wins, draws, losses])
 
     def start(self):
+        print("Let the games begin!")
         for _ in range(self.max_matches):
-            # Reset game
-            self._init_game()
-            
             # Get next matchup
             lms = self.matcher.get_next_match()
-            assert len(lms) == len(self.game.roles), "The number of matched LMs must be the same as the number of players required in the game."
+
+            # Reset game
+            game_manager = self._build_game_manager(lms)
+
+            assert len(lms) == len(game_manager.games[-1].roles), "The number of matched LMs must be the same as the number of players required in the game."
             
-            # Initialize players classes with the matched up LMs
-            self._init_players(lms)
             print(" VS ".join(lms))
             
-            final_game_state = self.do_eval(self.game)
+            final_game_state = game_manager.start()
             
             # Get which LM's turn the game stopped at
             cur_lm_turn = self.roles[final_game_state.roles[0]]
@@ -186,40 +177,3 @@ class MatchManager:
             self.save_leaderboard()
 
         return self.llm_elos, self.llm_wdl
-    
-    def do_eval(self, game_state):
-        logger = getLogger()
-        round_count = 0
-        while round_count < self.max_rounds:
-            turn_count = round_count // len(self.players) + 1
-            game_status = game_state
-            if game_status.validate_game():
-                break
-            game_status = game_state.query_game()
-            player = self.players[game_status.roles[0]]
-            logger.info(f"{player.id} turn {turn_count}:\n{game_state.display()}")
-            game_state = self.do_turn(game_status, player)
-            round_count += 1
-        return game_state
-
-    def do_turn(self, game_state, player):
-        logger = getLogger()
-        new_state = game_state
-        for _ in range(player.max_tries):
-            with dspy.context(lm=player.llm_model):
-                move = player.make_move(new_state)
-            new_state = new_state.update_game(move)
-            val = new_state.validate_game()
-            if val is None:
-                return new_state
-            if new_state.is_over():
-                return new_state.query_game()
-            else:
-                logger.warn(f"Player {player.id} made an invalid move: {move}")
-                new_state = game_state
-
-        logger.error(
-            f"Player {player.id} failed to make a valid move after {player.max_tries} tries."
-        )
-
-        return game_state  # Return the original state if all tries fail

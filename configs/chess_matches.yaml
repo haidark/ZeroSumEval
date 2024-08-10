@@ -1,11 +1,15 @@
 manager:
   name: rating_games
-  args:
+  match_manager_args:
     max_matches: 5
     max_rounds: 1000
     starting_elo: 800
     matching: round_robin
     out_csv_path: chess_leaderboard.csv
+  game_manager_args:
+    max_rounds: 200
+    win_conditions: 
+      - Checkmate
 game:
   name: chess
   players:
