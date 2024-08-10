@@ -36,7 +36,7 @@ game:
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
-        max_tries: 30
+        max_tries: 5
     - name: chess_player
       args:
         id: gpt4 black
@@ -67,4 +67,4 @@ game:
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
-        max_tries: 30
+        max_tries: 5

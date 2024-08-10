@@ -93,11 +93,12 @@ class MatchManager:
                 **player_config["args"],
                 lm=self.llm_configs[lm_name]
             )
-            if player.role not in self.game.roles: 
-                raise ValueError(f"Role {player.role} is not defined in {self.game.__class__.__name__}")
+            if not set(player.roles).issubset(self.game.roles): 
+                raise ValueError(f"Roles {player.roles} is not defined in {self.game.__class__.__name__}")
 
-            self.players[player.role] = player
-            self.roles[player.role] = lm_name
+            for role in player.roles:
+                self.players[role] = player
+                self.roles[role] = lm_name
 
     def calculate_elo_rating(self, rating_a, rating_b, result_a, k=32):
         """

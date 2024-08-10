@@ -1,4 +1,5 @@
-dspy
+dspy-ai==2.4.13
 chess
 pyyaml
 anthropic
+tabulate

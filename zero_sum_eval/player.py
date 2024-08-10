@@ -66,7 +66,7 @@ class Player(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def make_move(self, game_state):
+    def _make_move(self, game_state):
         """
         Abstract method for making a move based on the current game state.
         
@@ -77,6 +77,10 @@ class Player(ABC):
         dict: The move made by the player
         """
         raise NotImplementedError
+
+    def make_move(self, game_state):
+        with dspy.context(lm=self.llm_model):
+            return self._make_move(game_state)
 
 class HumanPlayer(Player):
     def make_move(self, game_state):
