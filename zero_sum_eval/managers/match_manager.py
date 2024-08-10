@@ -11,6 +11,8 @@ from copy import copy
 
 import dspy
 
+import itertools
+
 
 class Matcher(ABC):
     def __init__(self, llm_elos: List[Dict[str, int]]):
@@ -28,22 +30,11 @@ class RoundRobin(Matcher):
         self.round = 0
         self.pair_index = 0
         self.matches = self._generate_round_robin_pairs()
+        print("Scheduled matches: ", self.matches)
 
     def _generate_round_robin_pairs(self):
         participants = list(self.llm_elos.keys())
-        num_participants = len(participants)
-        if num_participants % 2 == 1:
-            participants.append(None)  # Add a dummy participant for odd numbers
-
-        schedule = []
-        for round in range(num_participants):
-            round_pairs = []
-            for i in range(num_participants // 2):
-                if participants[i] is not None and participants[-(i+1)] is not None:
-                    round_pairs.append((participants[i], participants[-(i+1)]))
-            participants.insert(0, participants.pop())  # Rotate
-            schedule.extend(round_pairs)
-
+        schedule = list(itertools.permutations(participants, 2))
         return schedule
 
     def get_next_match(self):
