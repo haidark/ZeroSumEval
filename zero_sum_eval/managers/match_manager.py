@@ -84,7 +84,9 @@ class MatchManager:
     def _build_game_manager(self, lms: List[str]):
         config = defaultdict(dict)
         config["game"] = copy(self.config["game"])
+        self.roles = dict()
         for lm_name, player_config in zip(lms, config["game"]["players"]):
+            self.roles[player_config["args"]["roles"][0]] = lm_name
             player_config["args"]["lm"] = self.llm_configs[lm_name]
         
         config["manager"]["args"] = self.config["manager"]["game_manager_args"]
