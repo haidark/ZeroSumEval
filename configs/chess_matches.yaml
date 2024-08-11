@@ -1,11 +1,12 @@
+logging:
+  output_dir: /Users/haidark/ktet_src/output/chess_matches
 manager:
   name: rating_games
   match_manager_args:
-    max_matches: 5
+    max_matches: 3
     max_rounds: 1000
     starting_elo: 800
     matching: round_robin
-    out_csv_path: chess_leaderboard.csv
   game_manager_args:
     max_rounds: 200
     win_conditions: 
@@ -38,7 +39,7 @@ game:
           max_bootstrapped_demos: 1
           max_labeled_demos: 1
         metric: chess_move_validation_metric
-        max_tries: 1
+        max_tries: 5
 
     - name: chess_player
       args:
@@ -59,11 +60,11 @@ game:
           max_bootstrapped_demos: 1
           max_labeled_demos: 1
         metric: chess_move_validation_metric
-        max_tries: 1
+        max_tries: 5
 
 llms:
   - type: AzureOpenAI
-    name: gpt-4o
+    name: gpt-4o1
     args:
       api_base: https://allam-swn-gpt-01.openai.azure.com/
       api_version: 2023-07-01-preview
@@ -73,10 +74,21 @@ llms:
       top_p: 0.95
       frequency_penalty: 0
       presence_penalty: 0
-  - type: Claude
-    name: claude-3-5-sonnet
+  - type: AzureOpenAI
+    name: gpt-4o2
     args:
-      model: claude-3-5-sonnet-20240620
+      api_base: https://allam-swn-gpt-01.openai.azure.com/
+      api_version: 2023-07-01-preview
+      deployment_id: gpt-4o-900ptu
       max_tokens: 800
       temperature: 0.8
       top_p: 0.95
+      frequency_penalty: 0
+      presence_penalty: 0
+  # - type: Claude
+  #   name: claude-3-5-sonnet
+  #   args:
+  #     model: claude-3-5-sonnet-20240620
+  #     max_tokens: 800
+  #     temperature: 0.8
+  #     top_p: 0.95

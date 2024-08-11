@@ -1,4 +1,5 @@
 import csv
+import os
 from abc import ABC, abstractmethod
 from typing import List, Dict
 
@@ -70,7 +71,8 @@ class MatchManager:
 
         self.max_matches = self.match_manager_args["max_matches"]
         
-        self.out_csv_path = self.match_manager_args["out_csv_path"]
+        self.out_csv_path = os.path.join(config['logging']['output_dir'], 'leaderboard.csv')
+        self.logger = getLogger()
 
     def _build_game_manager(self, lms: List[str]):
         config = defaultdict(dict)
@@ -153,16 +155,18 @@ class MatchManager:
                 result_a = 1 if cur_lm_turn == lms[0] else 0
                 self.llm_wdl[cur_lm_turn]["wins"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["losses"] += 1 
+                self.logger.info(f"Match {cur_lm_turn} won!")
             elif final_game_state.validate_game() in game_manager.draw_conditions:
                 result_a = 0.5
                 self.llm_wdl[cur_lm_turn]["draws"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["draws"] += 1 
+                self.logger.info(f"Match ended in a draw!")
             else:
                 # Loss to current LM because they made the state invalid (exceeded max_tries)
                 result_a = 0 if cur_lm_turn == lms[0] else 1
                 self.llm_wdl[cur_lm_turn]["losses"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["wins"] += 1 
-
+                self.logger.info(f"Match {cur_lm_turn} lost!")
             # Update elos of LMs
             self.llm_elos[lms[0]], self.llm_elos[lms[1]] = self.calculate_elo_rating(self.llm_elos[lms[0]], self.llm_elos[lms[1]], result_a)
             

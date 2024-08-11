@@ -1,12 +1,13 @@
 import argparse
+import os
 import yaml
 from collections import defaultdict
 
 from zero_sum_eval.managers import MatchManager
+from zero_sum_eval.logging_utils import setup_logging, cleanup_logging
 import logging
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO) 
+logger = logging.getLogger(__name__)
 
 
 def read_config(path):
@@ -18,23 +19,22 @@ def read_config(path):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-c", "--config", type=str)
-    #TODO: add optional match series history datafile
-    
+    parser.add_argument("-c", "--config", type=str)    
     args = parser.parse_args()
 
     config = read_config(args.config)
 
-    match_manager = MatchManager(config)
+    # Set up logging with 'match_series' prefix
+    handlers = setup_logging(config, 'match_series')
 
-    logger.info("Starting a new match series!")
-
-    final_elos = match_manager.start()
-
-
-    logger.info(
-        f"\Match series over. Final elos: {final_elos}"
-    )
+    try:
+        match_manager = MatchManager(config)
+        logger.info("Starting a new match series!")
+        final_elos = match_manager.start()
+        logger.info(f"Match series over. Final elos: {final_elos}")
+    finally:
+        # Clean up logging
+        cleanup_logging(logger, handlers)
 
 
 if __name__ == "__main__":
