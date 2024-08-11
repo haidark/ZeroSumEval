@@ -11,8 +11,9 @@ from collections import defaultdict
 from copy import copy
 
 import dspy
-
+import time
 import itertools
+import json
 
 
 class Matcher(ABC):
@@ -71,10 +72,11 @@ class MatchManager:
 
         self.max_matches = self.match_manager_args["max_matches"]
         
-        self.out_csv_path = os.path.join(config['logging']['output_dir'], 'leaderboard.csv')
+        self.output_dir = config['logging']['output_dir']
+
         self.logger = getLogger()
 
-    def _build_game_manager(self, lms: List[str]):
+    def _build_game_manager(self, lms: List[str], turn_dir):
         config = defaultdict(dict)
         config["game"] = copy(self.config["game"])
         self.roles = dict()
@@ -83,6 +85,7 @@ class MatchManager:
             player_config["args"]["lm"] = self.llm_configs[lm_name]
         
         config["manager"]["args"] = self.config["manager"]["game_manager_args"]
+        config["logging"]["output_dir"] = turn_dir
 
         return GameManager(config)
 
@@ -124,8 +127,8 @@ class MatchManager:
 
     def save_leaderboard(self):
         headers = ['Model', 'Elo', 'Wins', 'Draws', 'Losses']
-        with open(self.out_csv_path, mode='w', newline='') as file:
-            writer = csv.writer(file)
+        with open(os.path.join(self.output_dir, 'leaderboard.csv'), mode='w', newline='') as f:
+            writer = csv.writer(f)
             writer.writerow(headers)
             for model, elo in self.llm_elos.items():
                 wins = self.llm_wdl[model]['wins']
@@ -138,9 +141,11 @@ class MatchManager:
         for _ in range(self.max_matches):
             # Get next matchup
             lms = self.matcher.get_next_match()
-
             # Reset game
-            game_manager = self._build_game_manager(lms)
+            turn_dir = os.path.join(self.output_dir, f"matches/{lms[0]}_vs_{lms[1]}_{time.time()}")
+            os.makedirs(turn_dir, exist_ok=True)
+
+            game_manager = self._build_game_manager(lms=lms, turn_dir=turn_dir)
 
             assert len(lms) == len(game_manager.games[-1].roles), "The number of matched LMs must be the same as the number of players required in the game."
             
@@ -167,9 +172,16 @@ class MatchManager:
                 self.llm_wdl[cur_lm_turn]["losses"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["wins"] += 1 
                 self.logger.info(f"Match {cur_lm_turn} lost!")
+
+            elos_before = copy(self.llm_elos)
+
             # Update elos of LMs
             self.llm_elos[lms[0]], self.llm_elos[lms[1]] = self.calculate_elo_rating(self.llm_elos[lms[0]], self.llm_elos[lms[1]], result_a)
             
+            with open(os.path.join(turn_dir, "elos_delta.json"), mode='w', newline='') as f:
+                obj = {lm: [elos_before[lm], self.llm_elos[lm]] for lm in lms}
+                json.dump(obj, f)
+
             self.display_leaderboard()
             self.save_leaderboard()
 
