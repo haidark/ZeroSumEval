@@ -23,6 +23,7 @@ class GameManager:
         self.players: Dict[str, Player] = {}
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
+        self.draw_conditions: List[str] = self.config["manager"]["args"]["draw_conditions"]
         self._init_game()
         self._init_players()
 
