@@ -142,7 +142,7 @@ class MatchManager:
             # Get next matchup
             lms = self.matcher.get_next_match()
             # Reset game
-            turn_dir = os.path.join(self.output_dir, f"matches/{lms[0]}_vs_{lms[1]}_{time.time()}")
+            turn_dir = os.path.join(self.output_dir, f"matches/{lms[0]}_vs_{lms[1]}_{int(time.time())}")
             os.makedirs(turn_dir, exist_ok=True)
 
             game_manager = self._build_game_manager(lms=lms, turn_dir=turn_dir)
