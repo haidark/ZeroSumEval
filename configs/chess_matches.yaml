@@ -10,6 +10,12 @@ manager:
     max_rounds: 200
     win_conditions: 
       - Checkmate
+      - Invalid
+    draw_conditions:
+      - Stalemate
+      - Insufficient material
+      - 75-move rule
+      - Fivefold repetition
 game:
   name: chess
   players:

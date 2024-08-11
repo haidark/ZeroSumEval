@@ -46,18 +46,6 @@ class ChessGame(GameState):
 
         return new_state
 
-    def is_over(self):
-        return self.board.is_game_over()
-        
-    def is_win(self):
-        return self.board.is_checkmate()
-        
-    def is_draw(self):
-        return self.board.is_stalemate() or self.board.is_insufficient_material() or self.board.is_seventyfive_moves() or self.board.is_fivefold_repetition()
-    
-    def is_valid(self):
-        return self.board.is_valid()
-
     def validate_game(self) -> Optional[str]:
         if self.board.is_checkmate():
             message = "Checkmate"

@@ -149,11 +149,11 @@ class MatchManager:
             # Get which LM's turn the game stopped at
             cur_lm_turn = self.roles[final_game_state.roles[0]]
             
-            if final_game_state.is_win():
+            if final_game_state.validate_game() in game_manager.win_conditions:
                 result_a = 1 if cur_lm_turn == lms[0] else 0
                 self.llm_wdl[cur_lm_turn]["wins"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["losses"] += 1 
-            elif final_game_state.is_draw():
+            elif final_game_state.validate_game() in game_manager.draw_conditions:
                 result_a = 0.5
                 self.llm_wdl[cur_lm_turn]["draws"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["draws"] += 1 
