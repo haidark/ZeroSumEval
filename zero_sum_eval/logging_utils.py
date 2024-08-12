@@ -19,12 +19,21 @@ def setup_logging(config, log_prefix):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     for level_name, level in log_levels.items():
+        # File handler
         log_file = os.path.join(output_dir, f'{log_prefix}_{level_name}.log')
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(level)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-        handlers[level_name] = file_handler
+        handlers[f'file_{level_name}'] = file_handler
+
+        # Stream handler for info, warning, and error levels
+        if level_name in ['info', 'warning', 'error']:
+            stream_handler = logging.StreamHandler()
+            stream_handler.setLevel(level)
+            stream_handler.setFormatter(formatter)
+            logger.addHandler(stream_handler)
+            handlers[f'stream_{level_name}'] = stream_handler
 
     return handlers
 

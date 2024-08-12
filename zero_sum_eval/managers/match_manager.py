@@ -32,7 +32,6 @@ class RoundRobin(Matcher):
         self.round = 0
         self.pair_index = 0
         self.matches = self._generate_round_robin_pairs()
-        print("Scheduled matches: ", self.matches)
 
     def _generate_round_robin_pairs(self):
         participants = list(self.llm_elos.keys())
@@ -60,12 +59,14 @@ class MatchManager:
         
         self.players = dict()
         self.roles = dict()
-        
+        self.logger = getLogger()
+
         if matching := self.match_manager_args["matching"]:
             if matching == "round_robin":
                 self.matcher = RoundRobin(self.llm_elos)
             else:
                 raise ValueError(f"Matching strategy {matching} not defined.")
+            self.logger.info(f"Scheduled matches: {self.matcher.matches}")
         else:
             # default is round robin
             self.matcher = RoundRobin(self.llm_elos)
@@ -74,7 +75,7 @@ class MatchManager:
         
         self.output_dir = config['logging']['output_dir']
 
-        self.logger = getLogger()
+        
 
     def _build_game_manager(self, lms: List[str], turn_dir):
         config = defaultdict(dict)
@@ -121,8 +122,8 @@ class MatchManager:
             losses = self.llm_wdl[model]['losses']
             draws = self.llm_wdl[model]['draws']
             table_data.append([model, f"{elo:.2f}", wins, draws, losses])
-        
-        print(tabulate(table_data, headers, tablefmt="grid"))
+        for line in tabulate(table_data, headers, tablefmt="grid").split('\n'):
+            self.logger.info(line)
         
 
     def save_leaderboard(self):
@@ -137,7 +138,7 @@ class MatchManager:
                 writer.writerow([model, f"{elo:.2f}", wins, draws, losses])
 
     def start(self):
-        print("Let the games begin!")
+        self.logger.info("Let the games begin!")
         for _ in range(self.max_matches):
             # Get next matchup
             lms = self.matcher.get_next_match()
@@ -149,29 +150,29 @@ class MatchManager:
 
             assert len(lms) == len(game_manager.games[-1].roles), "The number of matched LMs must be the same as the number of players required in the game."
             
-            print(" VS ".join(lms))
+            self.logger.info(" VS ".join(lms))
             
             final_game_state = game_manager.start()
             
             # Get which LM's turn the game stopped at
             cur_lm_turn = self.roles[final_game_state.roles[0]]
-            
-            if final_game_state.validate_game() in game_manager.win_conditions:
+            gm_message = final_game_state.validate_game()
+            if gm_message in game_manager.win_conditions:
                 result_a = 1 if cur_lm_turn == lms[0] else 0
                 self.llm_wdl[cur_lm_turn]["wins"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["losses"] += 1 
-                self.logger.info(f"Match {cur_lm_turn} won!")
-            elif final_game_state.validate_game() in game_manager.draw_conditions:
+                self.logger.info(f"Match {cur_lm_turn} won! GM message: {gm_message}")
+            elif gm_message in game_manager.draw_conditions:
                 result_a = 0.5
                 self.llm_wdl[cur_lm_turn]["draws"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["draws"] += 1 
-                self.logger.info(f"Match ended in a draw!")
+                self.logger.info(f"Match ended in a draw! GM message: {gm_message}")
             else:
                 # Loss to current LM because they made the state invalid (exceeded max_tries)
                 result_a = 0 if cur_lm_turn == lms[0] else 1
                 self.llm_wdl[cur_lm_turn]["losses"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["wins"] += 1 
-                self.logger.info(f"Match {cur_lm_turn} lost!")
+                self.logger.info(f"Match {cur_lm_turn} lost! GM message: {gm_message}")
 
             elos_before = copy(self.llm_elos)
 
