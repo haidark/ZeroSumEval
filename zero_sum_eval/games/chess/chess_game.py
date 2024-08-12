@@ -89,7 +89,7 @@ class ChessGame(GameState):
         }
     
     def display(self) -> None:
-        display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
+        display_str = f"Role to Act: {self.roles[0]}\nGM Message: {self.context['message']}\n"
         display_str += f"{self.formatted_move_history()}\n"
         display_str += f"{self.board}\n"
         return display_str

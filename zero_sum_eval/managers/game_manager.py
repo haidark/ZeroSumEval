@@ -8,6 +8,9 @@ from zero_sum_eval.game_state import GameState
 from zero_sum_eval.player import Player
 from collections import defaultdict
 
+import jsonlines
+
+import os
 
 
 class GameManager:
@@ -24,6 +27,7 @@ class GameManager:
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
         self.draw_conditions: List[str] = self.config["manager"]["args"]["draw_conditions"]
+        self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
         self._init_game()
         self._init_players()
 
@@ -89,6 +93,10 @@ class GameManager:
                 return game_state, player_attempts
         return game_state, player_attempts  # Return the original state if all tries fail
 
+    def _log_turn(self, game_state: GameState):
+        with jsonlines.open(self.turns_log_file, "a") as f:
+            f.write(game_state.export())
+
     def _run_game_loop(self, game_state: GameState) -> GameState:
         """
         Run the main game loop.
@@ -112,7 +120,11 @@ class GameManager:
             if game_state.validate_game():
                 break
             game_state, attempts = self._process_turn(game_state, player)
+            self._log_turn(game_state)
+
             round_count += 1
+
+        self._log_turn(game_state)
         return game_state
 
     def start(self) -> GameState:

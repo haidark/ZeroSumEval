@@ -1,4 +1,5 @@
 import csv
+import os
 from abc import ABC, abstractmethod
 from typing import List, Dict
 
@@ -10,8 +11,9 @@ from collections import defaultdict
 from copy import copy
 
 import dspy
-
+import time
 import itertools
+import json
 
 
 class Matcher(ABC):
@@ -30,7 +32,6 @@ class RoundRobin(Matcher):
         self.round = 0
         self.pair_index = 0
         self.matches = self._generate_round_robin_pairs()
-        print("Scheduled matches: ", self.matches)
 
     def _generate_round_robin_pairs(self):
         participants = list(self.llm_elos.keys())
@@ -58,21 +59,25 @@ class MatchManager:
         
         self.players = dict()
         self.roles = dict()
-        
+        self.logger = getLogger()
+
         if matching := self.match_manager_args["matching"]:
             if matching == "round_robin":
                 self.matcher = RoundRobin(self.llm_elos)
             else:
                 raise ValueError(f"Matching strategy {matching} not defined.")
+            self.logger.info(f"Scheduled matches: {self.matcher.matches}")
         else:
             # default is round robin
             self.matcher = RoundRobin(self.llm_elos)
 
         self.max_matches = self.match_manager_args["max_matches"]
         
-        self.out_csv_path = self.match_manager_args["out_csv_path"]
+        self.output_dir = config['logging']['output_dir']
 
-    def _build_game_manager(self, lms: List[str]):
+        
+
+    def _build_game_manager(self, lms: List[str], turn_dir):
         config = defaultdict(dict)
         config["game"] = copy(self.config["game"])
         self.roles = dict()
@@ -81,6 +86,7 @@ class MatchManager:
             player_config["args"]["lm"] = self.llm_configs[lm_name]
         
         config["manager"]["args"] = self.config["manager"]["game_manager_args"]
+        config["logging"]["output_dir"] = turn_dir
 
         return GameManager(config)
 
@@ -116,14 +122,14 @@ class MatchManager:
             losses = self.llm_wdl[model]['losses']
             draws = self.llm_wdl[model]['draws']
             table_data.append([model, f"{elo:.2f}", wins, draws, losses])
-        
-        print(tabulate(table_data, headers, tablefmt="grid"))
+        for line in tabulate(table_data, headers, tablefmt="grid").split('\n'):
+            self.logger.info(line)
         
 
     def save_leaderboard(self):
         headers = ['Model', 'Elo', 'Wins', 'Draws', 'Losses']
-        with open(self.out_csv_path, mode='w', newline='') as file:
-            writer = csv.writer(file)
+        with open(os.path.join(self.output_dir, 'leaderboard.csv'), mode='w', newline='') as f:
+            writer = csv.writer(f)
             writer.writerow(headers)
             for model, elo in self.llm_elos.items():
                 wins = self.llm_wdl[model]['wins']
@@ -132,40 +138,51 @@ class MatchManager:
                 writer.writerow([model, f"{elo:.2f}", wins, draws, losses])
 
     def start(self):
-        print("Let the games begin!")
+        self.logger.info("Let the games begin!")
         for _ in range(self.max_matches):
             # Get next matchup
             lms = self.matcher.get_next_match()
-
             # Reset game
-            game_manager = self._build_game_manager(lms)
+            turn_dir = os.path.join(self.output_dir, f"matches/{lms[0]}_vs_{lms[1]}_{int(time.time())}")
+            os.makedirs(turn_dir, exist_ok=True)
+
+            game_manager = self._build_game_manager(lms=lms, turn_dir=turn_dir)
 
             assert len(lms) == len(game_manager.games[-1].roles), "The number of matched LMs must be the same as the number of players required in the game."
             
-            print(" VS ".join(lms))
+            self.logger.info(" VS ".join(lms))
             
             final_game_state = game_manager.start()
             
             # Get which LM's turn the game stopped at
             cur_lm_turn = self.roles[final_game_state.roles[0]]
-            
-            if final_game_state.validate_game() in game_manager.win_conditions:
+            gm_message = final_game_state.validate_game()
+            if gm_message in game_manager.win_conditions:
                 result_a = 1 if cur_lm_turn == lms[0] else 0
                 self.llm_wdl[cur_lm_turn]["wins"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["losses"] += 1 
-            elif final_game_state.validate_game() in game_manager.draw_conditions:
+                self.logger.info(f"Match {cur_lm_turn} won! GM message: {gm_message}")
+            elif gm_message in game_manager.draw_conditions:
                 result_a = 0.5
                 self.llm_wdl[cur_lm_turn]["draws"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["draws"] += 1 
+                self.logger.info(f"Match ended in a draw! GM message: {gm_message}")
             else:
                 # Loss to current LM because they made the state invalid (exceeded max_tries)
                 result_a = 0 if cur_lm_turn == lms[0] else 1
                 self.llm_wdl[cur_lm_turn]["losses"] += 1
                 self.llm_wdl[self.roles[final_game_state.roles[1]]]["wins"] += 1 
+                self.logger.info(f"Match {cur_lm_turn} lost! GM message: {gm_message}")
+
+            elos_before = copy(self.llm_elos)
 
             # Update elos of LMs
             self.llm_elos[lms[0]], self.llm_elos[lms[1]] = self.calculate_elo_rating(self.llm_elos[lms[0]], self.llm_elos[lms[1]], result_a)
             
+            with open(os.path.join(turn_dir, "elos_delta.json"), mode='w', newline='') as f:
+                obj = {lm: [elos_before[lm], self.llm_elos[lm]] for lm in lms}
+                json.dump(obj, f)
+
             self.display_leaderboard()
             self.save_leaderboard()
 
