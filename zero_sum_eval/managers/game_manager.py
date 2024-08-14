@@ -84,6 +84,7 @@ class GameManager:
             player_attempts+=1
             game_state: GameState = game_state.update_game(move)
             val: Optional[str] = game_state.validate_game()
+            logger.debug(f"{player.id} (attempt # {player_attempts}):\n{game_state.display()}\nMove: {move}")
             if val is None:
                 return game_state, player_attempts
             if val in self.win_conditions:
