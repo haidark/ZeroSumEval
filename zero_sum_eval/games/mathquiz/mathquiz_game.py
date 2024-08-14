@@ -1,7 +1,7 @@
 from zero_sum_eval.game_state import GameState
 from random import randint
 from zero_sum_eval.registry import GAME_REGISTRY
-
+from typing import Dict, List, Optional
 
 @GAME_REGISTRY.register("mathquiz")
 class MathQuizGame(GameState):
@@ -24,101 +24,120 @@ class MathQuizGame(GameState):
         teacher_answer: the teacher's answer to the math question
         student_answer: the student's answer to the math question
     """
-    def __init__(self, roles=None, environment=None, context=None, target=None):
-        super().__init__()
-        self.environment = environment if environment is not None else \
-            {"question": None, "teacher_answer": None, "student_answer": None}
-        self.roles = self.get_next_roles(self.environment) if roles is None else roles
-        self.context = context if context is not None else {"history": [], "message": None}
-        self.target = target if target is not None else str(randint(1, 1000))
 
-    def initialize(self, roles=None, environment=None, context=None, target=None):
-        return MathQuizGame(
-            roles=roles,
-            environment=environment,
-            context=context,
-            target=target
-        )
+    def instantiate(self, environment: Dict, context: Dict, roles: List[str], **kwargs) -> None:
+        self.environment = environment if environment else {
+            "question": None,
+            "teacher_answer": None,
+            "student_answer": None
+        }
+        self.context = context if context else {"history": [], "message": None}
+        self.roles = roles if roles else self.get_next_roles()
+        self.target = kwargs.get('target', str(randint(1, 1000)))
 
-    def update_game(self, move):
-        new_context = self.context.copy()
-        new_environment = self.environment.copy()
-        if self.roles[0] == "TeacherGenerateQuestion":
-            new_environment['question'] = move
-        elif self.roles[0] == "TeacherAnswerQuestion":
-            new_environment['teacher_answer'] = move
-        elif self.roles[0] == "StudentAnswerQuestion":
-            new_environment['student_answer'] = move
-
-        return self.initialize(
-            roles=self.roles,
-            environment=new_environment,
-            context=new_context,
+    def update_game(self, move: str) -> GameState:
+        new_state = MathQuizGame()
+        new_state.instantiate(
+            self.environment.copy(),
+            self.context.copy(),
+            self.roles.copy(),
             target=self.target
         )
-
-    def query_game(self):  
-        new_context = self.context.copy()
-        new_roles = self.get_next_roles(self.environment)
-        msg = self.validate_game() 
-        new_context['message'] = msg if msg is not None else f"You will move as {new_roles[0]}" 
-
-        return self.initialize(
-            environment=self.environment,
-            context=new_context,
-            roles=new_roles,
-            target=self.target
-        )
-
-    def verify_answer(self, answer):
-        return str(answer) == str(self.target)
-
-    def validate_game(self):
-        current_role = self.roles[0]
+        current_role = new_state.roles[0]       
         if current_role == "TeacherGenerateQuestion":
-            return None
+            new_state.environment['question'] = move
+            new_state.roles = new_state.get_next_roles()
         elif current_role == "TeacherAnswerQuestion":
+            new_state.environment['teacher_answer'] = move
+            if self.verify_answer(move):
+                new_state.roles = new_state.get_next_roles()
+        elif current_role == "StudentAnswerQuestion":
+            new_state.environment['student_answer'] = move
+            if self.verify_answer(move):
+                new_state.roles = new_state.get_next_roles()
+        return new_state
+
+    def query_game(self) -> GameState:
+        new_state = MathQuizGame()
+        new_state.instantiate(
+            self.environment.copy(),
+            self.context.copy(),
+            self.roles.copy(),
+            target=self.target
+        )
+        
+        msg = new_state.validate_game()
+        new_state.context['message'] = msg if msg else f"You will move as {new_state.roles[0]}"
+        return new_state
+
+    def validate_game(self) -> Optional[str]:
+        if self.environment['student_answer']: # student attempted to answer
+            if self.verify_answer(self.environment['student_answer']):
+                return "StudentCorrect"
+            else:
+                return "StudentIncorrect"
+        if self.environment['teacher_answer']: # teacher attempted to answer
             if self.verify_answer(self.environment['teacher_answer']):
                 return None
             else:
                 return "TeacherIncorrect"
-        elif current_role == "StudentAnswerQuestion":
-            if self.verify_answer(self.environment['teacher_answer']):
-                return "StudentCorrect"
-            else:
-                return "StudentIncorrect"
+        return None
 
-    def get_next_roles(self, environment):
-        if environment['question'] is None:
+    def get_next_roles(self) -> List[str]:
+        if self.environment['question'] is None:
             return ['TeacherGenerateQuestion', 'TeacherAnswerQuestion', 'StudentAnswerQuestion']
-        elif environment['teacher_answer'] is None:
+        elif self.environment['teacher_answer'] is None:
             return ['TeacherAnswerQuestion', 'StudentAnswerQuestion']
         else:
             return ['StudentAnswerQuestion']
 
-    def export(self):
+    def player_inputs(self) -> Dict[str, str]:
         current_role = self.roles[0]
         if current_role == "TeacherGenerateQuestion":
             return {
                 'role': self.roles[0],
-                'environment': self.target,
-                'context': self.context
+                'target': self.target,
+                'message': self.context['message']
             }
-        elif current_role  in ("TeacherAnswerQuestion", "StudentAnswerQuestion"):
+        elif current_role in ("TeacherAnswerQuestion", "StudentAnswerQuestion"):
             return {
                 'role': self.roles[0],
-                'environment': self.environment['question'],
-                'context': self.context
+                'question': self.environment['question'],
+                'message': self.context['message']
             }
         else:
             raise ValueError("Invalid role")
-    
-    def display(self):
+
+    def verify_answer(self, answer: str) -> bool:
+        return str(answer) == str(self.target)
+
+    def display(self) -> str:
         display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
-        display_str += f"{self.environment}\n"
+        display_str += f"Environment: {self.environment}\n"
         display_str += f"Target: {self.target}\n"
         return display_str
 
 
 if __name__ == "__main__":
-    pass
+    math_quiz = MathQuizGame()
+    math_quiz.instantiate(None, None, None)
+    print(math_quiz.export())
+
+    # Teacher generates question
+    math_quiz = math_quiz.update_game("What is 5 + 7?")
+    print(math_quiz.export())
+
+    print(math_quiz.query_game().export())
+    # Teacher answers question
+    math_quiz = math_quiz.update_game("12")
+    print(math_quiz.export())
+
+    # Student answers question
+    math_quiz = math_quiz.update_game("12")
+    print(math_quiz.export())
+
+    validation_result = math_quiz.validate_game()
+    if validation_result:
+        print(f"Game validation result: {validation_result}")
+    else:
+        print("Game is valid.")

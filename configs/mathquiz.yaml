@@ -1,8 +1,11 @@
+logging:
+  output_dir: ../output/mathquiz_game
 manager:
   args:
     max_rounds: 10
     win_conditions:
       - StudentCorrect
+    draw_conditions:
 game:
   name: mathquiz
   players:
@@ -12,6 +15,20 @@ game:
         roles: 
           - TeacherGenerateQuestion
           - TeacherAnswerQuestion
+        optimize: false
+        dataset: mathquiz_dataset
+        dataset_args:
+          filename: ./data/mathquiz/examples.jsonl
+          role: Teacher
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: math_question_validation_metric
         lm:
           type: AzureOpenAI
           args:
@@ -23,11 +40,26 @@ game:
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
+        max_tries: 5
     - name: mathquiz_student
       args:
         id: gpt4 student
         roles: 
           - StudentAnswerQuestion
+        optimize: false
+        dataset: mathquiz_dataset
+        dataset_args:
+          filename: ./data/mathquiz/examples.jsonl
+          role: Student
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: math_answer_validation_metric
         lm:
           type: AzureOpenAI
           args:
@@ -39,3 +71,4 @@ game:
             top_p: 0.95
             frequency_penalty: 0
             presence_penalty: 0
+        max_tries: 5

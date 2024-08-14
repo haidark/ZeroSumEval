@@ -1,8 +1,15 @@
+logging:
+  output_dir: ../output/chess_game
 manager:
   args:
     max_rounds: 200
     win_conditions: 
       - Checkmate
+    draw_conditions:
+      - Stalemate
+      - ThreefoldRepetition
+      - FiftyMoveRule
+      - InsufficientMaterial
 game:
   name: chess
   players:
