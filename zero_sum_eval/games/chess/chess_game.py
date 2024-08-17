@@ -94,6 +94,15 @@ class ChessGame(GameState):
         display_str += f"{self.board}\n"
         return display_str
 
+    def export(self) -> str:
+        return {
+            "environment": self.environment,
+            "context": self.context,
+            "roles": self.roles,
+            "formatted_history": self.formatted_move_history(),
+            "validate_game": self.validate_game()
+        }
+
 
 if __name__ == "__main__":
     chess_game = ChessGame()

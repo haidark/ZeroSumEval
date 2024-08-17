@@ -96,7 +96,7 @@ class GameState(ABC):
         Returns:
             str: A YAML-formatted string representation of the game state.
         """
-        return yaml.dump(self.__dict__)
+        return self.__dict__
     
     
 

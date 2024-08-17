@@ -10,10 +10,13 @@ from huggingface_hub import Repository
 
 logger = logging.getLogger(__name__)
 HF_TOKEN = os.environ.get("HF_TOKEN")
+HF_USERNAME = os.environ.get("HF_USERNAME", "HishamYahya")
+HF_REPO = os.environ.get("HF_REPO", "HishamYahya/zse-matches")
+
 
 if __name__ == "__main__":
-    repo = Repository(local_dir="zse-matches", clone_from=f"https://HishamYahya:{HF_TOKEN}@huggingface.co/datasets/HishamYahya/zse-matches")
-    
+    repo = Repository(local_dir="zse-matches", clone_from=f"https://{HF_USERNAME}:{HF_TOKEN}@huggingface.co/datasets/{HF_REPO}")
+
     os.chdir("zse-matches")
     game_configs = []
 
