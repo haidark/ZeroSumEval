@@ -125,7 +125,6 @@ class GameManager:
 
             round_count += 1
 
-        self._log_turn(game_state)
         return game_state
 
     def start(self) -> GameState:
