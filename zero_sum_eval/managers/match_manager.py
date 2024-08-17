@@ -168,7 +168,6 @@ class MatchManager:
 
         os.makedirs(os.path.join(self.output_dir, "leaderboard_history"), exist_ok=True)
         self.save_leaderboard(f"leaderboard_history/leaderboard_{int(time.time())}.csv")
-
         for _ in range(self.max_matches):
             # Get next matchup
             lms = self.matcher.get_next_match()
