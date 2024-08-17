@@ -80,9 +80,9 @@ class GameManager:
         player_attempts = 0
         for _ in range(player.max_tries):
             new_state: GameState = game_state.query_game()
-            move: str = player.make_move(new_state)
+            move, trace = player.make_move(new_state)
             player_attempts+=1
-            game_state: GameState = game_state.update_game(move)
+            game_state: GameState = game_state.update_game(move, trace)
             val: Optional[str] = game_state.validate_game()
             logger.debug(f"{player.id} (attempt # {player_attempts}):\n{game_state.display()}\nMove: {move}")
             if val is None:

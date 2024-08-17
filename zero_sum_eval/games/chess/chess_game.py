@@ -2,6 +2,7 @@ import chess
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
 from typing import Dict, List, Optional
+from dspy import Prediction
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
@@ -12,7 +13,7 @@ class ChessGame(GameState):
         self.context = context if context else {"message": "", "history": []}
         self.roles = roles if roles else self.get_next_roles()
 
-    def update_game(self, move: str) -> GameState:
+    def update_game(self, move: str, trace: Optional[Prediction] = None) -> GameState:
         new_state = ChessGame()
         new_state.instantiate(
             self.environment.copy(), 
@@ -27,6 +28,8 @@ class ChessGame(GameState):
             new_state.context['history'].append(san)
             new_state.context['message'] = None
             new_state.environment["fen"] = new_state.board.fen()
+            if trace:
+                new_state.context['last_trace'] = trace.toDict()
             new_state.roles = new_state.get_next_roles()
         except ValueError as e:
             new_state.context['message'] = f"Move {move} caused an error: {e}"
