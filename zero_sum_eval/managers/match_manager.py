@@ -152,9 +152,9 @@ class MatchManager:
             self.logger.info(line)
         
 
-    def save_leaderboard(self):
+    def save_leaderboard(self, path = "leaderboard.csv"):
         headers = ['Model', 'Elo', 'Wins', 'Draws', 'Losses']
-        with open(os.path.join(self.output_dir, 'leaderboard.csv'), mode='w', newline='') as f:
+        with open(os.path.join(self.output_dir, path), mode='w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(headers)
             for model, elo in self.llm_elos.items():
@@ -165,6 +165,10 @@ class MatchManager:
 
     def start(self):
         self.logger.info("Let the games begin!")
+
+        os.makedirs(os.path.join(self.output_dir, "leaderboard_history"), exist_ok=True)
+        self.save_leaderboard(f"leaderboard_history/leaderboard_{int(time.time())}.csv")
+        
         for _ in range(self.max_matches):
             # Get next matchup
             lms = self.matcher.get_next_match()
