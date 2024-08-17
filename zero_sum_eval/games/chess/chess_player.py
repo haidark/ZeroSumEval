@@ -78,4 +78,3 @@ class ChessPlayer(Player):
         """
         trace = self.module(**kwargs) 
         return trace.move, trace
-    

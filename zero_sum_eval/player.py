@@ -74,6 +74,7 @@ class Player(ABC):
         
         Returns:
         dict: The move made by the player
+        dspy.Prediction: DSPy trace of the move
         """
         raise NotImplementedError
 

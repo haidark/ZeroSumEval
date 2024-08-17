@@ -84,7 +84,7 @@ class GameManager:
             player_attempts+=1
             logger.info(f"\t\t--- {player.id} (attempt # {player_attempts}) ---")
             logger.info(f"{game_state.display()}Move:\n{move}\n\n")
-            game_state: GameState = game_state.update_game(move)
+            game_state: GameState = game_state.update_game(move, trace)
             val: Optional[str] = game_state.validate_game()
             if val is None:
                 return game_state, player_attempts
