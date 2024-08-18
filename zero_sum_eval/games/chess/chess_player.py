@@ -62,11 +62,10 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def _build_modules(self, **module_args):
-        self.main_module = ChessCoT(**module_args)
-        return [self.main_module]
+    def _build_module(self, **module_args):
+        return ChessCoT(**module_args)
 
-    def _make_move(self, game_state):
+    def _make_move(self, **kwargs):
         """
         Abstract method for making a move based on the current game state.
         
@@ -76,6 +75,6 @@ class ChessPlayer(Player):
         Returns:
         str: The move made by the player
         """
-        trace = self.main_module(**game_state.player_inputs()) 
+        trace = self.module(**kwargs) 
         return trace.move
     

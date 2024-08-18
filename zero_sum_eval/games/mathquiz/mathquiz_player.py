@@ -44,34 +44,51 @@ class AnswerQuestionCoT(dspy.Module):
         cot_out = self.cot_answer(role=role, message=message, question=question)
         return cot_out
 
+class TeacherModule(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.generate_question = GenerateQuestionCoT()
+        self.answer_question = AnswerQuestionCoT()
+    
+    def forward(self, **kwargs):
+        role = kwargs.get('role', None)
+        if role == "TeacherGenerateQuestion":
+            return self.generate_question(**kwargs)
+        elif role == "TeacherAnswerQuestion":
+            return self.answer_question(**kwargs)
+
+class StudentModule(dspy.Module):
+    def __init__(self):
+        super().__init__()
+        self.answer_question = AnswerQuestionCoT()
+    
+    def forward(self, role, message, question):
+        return self.answer_question(role=role, message=message, question=question)
+
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
 class MathQuizTeacher(Player):
-    def _build_modules(self, **module_args):
-        self.question_module = GenerateQuestionCoT(**module_args)
-        self.answer_module = AnswerQuestionCoT(**module_args)
-        return [self.question_module, self.answer_module]
+    def _build_module(self, **module_args):
+        return TeacherModule(**module_args)
 
-    def _make_move(self, game_state):
-        current_role = game_state.roles[0]
+    def _make_move(self, **kwargs):
+        current_role = kwargs.get('role', None)
+        trace = self.module(**kwargs)
         if current_role == "TeacherGenerateQuestion":
-            trace = self.question_module(**game_state.player_inputs())
             return trace.math_question
         elif current_role == "TeacherAnswerQuestion":
-            trace = self.answer_module(**game_state.player_inputs())
             return trace.answer
         else:
             raise ValueError(f"Invalid role for teacher: {current_role}")
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
 class MathQuizStudent(Player):
-    def _build_modules(self, **module_args):
-        self.answer_module = AnswerQuestionCoT(**module_args)
-        return [self.answer_module]
+    def _build_module(self, **module_args):
+        return StudentModule(**module_args)
 
-    def _make_move(self, game_state):
-        current_role = game_state.roles[0]
+    def _make_move(self, **kwargs):
+        current_role = kwargs.get('role', None)
         if current_role == "StudentAnswerQuestion":
-            trace = self.answer_module(**game_state.player_inputs())
+            trace = self.module(**kwargs)
             return trace.answer
         else:
             raise ValueError(f"Invalid role for student: {current_role}")

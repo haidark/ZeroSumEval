@@ -53,14 +53,21 @@ class MatchManager:
         self.config = config
         self.match_manager_args = config["manager"]["match_manager_args"]
         self.game_manager_args = config["manager"]["game_manager_args"]
-        self.llm_elos = {llm["name"]: self.match_manager_args["starting_elo"] for llm in config["llms"]}
-        self.llm_configs = {llm["name"]: llm for llm in config["llms"]}
-        self.llm_wdl = {llm["name"]: {"wins": 0, "losses": 0, "draws": 0} for llm in config["llms"]}
         
         self.players = dict()
         self.roles = dict()
         self.logger = getLogger()
 
+        self.max_matches = self.match_manager_args["max_matches"]
+        
+        self.output_dir = config['logging']['output_dir']
+
+        self.llm_configs = {llm["name"]: llm for llm in config["llms"]}
+
+        # initialize llm_elos from {output_dir}/leaderboard.csv if it exists
+        self.initialize_leaderboard()
+
+        # Initialize the matching strategy
         if matching := self.match_manager_args["matching"]:
             if matching == "round_robin":
                 self.matcher = RoundRobin(self.llm_elos)
@@ -71,11 +78,30 @@ class MatchManager:
             # default is round robin
             self.matcher = RoundRobin(self.llm_elos)
 
-        self.max_matches = self.match_manager_args["max_matches"]
-        
-        self.output_dir = config['logging']['output_dir']
+    def initialize_leaderboard(self):
+        """
+        Initializes the leaderboard by reading data from a CSV file and populating the `llm_elos` and `llm_wdl` dictionaries.
+        If the CSV file does not exist, the `llm_elos` and `llm_wdl` dictionaries are initialized with default values.
+        """
+        self.llm_elos = dict()
+        self.llm_wdl = dict()
 
-        
+        leaderboard_path = os.path.join(self.output_dir, 'leaderboard.csv')
+        if os.path.exists(leaderboard_path):
+            with open(leaderboard_path, mode='r') as f:
+                reader = csv.reader(f)
+                next(reader)
+                for row in reader:
+                    model, elo, wins, draws, losses = row
+                    self.llm_elos[model] = float(elo)
+                    self.llm_wdl[model] = {"wins": int(wins), "draws": int(draws), "losses": int(losses)}
+
+        # Initialize llm_elos from config if not already initialized
+        for model in self.config["llms"]:
+            if model["name"] not in self.llm_elos:
+                self.llm_elos[model["name"]] = self.match_manager_args["starting_elo"]
+                self.llm_wdl[model["name"]] = {"wins": 0, "draws": 0, "losses": 0}
+
 
     def _build_game_manager(self, lms: List[str], turn_dir):
         config = defaultdict(dict)
