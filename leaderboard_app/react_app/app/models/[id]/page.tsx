@@ -2,9 +2,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { 
-    Typography, 
-    Paper, 
+import {
+    Typography,
+    Paper,
     Box,
     Table,
     TableBody,
@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 
 const getResultColor = (result: number) => {
-    switch(result) {
+    switch (result) {
         case 1: return 'success';
         case 0: return 'error';
         case 0.5: return 'warning';
@@ -41,6 +41,8 @@ export default function ModelPage() {
     const [opponentFilter, setOpponentFilter] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [uniqueGames, setUniqueGames] = useState<string[]>([]);
+    const [uniqueOpponents, setUniqueOpponents] = useState<string[]>([]);
 
     useEffect(() => {
         // Fetch model matches based on id
@@ -51,13 +53,17 @@ export default function ModelPage() {
             // Update state with fetched data
             setMatches(data);
 
+            // Update unique games and opponents
+            setUniqueGames([...new Set(data.map(match => match.game))]);
+            setUniqueOpponents([...new Set(data.map(match => match.opponent))]);
+
         }
         fetchMatches()
     }, []);
 
 
     const filteredMatches = useMemo(() => {
-        return matches.filter(match => 
+        return matches.filter(match =>
             (gameFilter === '' || match.game === gameFilter) &&
             (resultFilter === -1 || match.results[model_id].result === resultFilter) &&
             (opponentFilter === '' || match.opponent === opponentFilter) &&
@@ -65,9 +71,6 @@ export default function ModelPage() {
             (endDate === '' || match.timestamp <= endDate)
         );
     }, [gameFilter, resultFilter, opponentFilter, startDate, endDate, matches]);
-
-    const uniqueGames = useMemo(() => [...new Set(matches.map(match => match.game))], []);
-    const uniqueOpponents = useMemo(() => [...new Set(matches.map(match => match.opponent))], []);
 
     const getResultString = (result: number) => {
         if (result === 1) {
@@ -167,8 +170,8 @@ export default function ModelPage() {
                                 <TableCell>{match.game}</TableCell>
                                 <TableCell>{match.opponent}</TableCell>
                                 <TableCell>
-                                    <Chip 
-                                        label={getResultString(match.results[model_id].result).toUpperCase()} 
+                                    <Chip
+                                        label={getResultString(match.results[model_id].result).toUpperCase()}
                                         color={getResultColor(match.results[model_id].result) as "success" | "error" | "warning" | "default"}
                                         size="small"
                                     />

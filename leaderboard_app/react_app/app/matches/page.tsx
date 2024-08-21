@@ -1,8 +1,10 @@
 "use client"
-import React, { useState, useMemo } from 'react';
-import { 
-    Typography, 
-    Paper, 
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import {
+    Typography,
+    Paper,
     Box,
     Table,
     TableBody,
@@ -19,48 +21,56 @@ import {
     TextField
 } from '@mui/material';
 
-// Mock data (replace with actual data fetching)
-const mockMatches = [
-    { id: 1, game: "Chess", model1: "Model A", model2: "Model B", result: "win", model1OldElo: 1500, model1NewElo: 1515, model1EloDelta: 15, model2OldElo: 1520, model2NewElo: 1505, model2EloDelta: -15, date: "2024-08-01" },
-    { id: 2, game: "Go", model1: "Model C", model2: "Model D", result: "loss", model1OldElo: 1600, model1NewElo: 1588, model1EloDelta: -12, model2OldElo: 1580, model2NewElo: 1592, model2EloDelta: 12, date: "2024-08-02" },
-    { id: 3, game: "Checkers", model1: "Model A", model2: "Model E", result: "draw", model1OldElo: 1550, model1NewElo: 1550, model1EloDelta: 0, model2OldElo: 1540, model2NewElo: 1540, model2EloDelta: 0, date: "2024-08-03" },
-    { id: 4, game: "Chess", model1: "Model B", model2: "Model E", result: "win", model1OldElo: 1515, model1NewElo: 1523, model1EloDelta: 8, model2OldElo: 1530, model2NewElo: 1522, model2EloDelta: -8, date: "2024-08-04" },
-    { id: 5, game: "Connect 4", model1: "Model D", model2: "Model C", result: "loss", model1OldElo: 1700, model1NewElo: 1690, model1EloDelta: -10, model2OldElo: 1680, model2NewElo: 1690, model2EloDelta: 10, date: "2024-08-05" },
-];
-
-const getResultColor = (result) => {
-    switch(result) {
-        case 'win': return 'success';
-        case 'loss': return 'error';
-        case 'draw': return 'warning';
+const getResultColor = (result: number) => {
+    switch (result) {
+        case 1: return 'success';
+        case 0: return 'error';
+        case 0.5: return 'warning';
         default: return 'default';
     }
 };
 
-export default function AllMatchesPage() {
+export default function ModelPage() {
+    const [matches, setMatches] = useState<{ id: number, models: string[], game: string, timestamp: string, results: { [model: string]: { elos_delta: number[], result: number } } }[]>([]);
     const [gameFilter, setGameFilter] = useState('');
-    const [resultFilter, setResultFilter] = useState('');
-    const [model1Filter, setModel1Filter] = useState('');
-    const [model2Filter, setModel2Filter] = useState('');
+    const [modelFilter1, setModelFilter1] = useState('');
+    const [modelFilter2, setModelFilter2] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [uniqueGames, setUniqueGames] = useState<string[]>([]);
+    const [UniqueModels, setUniqueModels] = useState<string[]>([]);
+
+    useEffect(() => {
+        // Fetch model matches based on id
+        const fetchMatches = async () => {
+            const response = await fetch(`http://localhost:8000/api/matches`);
+            const data = await response.json();
+
+            // Update state with fetched data
+            setMatches(data);
+
+            // Update unique games and opponents
+            setUniqueGames([...new Set(data.map(match => match.game))]);
+            setUniqueModels([...new Set(data.map(match => match.models[0]), data.map(match => match.models[1]))]);
+
+        }
+        fetchMatches()
+    }, []);
+
 
     const filteredMatches = useMemo(() => {
-        return mockMatches.filter(match => 
+        return matches.filter(match =>
             (gameFilter === '' || match.game === gameFilter) &&
-            (resultFilter === '' || match.result === resultFilter) &&
-            (model1Filter === '' || match.model1 === model1Filter || match.model2 === model1Filter) &&
-            (model2Filter === '' || match.model2 === model2Filter || match.model1 === model2Filter) &&
-            (startDate === '' || match.date >= startDate) &&
-            (endDate === '' || match.date <= endDate)
+            (modelFilter1 === '' || match.models[0] === modelFilter1) &&
+            (modelFilter2 === '' || match.models[1] === modelFilter2) &&
+            (startDate === '' || match.timestamp >= startDate) &&
+            (endDate === '' || match.timestamp <= endDate)
         );
-    }, [gameFilter, resultFilter, model1Filter, model2Filter, startDate, endDate]);
+    }, [gameFilter, modelFilter1, modelFilter2, startDate, endDate, matches]);
 
-    const uniqueGames = useMemo(() => [...new Set(mockMatches.map(match => match.game))], []);
-    const uniqueModels = useMemo(() => [...new Set([...mockMatches.map(match => match.model1), ...mockMatches.map(match => match.model2)])], []);
 
     return (
-        <Box sx={{ margin: 'auto', mt: 4 }}>
+        <Box sx={{ maxWidth: 1000, margin: 'auto', mt: 4 }}>
             <Typography variant="h4" gutterBottom>
                 All Matches
             </Typography>
@@ -81,28 +91,14 @@ export default function AllMatchesPage() {
                 </FormControl>
 
                 <FormControl sx={{ minWidth: 120 }}>
-                    <InputLabel>Result</InputLabel>
-                    <Select
-                        value={resultFilter}
-                        label="Result"
-                        onChange={(e) => setResultFilter(e.target.value)}
-                    >
-                        <MenuItem value="">All</MenuItem>
-                        <MenuItem value="win">Win</MenuItem>
-                        <MenuItem value="loss">Loss</MenuItem>
-                        <MenuItem value="draw">Draw</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <FormControl sx={{ minWidth: 120 }}>
                     <InputLabel>Model 1</InputLabel>
                     <Select
-                        value={model1Filter}
+                        value={modelFilter1}
                         label="Model 1"
-                        onChange={(e) => setModel1Filter(e.target.value)}
+                        onChange={(e) => setModelFilter1(e.target.value)}
                     >
                         <MenuItem value="">All</MenuItem>
-                        {uniqueModels.map(model => (
+                        {UniqueModels.map(model => (
                             <MenuItem key={model} value={model}>{model}</MenuItem>
                         ))}
                     </Select>
@@ -111,12 +107,12 @@ export default function AllMatchesPage() {
                 <FormControl sx={{ minWidth: 120 }}>
                     <InputLabel>Model 2</InputLabel>
                     <Select
-                        value={model2Filter}
+                        value={modelFilter2}
                         label="Model 2"
-                        onChange={(e) => setModel2Filter(e.target.value)}
+                        onChange={(e) => setModelFilter2(e.target.value)}
                     >
                         <MenuItem value="">All</MenuItem>
-                        {uniqueModels.map(model => (
+                        {UniqueModels.map(model => (
                             <MenuItem key={model} value={model}>{model}</MenuItem>
                         ))}
                     </Select>
@@ -146,55 +142,53 @@ export default function AllMatchesPage() {
                             <TableCell>Game</TableCell>
                             <TableCell>Model 1</TableCell>
                             <TableCell>Model 2</TableCell>
+                            <TableCell>Model 1 ELO</TableCell>
+                            <TableCell>Model 2 ELO</TableCell>
                             <TableCell>Result</TableCell>
-                            <TableCell>Model 1 Old ELO</TableCell>
-                            <TableCell>Model 1 New ELO</TableCell>
-                            <TableCell>Model 1 ELO Δ</TableCell>
-                            <TableCell>Model 2 Old ELO</TableCell>
-                            <TableCell>Model 2 New ELO</TableCell>
-                            <TableCell>Model 2 ELO Δ</TableCell>
                             <TableCell>Date</TableCell>
                             <TableCell>Action</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredMatches.map((match) => (
-                            <TableRow key={match.id}>
+                        {filteredMatches.map((match, i) => (
+                            <TableRow key={i}>
                                 <TableCell>{match.game}</TableCell>
-                                <TableCell>{match.model1}</TableCell>
-                                <TableCell>{match.model2}</TableCell>
                                 <TableCell>
-                                    <Chip 
-                                        label={match.result.toUpperCase()} 
-                                        color={getResultColor(match.result)}
-                                        size="small"
-                                    />
+                                    <Link href={`/models/${match.models[0]}`}>
+                                        {match.models[0]}
+                                    </Link>
                                 </TableCell>
-                                <TableCell>{match.model1OldElo}</TableCell>
-                                <TableCell>{match.model1NewElo}</TableCell>
                                 <TableCell>
-                                    <Typography
-                                        component="span"
-                                        color={match.model1EloDelta > 0 ? "success.main" : (match.model1EloDelta < 0 ? "error.main" : "text.primary")}
-                                    >
-                                        {match.model1EloDelta > 0 ? '+' : ''}{match.model1EloDelta}
+                                    <Link href={`/models/${match.models[1]}`}>
+                                        {match.models[1]}
+                                    </Link>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography>
+                                        {match.results[match.models[0]].elos_delta[0]}
+                                    </Typography>
+                                    <Typography color={match.results[match.models[0]].elos_delta[1] - match.results[match.models[0]].elos_delta[0] > 0 ? "green" : "red"}>
+                                        ({match.results[match.models[0]].elos_delta[1] - match.results[match.models[0]].elos_delta[0] > 0 ? '+' : ''}{match.results[match.models[0]].elos_delta[1] - match.results[match.models[0]].elos_delta[0]})
                                     </Typography>
                                 </TableCell>
-                                <TableCell>{match.model2OldElo}</TableCell>
-                                <TableCell>{match.model2NewElo}</TableCell>
                                 <TableCell>
-                                    <Typography
-                                        component="span"
-                                        color={match.model2EloDelta > 0 ? "success.main" : (match.model2EloDelta < 0 ? "error.main" : "text.primary")}
-                                    >
-                                        {match.model2EloDelta > 0 ? '+' : ''}{match.model2EloDelta}
+                                    <Typography>
+                                        {match.results[match.models[1]].elos_delta[0]}
+                                    </Typography>
+                                    <Typography color={match.results[match.models[1]].elos_delta[1] - match.results[match.models[1]].elos_delta[0] > 0 ? "green" : "red"}>
+                                        ({match.results[match.models[1]].elos_delta[1] - match.results[match.models[1]].elos_delta[0] > 0 ? '+' : ''}{match.results[match.models[1]].elos_delta[1] - match.results[match.models[1]].elos_delta[0]})
                                     </Typography>
                                 </TableCell>
-                                <TableCell>{match.date}</TableCell>
                                 <TableCell>
-                                    <Button variant="contained" size="small" href={`/matches/${match.id}`}>
-                                        View Match
-                                    </Button>
+                                    {match.results[match.models[0]].result === 0.5 ? 'Draw' : match.results[match.models[0]].result == 1 ? `${match.models[0]} wins!` : `${match.models[1]} wins!`}
+                                </TableCell>
+                                <TableCell>{match.timestamp}</TableCell>
+                                <TableCell>
+                                    <Link href={`/matches/${match.id}`} passHref>
+                                        <Button variant="contained" size="small">
+                                            View Match
+                                        </Button>
+                                    </Link>
                                 </TableCell>
                             </TableRow>
                         ))}

@@ -16,16 +16,13 @@ const Template: React.FC = ({ children }) => {
                         <AppBar position="static">
                             <Toolbar>
                                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                    Zero Sum Eval
+                                    <Link href="/" style={{ textDecoration: 'none', color: 'white' }} >Zero Sum Eval</Link>
                                 </Typography>
                                 <Link href="/" passHref>
                                     <Button sx={{ color: "white" }}>Leaderboard</Button>
                                 </Link>
                                 <Link href="/matches" passHref>
-                                    <Button sx={{ color: "white" }}>Games</Button>
-                                </Link>
-                                <Link href="/llms" passHref>
-                                    <Button sx={{ color: "white" }}>LLMs</Button>
+                                    <Button sx={{ color: "white" }}>All Matches</Button>
                                 </Link>
                             </Toolbar>
                         </AppBar>

@@ -89,6 +89,51 @@ def get_model_matches(model_id: str):
     return matches
         
 
+@app.get("/api/matches/{match_id}")
+def get_match(match_id: str):
+    match_path = glob(os.path.join(LOCAL_DIR, "games/*/matches", match_id))
+    if not match_path:
+        raise HTTPException(status_code=404, detail="Match not found")
+    model_1, model_2, match_time = re.match(r"(.+)_vs_(.+)_(\d+)", match_id).groups()
+    game_name = match_path[0].split("/")[-3]
+    match = {"models": [model_1, model_2], "timestamp": datetime.datetime.fromtimestamp(int(match_time)).strftime("%Y-%m-%d %H:%M:%S"), "game": game_name}
+    with open(os.path.join(match_path[0], "results.json")) as f:
+        results = json.load(f)
+        match["result"] = results[model_1]["result"]
+    
+    match["turns"] = []
+    with jsonlines.open(os.path.join(match_path[0], "turns.jsonl")) as f:
+        for turn in f:
+            match["turns"].append(turn)    
+    
+    return match
+    
+@app.get("/api/matches")
+def get_matches():
+    matches = []
+    for match_path in glob(os.path.join(LOCAL_DIR, "games/*/matches/*")):
+        game_name = match_path.split("/")[-3]
+        match_name = match_path.split("/")[-1]
+        model_1, model_2, match_time = re.match(r"(.+)_vs_(.+)_(\d+)", match_name).groups()
+        
+        # get the results
+        with open(os.path.join(match_path, "results.json")) as f:
+            results = json.load(f)
+            
+        for result in results:
+            results[result]["elos_delta"] = [int(x) for x in results[result]["elos_delta"]]
+
+        match = {
+            "id": match_name,
+            "game": game_name,
+            "models": [model_1, model_2],
+            "results": results,
+            "timestamp": datetime.datetime.fromtimestamp(int(match_time)).strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        matches.append(match)
+        
+    return matches
+
 @app.post("/api/webhook")
 async def webhook(request: Request):
     payload = await request.json()
