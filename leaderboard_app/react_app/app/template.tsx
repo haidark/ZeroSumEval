@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 
-const Template: React.FC = ({ children }) => {
+const Template: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
         <>
             <Container>

@@ -23,7 +23,7 @@ HF_USERNAME = os.environ.get("HF_USERNAME", "HishamYahya")
 LOCAL_DIR = "zse-matches"
 WEBHOOK_SECRET = os.environ.get("WEBHOOK_SECRET", "abc123")
 
-app = FastAPI(lifespan=gradio_lifespan_init())
+app = FastAPI(lifespan=gradio_lifespan_init(), root_path="/api")
 
 
 app.add_middleware(
@@ -48,7 +48,7 @@ async def update_local_repo():
     except Exception as e:
         print(f"Failed to update local repository: {str(e)}")
 
-@app.get("/api/leaderboard")
+@app.get("/leaderboard")
 def get_leaderboard():
     leaderboard = dict()
     for leaderboard_path in glob(os.path.join(LOCAL_DIR, "games/*/leaderboard.csv")):
@@ -61,7 +61,7 @@ def get_leaderboard():
 
     return leaderboard
 
-@app.get("/api/models/{model_id}")
+@app.get("/models/{model_id}")
 def get_model_matches(model_id: str):
     matches = []
     for match_path in glob(os.path.join(LOCAL_DIR, "games/*/matches/*")):
@@ -89,7 +89,7 @@ def get_model_matches(model_id: str):
     return matches
         
 
-@app.get("/api/matches/{match_id}")
+@app.get("/matches/{match_id}")
 def get_match(match_id: str):
     match_path = glob(os.path.join(LOCAL_DIR, "games/*/matches", match_id))
     if not match_path:
@@ -108,7 +108,7 @@ def get_match(match_id: str):
     
     return match
     
-@app.get("/api/matches")
+@app.get("/matches")
 def get_matches():
     matches = []
     for match_path in glob(os.path.join(LOCAL_DIR, "games/*/matches/*")):
@@ -134,7 +134,7 @@ def get_matches():
         
     return matches
 
-@app.post("/api/webhook")
+@app.post("/webhook")
 async def webhook(request: Request):
     payload = await request.json()
 

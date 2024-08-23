@@ -14,11 +14,22 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import GameComponent from './GameComponent';  // Make sure to create this file
 
+type Match = {
+    models: string[];
+    game: string;
+    result: number;
+    turns: {
+        context: {
+            last_trace: Record<string, string>;
+        };
+    }[];
+};
+
 const MatchPage = () => {
     const params = useParams();
     const matchId = params?.id;
 
-    const [match, setMatch] = useState(null);
+    const [match, setMatch] = useState<Match | null>(null);
     const [currentTurn, setCurrentTurn] = useState(0);
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +37,7 @@ const MatchPage = () => {
         const fetchMatchData = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`http://localhost:8000/api/matches/${matchId}`);
+                const response = await fetch(`/api/matches/${matchId}`);
                 const data = await response.json();
                 console.log('Match data:', data);
                 setMatch(data);
@@ -45,7 +56,9 @@ const MatchPage = () => {
     };
 
     const handleNextTurn = () => {
-        setCurrentTurn(prev => Math.min(match.turns.length - 1, prev + 1));
+        if (match) {
+            setCurrentTurn(prev => Math.min(match?.turns.length - 1, prev + 1));
+        }
     };
 
     if (loading) {
@@ -89,16 +102,16 @@ const MatchPage = () => {
             {/* Left side - Chat interface */}
             <Box sx={{ flex: 1, mr: 2, overflowY: 'auto' }}>
                 <Typography variant="h4" gutterBottom>
-                    {match.models[0]} vs {match.models[1]}
+                    {match?.models[0]} vs {match?.models[1]}
                 </Typography>
                 <Typography variant="h6" gutterBottom>
-                    Game: {match.game}
+                    Game: {match?.game}
                 </Typography>
                 <Typography variant="h6" gutterBottom>
-                    Result: {match.result === 0.5 ? 'Draw' : `${match.models[match.result]} wins!`}
+                    Result: {match?.result === 0.5 ? 'Draw' : `${match?.models[match?.result]} wins!`}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                {match.turns.map((turn, index) => (
+                {match?.turns.map((turn, index) => (
                     <Box
                         key={index}
                         sx={{
@@ -133,15 +146,15 @@ const MatchPage = () => {
             {/* Right side - Game component and controls */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <Paper sx={{ mb: 2, p: 2 }}>
-                    <GameComponent turn={match.turns[currentTurn]} moveNumber={currentTurn} lastMove={currentTurn == match.turns.length - 1} />
+                    <GameComponent turn={match?.turns[currentTurn]} moveNumber={currentTurn} lastMove={currentTurn == match?.turns.length - 1} />
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 2 }}>
                         <Button onClick={handlePrevTurn} disabled={currentTurn === 0}>
                             <ArrowBackIosNewIcon />
                         </Button>
                         <Typography sx={{ mx: 2 }}>
-                            Turn {currentTurn + 1} of {match.turns.length}
+                            Turn {currentTurn + 1} of {match?.turns.length}
                         </Typography>
-                        <Button onClick={handleNextTurn} disabled={currentTurn === match.turns.length - 1}>
+                        <Button onClick={handleNextTurn} disabled={currentTurn === match?.turns.length - 1}>
                             <ArrowForwardIosIcon />
                         </Button>
                     </Box>

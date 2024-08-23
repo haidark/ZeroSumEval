@@ -32,7 +32,7 @@ const getResultColor = (result: number) => {
 
 export default function ModelPage() {
     const params = useParams()
-    const model_id: string = params.id;
+    const model_id: string = params.id as string;
 
 
     const [matches, setMatches] = useState<{ id: number, opponent: string, game: string, timestamp: string, results: { [model: string]: { elos_delta: number[], result: number } } }[]>([]);
@@ -47,15 +47,15 @@ export default function ModelPage() {
     useEffect(() => {
         // Fetch model matches based on id
         const fetchMatches = async () => {
-            const response = await fetch(`http://localhost:8000/api/models/${model_id}`);
+            const response = await fetch(`/api/models/${model_id}`);
             const data = await response.json();
 
             // Update state with fetched data
             setMatches(data);
 
             // Update unique games and opponents
-            setUniqueGames([...new Set(data.map(match => match.game))]);
-            setUniqueOpponents([...new Set(data.map(match => match.opponent))]);
+            setUniqueGames(Array.from(new Set<string>(matches.map(match => match.game))));
+            setUniqueOpponents(Array.from(new Set<string>(matches.map(match => match.opponent))));
 
         }
         fetchMatches()
@@ -110,7 +110,7 @@ export default function ModelPage() {
                     <Select
                         value={resultFilter}
                         label="Result"
-                        onChange={(e) => setResultFilter(e.target.value)}
+                        onChange={(e) => setResultFilter(e.target.value as number)}
                     >
                         <MenuItem value={-1}>All</MenuItem>
                         <MenuItem value={1}>Win</MenuItem>

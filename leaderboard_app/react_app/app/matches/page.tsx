@@ -43,15 +43,15 @@ export default function ModelPage() {
     useEffect(() => {
         // Fetch model matches based on id
         const fetchMatches = async () => {
-            const response = await fetch(`http://localhost:8000/api/matches`);
+            const response = await fetch(`/api/matches`);
             const data = await response.json();
 
             // Update state with fetched data
             setMatches(data);
 
             // Update unique games and opponents
-            setUniqueGames([...new Set(data.map(match => match.game))]);
-            setUniqueModels([...new Set(data.map(match => match.models[0]), data.map(match => match.models[1]))]);
+            setUniqueGames(Array.from(new Set<string>(matches.map(match => match.game))));
+            setUniqueModels(Array.from(new Set([...matches.map(match => match.models[0]), ...matches.map(match => match.models[1])])));
 
         }
         fetchMatches()

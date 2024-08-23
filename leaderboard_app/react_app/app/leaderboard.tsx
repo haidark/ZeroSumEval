@@ -34,7 +34,7 @@ export default function Leaderboard(): JSX.Element {
     const [chosenGames, setChosenGames] = useState<string[]>([]);
     const [games, setGames] = useState<string[]>([]);
     const [leaderboard, setLeaderboard] = useState<{ id: string, elo: number }[]>([]);
-    const [leaderboards, setLeaderboards] = useState<{[game: string]: { id: string, elo: number }[]}>({});
+    const [leaderboards, setLeaderboards] = useState<{ [game: string]: { id: string, elo: number }[] }>({});
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
 
@@ -61,11 +61,11 @@ export default function Leaderboard(): JSX.Element {
     useEffect(() => {
         const fetchLeaderboard = async () => {
             setIsLoading(true);
-            let response = await fetch(`http://localhost:8000/api/leaderboard`);
-            let data: {[game: string]: { model: string, elo: number, wins: number, draws: number, losses: number }[]} = await response.json();
+            let response = await fetch(`/api/leaderboard`);
+            let data: { [game: string]: { model: string, elo: number, wins: number, draws: number, losses: number }[] } = await response.json();
             // convert response data to the format { game: { id: string, elo: number } }
             console.log(data)
-            let formattedData: {[game: string]: { id: string, elo: number }[]} = {};
+            let formattedData: { [game: string]: { id: string, elo: number }[] } = {};
             let games: string[] = [];
             for (const game in data) {
                 formattedData[game] = data[game].map(model => ({ id: model.model, elo: model.elo }));
@@ -75,7 +75,7 @@ export default function Leaderboard(): JSX.Element {
             setGames(games);
             setChosenGames(games);
             const newLeaderboard = calculateLeaderboard();
-                setLeaderboard(newLeaderboard);
+            setLeaderboard(newLeaderboard);
 
             setIsLoading(false);
         }

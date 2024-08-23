@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
 
-const Template: React.FC = ({ children }) => {
+const Template: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
         <>
             <html lang='en'>
