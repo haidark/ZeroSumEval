@@ -8,11 +8,12 @@ import {
     Button,
     Divider,
     Modal,
-    CircularProgress
+    CircularProgress,
+    Grid
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import GameComponent from './GameComponent';  // Make sure to create this file
+import GameComponent from './GameComponent';
 
 type Match = {
     models: string[];
@@ -101,95 +102,98 @@ const MatchPage = () => {
     }
 
     return (
-        <Box sx={{ display: 'flex', height: '100vh', p: 2 }}>
-            {/* Left side - Chat interface */}
-            <Box sx={{ flex: 1, mr: 2, overflowY: 'auto' }}>
-                <Typography variant="h4" gutterBottom>
-                    {match?.models[0]} vs {match?.models[1]}
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                    Game: {match?.game}
-                </Typography>
-                <Typography variant="h6" gutterBottom>
-                    Result: {match?.result === 0.5 ? 'Draw' : `${match?.models[match?.result]} wins!`}
-                </Typography>
-                <Divider sx={{ my: 2 }} />
-                {match?.turns.map((turn, index) => {
-                    if (turn.context.message) {
-                        return (
-                            <Box
-                                key={index}
-                                sx={{
-                                    display: 'flex',
-                                    justifyContent: "center",
-                                    mb: 2
-                                }}
-                            >
-                                <Paper
+        <Box sx={{ flexGrow: 1, p: 2 }}>
+            <Grid container spacing={2}>
+                {/* Game component and controls - will be at the top on narrow screens */}
+                <Grid item xs={12} md={6} order={{ xs: 1, md: 2 }}>
+                    <Paper sx={{ p: 2, mb: { xs: 2, md: 0 } }}>
+                        <GameComponent turn={match?.turns[currentTurn]} moveNumber={currentTurn} lastMove={currentTurn == match?.turns.length - 1} />
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 2 }}>
+                            <Button onClick={handlePrevTurn} disabled={currentTurn === 0}>
+                                <ArrowBackIosNewIcon />
+                            </Button>
+                            <Typography sx={{ mx: 2 }}>
+                                Turn {currentTurn + 1} of {match?.turns.length}
+                            </Typography>
+                            <Button onClick={handleNextTurn} disabled={currentTurn === match?.turns.length - 1}>
+                                <ArrowForwardIosIcon />
+                            </Button>
+                        </Box>
+                    </Paper>
+                </Grid>
+
+                {/* Chat interface */}
+                <Grid item xs={12} md={6} order={{ xs: 2, md: 1 }}>
+                    <Box sx={{ overflowY: 'auto', maxHeight: { xs: 'auto', md: 'calc(100vh - 32px)' } }}>
+                        <Typography variant="h4" gutterBottom>
+                            {match?.models[0]} vs {match?.models[1]}
+                        </Typography>
+                        <Typography variant="h6" gutterBottom>
+                            Game: {match?.game}
+                        </Typography>
+                        <Typography variant="h6" gutterBottom>
+                            Result: {match?.result === 0.5 ? 'Draw' : `${match?.models[match?.result]} wins!`}
+                        </Typography>
+                        <Divider sx={{ my: 2 }} />
+                        {match?.turns.map((turn, index) => {
+                            if (turn.context.message) {
+                                return (
+                                    <Box
+                                        key={index}
+                                        sx={{
+                                            display: 'flex',
+                                            justifyContent: "center",
+                                            mb: 2
+                                        }}
+                                    >
+                                        <Paper
+                                            sx={{
+                                                p: 1,
+                                                maxWidth: '70%',
+                                                bgcolor: "info.light"
+                                            }}
+                                        >
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {turn.context.message}
+                                            </Typography>
+                                        </Paper>
+                                    </Box>
+                                );
+                            }
+                            return (
+                                <Box
+                                    key={index}
                                     sx={{
-                                        p: 1,
-                                        maxWidth: '70%',
-                                        bgcolor: "info.light"
+                                        display: 'flex',
+                                        justifyContent: turn.context.history.length % 2 === 0 ? 'flex-start' : 'flex-end',
+                                        mb: 2
                                     }}
                                 >
-                                    <Typography variant="body2" fontWeight="bold">
-                                        {turn.context.message}
-                                    </Typography>
-                                </Paper>
-                            </Box>
-                        );
-                    }
-                    return (
-                        <Box
-                            key={index}
-                            sx={{
-                                display: 'flex',
-                                justifyContent: turn.context.history.length % 2 === 0 ? 'flex-start' : 'flex-end',
-                                mb: 2
-                            }}
-                        >
-                            <Paper
-                                sx={{
-                                    p: 1,
-                                    maxWidth: '70%',
-                                    bgcolor: turn.context.history.length % 2 === 0 ? 'primary.light' : 'secondary.light'
-                                }}
-                            >
-                                {Object.entries(turn.context.last_trace || {}).map(([key, value], i, arr) => (
-                                    <React.Fragment key={key}>
-                                        <Typography variant="body2" fontWeight="bold">
-                                            {key}:
-                                        </Typography>
-                                        <Typography variant="body2" paragraph>
-                                            {value}
-                                        </Typography>
-                                        {i < arr.length - 1 && <Divider sx={{ my: 1 }} />}
-                                    </React.Fragment>
-                                ))}
-                            </Paper>
-                        </Box>
-                    );
-                }
-                )}
-            </Box>
-
-            {/* Right side - Game component and controls */}
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <Paper sx={{ mb: 2, p: 2 }}>
-                    <GameComponent turn={match?.turns[currentTurn]} moveNumber={currentTurn} lastMove={currentTurn == match?.turns.length - 1} />
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 2 }}>
-                        <Button onClick={handlePrevTurn} disabled={currentTurn === 0}>
-                            <ArrowBackIosNewIcon />
-                        </Button>
-                        <Typography sx={{ mx: 2 }}>
-                            Turn {currentTurn + 1} of {match?.turns.length}
-                        </Typography>
-                        <Button onClick={handleNextTurn} disabled={currentTurn === match?.turns.length - 1}>
-                            <ArrowForwardIosIcon />
-                        </Button>
+                                    <Paper
+                                        sx={{
+                                            p: 1,
+                                            maxWidth: '70%',
+                                            bgcolor: turn.context.history.length % 2 === 0 ? 'primary.light' : 'secondary.light'
+                                        }}
+                                    >
+                                        {Object.entries(turn.context.last_trace || {}).map(([key, value], i, arr) => (
+                                            <React.Fragment key={key}>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {key}:
+                                                </Typography>
+                                                <Typography variant="body2" paragraph>
+                                                    {value}
+                                                </Typography>
+                                                {i < arr.length - 1 && <Divider sx={{ my: 1 }} />}
+                                            </React.Fragment>
+                                        ))}
+                                    </Paper>
+                                </Box>
+                            );
+                        })}
                     </Box>
-                </Paper>
-            </Box>
+                </Grid>
+            </Grid>
         </Box>
     );
 };
