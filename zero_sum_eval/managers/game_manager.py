@@ -118,7 +118,6 @@ class GameManager:
         turns: List[Dict] = []
         while round_count < self.max_rounds:
             turn_count: int = round_count // len(self.players) + 1
-
             player: Player = self.players[game_state.roles[0]]
             if game_state.validate_game():
                 break
