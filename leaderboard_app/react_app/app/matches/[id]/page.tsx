@@ -18,9 +18,12 @@ type Match = {
     models: string[];
     game: string;
     result: number;
+    message: string;
     turns: {
         context: {
             last_trace: Record<string, string>;
+            history: string[];
+            message: string | null;
         };
     }[];
 };
@@ -111,36 +114,63 @@ const MatchPage = () => {
                     Result: {match?.result === 0.5 ? 'Draw' : `${match?.models[match?.result]} wins!`}
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                {match?.turns.map((turn, index) => (
-                    <Box
-                        key={index}
-                        sx={{
-                            display: 'flex',
-                            justifyContent: index % 2 === 0 ? 'flex-start' : 'flex-end',
-                            mb: 2
-                        }}
-                    >
-                        <Paper
+                {match?.turns.map((turn, index) => {
+                    if (turn.context.message) {
+                        return (
+                            <Box
+                                key={index}
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: "center",
+                                    mb: 2
+                                }}
+                            >
+                                <Paper
+                                    sx={{
+                                        p: 1,
+                                        maxWidth: '70%',
+                                        bgcolor: "info.light"
+                                    }}
+                                >
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {turn.context.message}
+                                    </Typography>
+                                </Paper>
+                            </Box>
+                        );
+                    }
+                    return (
+                        <Box
+                            key={index}
                             sx={{
-                                p: 1,
-                                maxWidth: '70%',
-                                bgcolor: index % 2 === 0 ? 'primary.light' : 'secondary.light'
+                                display: 'flex',
+                                justifyContent: turn.context.history.length % 2 === 0 ? 'flex-start' : 'flex-end',
+                                mb: 2
                             }}
                         >
-                            {Object.entries(turn.context.last_trace || {}).map(([key, value], i, arr) => (
-                                <React.Fragment key={key}>
-                                    <Typography variant="body2" fontWeight="bold">
-                                        {key}:
-                                    </Typography>
-                                    <Typography variant="body2" paragraph>
-                                        {value}
-                                    </Typography>
-                                    {i < arr.length - 1 && <Divider sx={{ my: 1 }} />}
-                                </React.Fragment>
-                            ))}
-                        </Paper>
-                    </Box>
-                ))}
+                            <Paper
+                                sx={{
+                                    p: 1,
+                                    maxWidth: '70%',
+                                    bgcolor: turn.context.history.length % 2 === 0 ? 'primary.light' : 'secondary.light'
+                                }}
+                            >
+                                {Object.entries(turn.context.last_trace || {}).map(([key, value], i, arr) => (
+                                    <React.Fragment key={key}>
+                                        <Typography variant="body2" fontWeight="bold">
+                                            {key}:
+                                        </Typography>
+                                        <Typography variant="body2" paragraph>
+                                            {value}
+                                        </Typography>
+                                        {i < arr.length - 1 && <Divider sx={{ my: 1 }} />}
+                                    </React.Fragment>
+                                ))}
+                            </Paper>
+                        </Box>
+                    );
+                }
+                )}
             </Box>
 
             {/* Right side - Game component and controls */}

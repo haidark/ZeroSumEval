@@ -38,7 +38,7 @@ export default function ModelPage() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [uniqueGames, setUniqueGames] = useState<string[]>([]);
-    const [UniqueModels, setUniqueModels] = useState<string[]>([]);
+    const [uniqueModels, setUniqueModels] = useState<string[]>([]);
 
     useEffect(() => {
         // Fetch model matches based on id
@@ -66,7 +66,7 @@ export default function ModelPage() {
             (startDate === '' || match.timestamp >= startDate) &&
             (endDate === '' || match.timestamp <= endDate)
         );
-    }, [gameFilter, modelFilter1, modelFilter2, startDate, endDate, matches]);
+    }, [gameFilter, modelFilter1, modelFilter2, startDate, endDate, matches, uniqueGames, uniqueModels]);
 
 
     return (
@@ -98,7 +98,7 @@ export default function ModelPage() {
                         onChange={(e) => setModelFilter1(e.target.value)}
                     >
                         <MenuItem value="">All</MenuItem>
-                        {UniqueModels.map(model => (
+                        {uniqueModels.map(model => (
                             <MenuItem key={model} value={model}>{model}</MenuItem>
                         ))}
                     </Select>
@@ -112,7 +112,7 @@ export default function ModelPage() {
                         onChange={(e) => setModelFilter2(e.target.value)}
                     >
                         <MenuItem value="">All</MenuItem>
-                        {UniqueModels.map(model => (
+                        {uniqueModels.map(model => (
                             <MenuItem key={model} value={model}>{model}</MenuItem>
                         ))}
                     </Select>
