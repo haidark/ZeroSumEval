@@ -1,3 +1,4 @@
+from copy import deepcopy
 import chess
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
@@ -99,9 +100,9 @@ class ChessGame(GameState):
 
     def export(self) -> str:
         return {
-            "environment": self.environment,
-            "context": self.context,
-            "roles": self.roles,
+            "environment": deepcopy(self.environment),
+            "context": deepcopy(self.context),
+            "roles": self.roles.copy(),
             "formatted_history": self.formatted_move_history(),
             "validate_game": self.validate_game()
         }

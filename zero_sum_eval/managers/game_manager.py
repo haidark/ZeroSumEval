@@ -94,9 +94,6 @@ class GameManager:
                 return game_state, player_attempts
         return game_state, player_attempts  # Return the original state if all tries fail
 
-    def _log_turn(self, game_state: GameState):
-        with jsonlines.open(self.turns_log_file, "a") as f:
-            f.write(game_state.export())
 
     def _run_game_loop(self, game_state: GameState) -> GameState:
         """
@@ -114,6 +111,7 @@ class GameManager:
         logger = getLogger()
         round_count: int = 0
         attempts: int = 0
+        turns: List[Dict] = []
         while round_count < self.max_rounds:
             turn_count: int = round_count // len(self.players) + 1
             player: Player = self.players[game_state.roles[0]]
@@ -121,10 +119,13 @@ class GameManager:
             if game_state.validate_game():
                 break
             game_state, attempts = self._process_turn(game_state, player)
-            self._log_turn(game_state)
-
+            turns.append(game_state.export())
             round_count += 1
-
+            
+        with jsonlines.open(self.turns_log_file, "w") as f:
+            for turn in turns:
+                f.write(turn)
+        
         return game_state
 
     def start(self) -> GameState:
