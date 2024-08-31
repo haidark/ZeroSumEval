@@ -1,27 +1,26 @@
 logging:
-  output_dir: ../output/mathquiz_game
+  output_dir: ../output/gandalf_game
+
 manager:
   args:
-    max_rounds: 10
+    max_rounds: 20
     win_conditions:
-      - StudentCorrect
-      - StudentIncorrect
-      - TeacherIncorrect
+      - SecretGuessed
+      - MaxTurnsExceeded
     draw_conditions:
 game:
-  name: mathquiz
+  name: gandalf
   players:
-    - name: mathquiz_teacher
+    - name: sentinel_player
       args:
-        id: gpt4 teacher
+        id: gpt4 sentinel
         roles: 
-          - TeacherGenerateQuestion
-          - TeacherAnswerQuestion
+          - Sentinel
         optimize: false
-        dataset: mathquiz_dataset
+        dataset: gandalf_dataset
         dataset_args:
-          filename: ./data/mathquiz/examples.jsonl
-          role: Teacher
+          filename: ./data/gandalf/examples.jsonl
+          role: Sentinel
         optimizer: MIPROv2
         optimizer_args:
           num_candidates: 5
@@ -30,7 +29,7 @@ game:
         compilation_args:
           max_bootstrapped_demos: 1
           max_labeled_demos: 1
-        metric: math_question_validation_metric
+        metric: sentinel_response_validation_metric
         lm:
           type: AzureOpenAI
           args:
@@ -43,16 +42,16 @@ game:
             frequency_penalty: 0
             presence_penalty: 0
         max_tries: 5
-    - name: mathquiz_student
+    - name: infiltrator_player
       args:
-        id: gpt4 student
+        id: gpt4 infiltrator
         roles: 
-          - StudentAnswerQuestion
+          - Infiltrator
         optimize: false
-        dataset: mathquiz_dataset
+        dataset: gandalf_dataset
         dataset_args:
-          filename: ./data/mathquiz/examples.jsonl
-          role: Student
+          filename: ./data/gandalf/examples.jsonl
+          role: Infiltrator
         optimizer: MIPROv2
         optimizer_args:
           num_candidates: 5
@@ -61,7 +60,7 @@ game:
         compilation_args:
           max_bootstrapped_demos: 1
           max_labeled_demos: 1
-        metric: math_answer_validation_metric
+        metric: infiltrator_guess_validation_metric
         lm:
           type: AzureOpenAI
           args:

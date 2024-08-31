@@ -43,7 +43,8 @@ class MathQuizGame(GameState):
             self.roles.copy(),
             target=self.target
         )
-        current_role = new_state.roles[0]       
+        current_role = new_state.roles[0]
+        new_state.context['message'] = None   
         if current_role == "TeacherGenerateQuestion":
             new_state.environment['question'] = move
             new_state.roles = new_state.get_next_roles()
@@ -51,10 +52,14 @@ class MathQuizGame(GameState):
             new_state.environment['teacher_answer'] = move
             if self.verify_answer(move):
                 new_state.roles = new_state.get_next_roles()
+            else:
+                new_state.context['message'] = f"Teacher's previous answer ({move})was incorrect."
         elif current_role == "StudentAnswerQuestion":
             new_state.environment['student_answer'] = move
             if self.verify_answer(move):
                 new_state.roles = new_state.get_next_roles()
+            else:
+                new_state.context['message'] = f"Student's previous answer ({move}) was incorrect."
         return new_state
 
     def query_game(self) -> GameState:
