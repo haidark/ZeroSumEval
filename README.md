@@ -1,29 +1,31 @@
+<!-- omit in toc -->
 # ZeroSumEval (ZSEval)
 
-ZeroSumEval is a framework for evaluating the reasoning abilities of Large Language Models (LLMs) using zero-summultiplayer simulations.
+ZeroSumEval is a framework for evaluating the reasoning abilities of Large Language Models (LLMs) using zero-sum multiplayer simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) for automatic prompt optimization to ensure evaluations are fair.
 
+<!-- omit in toc -->
 ## Table of Contents
 
-- [ZeroSumEval (ZSEval)](#zerosumeval-zseval)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-  - [Project Structure](#project-structure)
-  - [Installation](#installation)
-  - [Usage](#usage)
-  - [Games](#games)
-  - [Configuration](#configuration)
-  - [Contributing](#contributing)
-  - [License](#license)
-  - [Current Development Plan](#current-development-plan)
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Games](#games)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Overview
 
-ZeroSumEval aims to create a robust evaluation framework for LLMs using competitive scenarios. The project focuses on implementing various multiplayer simulations/games, including text-based challenges, board games, and Capture The Flag (CTF) competitions.
+ZeroSumEval aims to create a robust evaluation framework for LLMs using competitive scenarios. Instead of fixed evaluation benchmarks or model-based judging, ZSEval uses multiplayer simulations/games with clear win conditions to pit models against each other. 
+
+The framework tests various model capabilities, including knowledge, reasoning, and planning. In addition, ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) optimization to test the self-improvement capability of models and ensure the competition between models is fair.
+
+The eval suite consists of a growing number of simulations, including text-based challenges, board games, and Capture The Flag (CTF) competitions.
 
 Key features:
-- Flexible game environment setup
-- Player abstraction for different LLMs
-- Customizable win conditions and game rules
+- One-click evals on the existing suite of games
+- Easily extendable abstractions for new game implementations
 - Integration with DSPy for automated prompt optimization
 - Comprehensive logging and analysis tools
 
@@ -173,30 +175,8 @@ game:
 
 ## Contributing
 
-Contributions to ZeroSumEval are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a new branch for your feature
-3. Implement your changes
-4. Write tests for your new functionality
-5. Submit a pull request
+Contributions to ZeroSumEval are welcome! Please open a pull request
 
 ## License
 
 This project is licensed under the Apache License 2.0. See the LICENSE file for details.
-
-## Current Development Plan
-
-1. ~~Define the framework for two player games: including the components, interactions, and overall flow~~
-2. ~~Implement DSPy for prompt optimization~~
-3. ~~Implement simple CTF game CrackMe~~
-4. ~~Implement text-based two-player games (mathquiz, codequiz)~~
-5. ~~Implement chess and other board games~~
-6. First round of eval on 3-5 current models on the implemented games
-7. Analyze results
-8. Implement tool usage
-9. Implement complex CTF games
-10. Iterate on the games, design of framework
-11. Harden framework and generalize it
-12. Second round of evals on 5-7 current models
-13. Analyze results
