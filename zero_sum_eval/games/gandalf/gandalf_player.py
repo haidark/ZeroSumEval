@@ -45,26 +45,18 @@ class InfiltratorGuessModule(dspy.Module):
 
 @PLAYER_REGISTRY.register("gandalf", "sentinel_player")
 class SentinelPlayer(Player):
-    def _build_modules(self, **module_args):
+    def _build_module(self, **module_args):
         self.sentinel_module = SentinelResponseModule(**module_args)
-        return [self.sentinel_module]
+        return self.sentinel_module
 
-    def _make_move(self, game_state):
-        if game_state.roles[0] != "Sentinel":
-            raise ValueError(f"Invalid role for Sentinel: {game_state.roles[0]}")
-        
-        trace = self.sentinel_module(**game_state.player_inputs())
-        return trace.response
+    def _make_move(self, **kwargs):
+        return self.sentinel_module(**kwargs).response
 
 @PLAYER_REGISTRY.register("gandalf", "infiltrator_player")
 class InfiltratorPlayer(Player):
-    def _build_modules(self, **module_args):
+    def _build_module(self, **module_args):
         self.infiltrator_module = InfiltratorGuessModule(**module_args)
-        return [self.infiltrator_module]
+        return self.infiltrator_module
 
-    def _make_move(self, game_state):
-        if game_state.roles[0] != "Infiltrator":
-            raise ValueError(f"Invalid role for Infiltrator: {game_state.roles[0]}")
-        
-        trace = self.infiltrator_module(**game_state.player_inputs())
-        return trace.response
+    def _make_move(self, **kwargs):
+        return self.infiltrator_module(**kwargs).response
