@@ -38,7 +38,11 @@ class Registry:
             raise ValueError(
                 f"Type '{name}' is not registered in '{self.registry_name}'."
             )
-
+        if key == "bootstrapfewshot":
+            if "prompt_model" in kwargs:
+                del kwargs["prompt_model"]
+            if "task_model" in kwargs:
+                del kwargs["task_model"]
         cls = self._classes_dict[key]
         return cls(*args, **kwargs)
 
@@ -160,8 +164,8 @@ class MetricRegistry:
 
         metric = self._metrics_dict[key]
         return metric
-    # TODO fix this wrapper or remove it if it isnt needed.
-    #     return self._metric_wrapper(*args, func=metric, output_key=output_key, **kwargs)
+        # # TODO fix this wrapper or remove it if it isnt needed.
+        # return self._metric_wrapper(*args, func=metric, output_key=output_key, **kwargs)
 
     # def _metric_wrapper(self, func, output_key):
     #     """
