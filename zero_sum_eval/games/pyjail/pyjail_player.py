@@ -1,8 +1,4 @@
 from zero_sum_eval.player import Player
-from .attacker_dspy import AttackerCoT
-from .defender_dspy import DefenderCoT
-# from .attacker_prompting import attack
-# from .defender_prompting import *
 
 class PlayerAttacker(Player):
     def __init__(self, id, llm_model, name):
