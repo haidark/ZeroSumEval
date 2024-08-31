@@ -6,6 +6,7 @@ import dspy
 import chess
 from chess import IllegalMoveError, InvalidMoveError, AmbiguousMoveError
 from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
+from stockfish import Stockfish
 
 # TODO: add support for resigning
 
@@ -21,6 +22,29 @@ def validate_move(example, prediction, trace=None):
         return 0
     else:
         return -1
+    
+@METRIC_REGISTRY.register("chess_stockfish_metric")
+def stockfish_metric(example: dspy.Example, prediction: dspy.Example, trace=None, margin=5):
+    board_state = example.board_state
+    pred_move = prediction.move
+    board = chess.Board(board_state)
+    try:
+        if not board.is_legal(board.parse_san(pred_move)):
+            return 0
+    except (IllegalMoveError, InvalidMoveError, AmbiguousMoveError):
+        return 0
+    
+    stockfish = Stockfish("/usr/games/stockfish", parameters={"Threads": 1, "Minimum Thinking Time": 1000})
+    is_white = board.turn
+    stockfish.set_fen_position(board.fen())
+    eval_prev = stockfish.get_evaluation()
+    board.push_san(pred_move)
+    stockfish.set_fen_position(board.fen())
+    eval_after = stockfish.get_evaluation()
+    if is_white:
+        return eval_after["value"] > eval_prev["value"] - margin
+    else:
+        return eval_prev["value"] > eval_after["value"] - margin  
 
 class NextMove(dspy.Signature):
     """Given a board state, role, and move history, produce the next best valid move"""
