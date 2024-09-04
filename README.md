@@ -1,5 +1,7 @@
-<!-- omit in toc -->
-# ZeroSumEval (ZSEval)
+<p align="center">
+  <img align="center" src="logo.png" width="380px" />
+</p>
+<p align="left">
 
 ZeroSumEval is a framework for evaluating the reasoning abilities of Large Language Models (LLMs) using zero-sum multiplayer simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) for automatic prompt optimization to ensure evaluations are fair.
 
