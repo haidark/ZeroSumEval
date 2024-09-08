@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 import logging
 import functools
+import os
 
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 import dspy
@@ -24,6 +25,7 @@ class Player(ABC):
         dataset: Optional[str]= None,
         dataset_args: dict = {},
         max_tries: int = 10,
+        output_dir: str = "",
     ):
         from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
@@ -46,6 +48,9 @@ class Player(ABC):
             dspy.configure(trace=[])
             with dspy.context(lm=self.llm_model):
                 self.module = self.optimizer.compile(self.module, trainset=self.dataset.get_dataset(), **compilation_args)
+                print(output_dir)
+                os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
+                self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
 
     @abstractmethod
     def _build_module(self, **module_args):

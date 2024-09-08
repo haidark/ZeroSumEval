@@ -4,3 +4,4 @@ pyyaml
 anthropic
 tabulate
 jsonlines
+mistralai==0.4.2

@@ -54,6 +54,7 @@ class GameManager:
             player: Player = PLAYER_REGISTRY.build(
                 self.config["game"]["name"],
                 player_config["name"],
+                output_dir=self.config["logging"]["output_dir"],
                 **player_config["args"],
             )
             if player.roles[0] not in self.games[0].roles: 
