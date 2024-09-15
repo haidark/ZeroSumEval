@@ -114,6 +114,7 @@ class GameManager:
         logger = getLogger()
         turn_count: int = 1
         attempts: int = 0
+        round_count: int = 0
         turns: List[Dict] = []
         while round_count < self.max_rounds:
             turn_count: int = round_count // len(self.players) + 1
