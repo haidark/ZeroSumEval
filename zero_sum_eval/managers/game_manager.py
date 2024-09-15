@@ -25,6 +25,7 @@ class GameManager:
         self.games: List[GameState] = []
         self.players: Dict[str, Player] = {}
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
+        self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
         self.draw_conditions: List[str] = self.config["manager"]["args"]["draw_conditions"]
         self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
@@ -79,10 +80,10 @@ class GameManager:
         logger = getLogger()
         
         player_attempts = 0
-        for _ in range(player.max_tries):
+        for _ in range(self.max_player_attempts):
             new_state: GameState = game_state.query_game()
             move: str = player.make_move(new_state)
-            player_attempts+=1
+            player_attempts += 1
             game_state: GameState = game_state.update_game(move)
             val: Optional[str] = game_state.validate_game()
             logger.debug(f"{player.id} (attempt # {player_attempts}):\n{game_state.display()}\nMove: {move}")
