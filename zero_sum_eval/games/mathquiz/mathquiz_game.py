@@ -44,22 +44,20 @@ class MathQuizGame(GameState):
             target=self.target
         )
         current_role = new_state.roles[0]
-        new_state.context['message'] = None   
+        new_state.context['message'] = None
         if current_role == "TeacherGenerateQuestion":
             new_state.environment['question'] = move
-            new_state.roles = new_state.get_next_roles()
         elif current_role == "TeacherAnswerQuestion":
             new_state.environment['teacher_answer'] = move
-            if self.verify_answer(move):
-                new_state.roles = new_state.get_next_roles()
-            else:
-                new_state.context['message'] = f"Teacher's previous answer ({move})was incorrect."
+            if not self.verify_answer(move):
+                new_state.context['message'] = f"TeacherIncorrect"
+                new_state.environment['teacher_answer'] = None
         elif current_role == "StudentAnswerQuestion":
             new_state.environment['student_answer'] = move
-            if self.verify_answer(move):
-                new_state.roles = new_state.get_next_roles()
-            else:
-                new_state.context['message'] = f"Student's previous answer ({move}) was incorrect."
+            if not self.verify_answer(move):
+                new_state.context['message'] = f"StudentIncorrect"
+                new_state.environment['student_answer'] = None
+        new_state.roles = new_state.get_next_roles()      
         return new_state
 
     def query_game(self) -> GameState:
@@ -76,17 +74,15 @@ class MathQuizGame(GameState):
         return new_state
 
     def validate_game(self) -> Optional[str]:
-        if self.environment['student_answer']: # student attempted to answer
+        if self.environment['student_answer'] is not None:
             if self.verify_answer(self.environment['student_answer']):
                 return "StudentCorrect"
             else:
                 return "StudentIncorrect"
-        if self.environment['teacher_answer']: # teacher attempted to answer
-            if self.verify_answer(self.environment['teacher_answer']):
-                return None
-            else:
+        if self.environment['teacher_answer'] is not None:
+            if not self.verify_answer(self.environment['teacher_answer']):
                 return "TeacherIncorrect"
-        return None
+        return self.context['message']
 
     def get_next_roles(self) -> List[str]:
         if self.environment['question'] is None:

@@ -2,11 +2,9 @@ logging:
   output_dir: ../output/mathquiz_game
 manager:
   args:
-    max_rounds: 10
+    max_rounds: 100
     win_conditions:
       - StudentCorrect
-      - StudentIncorrect
-      - TeacherIncorrect
     draw_conditions:
 game:
   name: mathquiz
@@ -17,19 +15,20 @@ game:
         roles: 
           - TeacherGenerateQuestion
           - TeacherAnswerQuestion
-        optimize: false
+        optimize: true
         dataset: mathquiz_dataset
         dataset_args:
-          filename: ./data/mathquiz/examples.jsonl
-          role: Teacher
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
+          filename: data/mathquiz/mathquiz_gsm8k_teacher_examples.jsonl
+          role: TeacherGenerateQuestion
+          num_examples: 10
+        optimizer: MiPROv2
+        # optimizer_args:
+        #   num_candidates: 5
+        #   minibatch_size: 5
+        #   minibatch_full_eval_steps: 10
+        # compilation_args:
+        #   max_bootstrapped_demos: 1
+        #   max_labeled_demos: 1
         metric: math_question_validation_metric
         lm:
           type: AzureOpenAI
