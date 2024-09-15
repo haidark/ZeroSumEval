@@ -13,15 +13,14 @@ from stockfish import Stockfish
 @METRIC_REGISTRY.register("chess_move_validation_metric")
 def validate_move(example, prediction, trace=None):
     pred_move = prediction.move
-    true_move = example.move
     board_state = example.board_state
     board = chess.Board(board_state)
-    if true_move is not None and pred_move == true_move:
-        return 1
-    elif board.is_legal(board.parse_san(pred_move)):
+    try:
+        if board.is_legal(board.parse_san(pred_move)):
+            return 1
         return 0
-    else:
-        return -1
+    except (IllegalMoveError, InvalidMoveError, AmbiguousMoveError):
+        return 0
     
 @METRIC_REGISTRY.register("chess_stockfish_metric")
 def stockfish_metric(example: dspy.Example, prediction: dspy.Example, trace=None, margin=5):
@@ -52,7 +51,7 @@ class NextMove(dspy.Signature):
     board_state = dspy.InputField(desc="FEN formatted current board state")
     role = dspy.InputField(desc="role of the player making the next move")
     history = dspy.InputField(desc="move history")
-    move = dspy.OutputField(desc="a valid SAN formatted move without move number or elipses")
+    move = dspy.OutputField(desc="a valid SAN move without move number or elipses. Make sure to reply ONLY with the SAN move and nothing else.")
 
 class ChessCoT(dspy.Module):
     def __init__(self):
