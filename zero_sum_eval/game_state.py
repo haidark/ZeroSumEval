@@ -5,6 +5,8 @@ import yaml
 from abc import ABC, abstractmethod
 from typing import Dict, List, Self, Optional 
 
+from dspy import Prediction
+
 class GameState(ABC):
     def __init__(self, **kwargs) -> Self:
        environment = None         
@@ -25,12 +27,13 @@ class GameState(ABC):
         raise NotImplementedError
         
     @abstractmethod
-    def update_game(self, move: str) -> Self:
+    def update_game(self, move: str, trace: Optional[Prediction] = None) -> Self:
         """
         Update the game state based on the given move.
 
         Args:
             move (str): The move to be applied to the game state.
+            trace (dspy.Prediction, optional): The trace of the move made by the player, to save in the state.
 
         Returns:
             GameState: A new GameState object representing the updated game state.
@@ -96,7 +99,7 @@ class GameState(ABC):
         Returns:
             str: A YAML-formatted string representation of the game state.
         """
-        return yaml.dump(self.__dict__)
+        return self.__dict__
     
     
 

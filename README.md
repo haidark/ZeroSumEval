@@ -1,134 +1,184 @@
-# Zero Sum Eval (ZSEval)
+<p align="center">
+  <img align="center" src="logo.png" width="380px" />
+</p>
+<p align="left">
 
-The goal of this work is to understand how two player games/problems/challenges can be used the evaluate/improve the reasoning ability of LLMs
+ZeroSumEval is a framework for evaluating the reasoning abilities of Large Language Models (LLMs) using zero-sum multiplayer simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) for automatic prompt optimization to ensure evaluations are fair.
 
-# High level Plan
+<!-- omit in toc -->
+## Table of Contents
 
-## Current Plan
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Games](#games)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [License](#license)
 
-1. Define the framework for two player games: including the components, interactions, and overall flow
-    1. Abstractions that captures the players in the games, win conditions, and interactions between players
-        1. Player: captures the essential parts of a player in the game, including the LLM driving the player and abstract methods which prepare the player to play its role in the game
-        2. GameEnvironment: captures the setup of the game, controls information provided to each player, the progress of each player in the game, tracks tries/retries, win/loss conditions, ends the game
-        
-        ### UML DIagram
-        
-        ```html
-        +-------------------+          +--------------------+
-        |   GameManager     |          |       Player       |
-        +-------------------+          +--------------------+
-        | - players         |1        n| - id               |
-        | - game_state      |<-------->| - llm_model        |
-        | - max_turns       |          | - name             |
-        | - current_turn    |          +--------------------+
-        | - win_conditions  |          | + initlaize()      |
-        +-------------------+          | + make_move()      |
-        | + initialize()    |          +--------------------+
-        | + update_state()  |       
-        | + check_win()     |       
-        | + run_game()      |
-        +-------------------+
-        ```
-        
-2. Implement DSPy for prompt optimization (Haidar)
-3. Implement simple CTF game FuzzMe (Colton)
-4. Implement text based two player game
-    1. mathquiz
-    2. codequiz 
-5. Implement chess and other board games
-6. First round of eval on 3-5 current models on the implemented games
-7. Analyze results (end of July)
-8. Implement tool usage
-9. Implement complex CTF games
-10. Iterate on the games, design of framework.
-11. Harden framework and generalize it
-12. Second round of evals on 5-7 current models.
-13. Analyze results
-14. Write plan to open source
-15. Write paper
+## Overview
 
-### Initial plan (outdated)
+ZeroSumEval aims to create a robust evaluation framework for LLMs using competitive scenarios. Instead of fixed evaluation benchmarks or model-based judging, ZSEval uses multiplayer simulations/games with clear win conditions to pit models against each other. 
 
-1. Develop an understanding of Capture the Flag
-    1. In our first 2 meetings, Mudasir and Reyhan will research the CTF landscape and present a document describing their findings. Some aspects of interest to this project:
-        1. The CTF format
-        2. How do humans compete in CTF
-        3. Sample CTF problems and solutions
-        4. Software required for CTF problems/competitions
-        5. CTF problem/competition repositories that can be mined for data
-        6. a taxonomy of CTF problems/competitions
-2. Survey the published work around LLMs applied to CTF
-    1. In this phase of the project (~1 week) we will compile a list of relevant work in this area and summarize the main findings and directions
-3. Create a LLM evaluation benchmark based on CTF
-    1. Our first publishable milestone
-    2. Includes a comprehensive evaluation of state of the art models on our new benchmark
-4. Create training data for LLMs based on CTF
+The framework tests various model capabilities, including knowledge, reasoning, and planning. In addition, ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) optimization to test the self-improvement capability of models and ensure the competition between models is fair.
 
-# Two Player LLM Evaluation
+The eval suite consists of a growing number of simulations, including text-based challenges, board games, and Capture The Flag (CTF) competitions.
 
-Evaluation of LLMs is one of the primary challenges researchers and practitioners face today, the existing suite of LLM evaluations can be categorized into four broad categories:
+Key features:
+- One-click evals on the existing suite of games
+- Easily extendable abstractions for new game implementations
+- Integration with DSPy for automated prompt optimization
+- Comprehensive logging and analysis tools
 
-1. Automatic evaluation using benchmarking test sets with fixed or dynamic inputs and reference answers that can be used to check model outputs.
-2. Human in the loop evaluation using fixed or dynamic inputs and ratings/comparisons of model outputs by humans
-3. Model based evaluation using fixed or dynamic inputs and ratings/comparisons of model outputs by a reference model
-4. Head to head competitions between models with dynamic inputs and predefined win criteria to build ratings
+## Project Structure
 
-The last type of evaluation is particularly attractive as it doesn’t rely on (i) a pre-defined set of inputs/references or (ii) incur the expense of human evaluation. One can determine ELO ratings based on wins and losses.
+The project is organized as follows:
 
-Let’s focus on this type of evaluation in the context of CTF
+- `zero_sum_eval/`: Main package containing the core framework
+  - `games/`: Individual game implementations
+  - `managers/`: Game and match management classes
+- `data/`: Game-specific data and examples
+- `configs/`: Configuration files for different games and scenarios
+- `run_game.py`: Script to run individual games
+- `run_matches.py`: Script to run a series of matches
 
-In this setting, there are two players in the game - a defender and an attacker. The defender creates a CTF challenge and proves the challenge is solvable. The attacker examines the CTF challenge and must retrieve the hidden flag. The defender and attacker are limited in the number of attempts to generate a valid challenge and solve the challenge respectively.
+## Installation
 
-## A proof of concept: pyjail defense & attack
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/ZeroSumEval.git
+   cd ZeroSumEval
+   ```
 
-To prove this works, let’s build this for one of the simplest CTF settings - pyjail. Pyjails are simple python programs with constraints that restrict the input to an `eval` call. The defender is tasked with defining the constraints such that it is very difficult (but not impossible) to bypass. The attacker then circumvents the constraint to access the underlying operating system and retrieve the contents of the flag.
+2. Install the required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-The following components are required:
+## Usage
 
-- A container which:
-    - runs the python script constructed by the defender that exposes the input field of the pyjail
-    - stores the flag, e.g. in `flag.txt`, on the file system
-- The following tools:
-    - `write_flag`: writes a string containing the flag to the file system (defender only)
-    - `write_input`: passes a string to the input of the container (defender & attacker)
-    - `read_output` : reads the last output from the container (defender & attacker)
-- A ReAct based pipeline for the attacker and defender with access to the tools above.
+To run a game:
 
-For more complicated challenges, we will want to expand the list of tools and the container.
+```
+python run_game.py -c configs/chess.yaml
+```
 
-## Defender
+To run a series of matches:
+```
+python run_matches.py -c configs/mathquiz.yaml
+```
 
-Here is an outline of the Defender pipeline.
+## Games
 
-- system prompt
-    - explanation of the setting
-    - rules of the game
-    - the desired format
-- examples of good pyjail challenges with solutions
-- ReAct process to generate pyjail using the tools with two outputs
-    - the pyjail python script (code only)
-    - a string that successfully breaks free of the pyjail
-    - Prove the pyjail is valid by deploying the container, running the script, inputting the string, and reading the flag off the filesystem
+ZeroSumEval currently supports the following games:
 
-If the defender fails to prove the challenge is valid, it is allowed to retry.
+1. Chess
+2. Math Quiz
+3. Gandalf (Password Guessing)
+4. PyJail (Capture The Flag)
 
-## Attacker
+Each game is implemented as a separate module in the `zero_sum_eval/games/` directory.
 
-Here is an outline of the Attacker pipeline
+## Configuration
 
-- system prompt
-    - explanation of the setting
-    - rules of the game
-    - the desired format
-- examples of good pyjail challenges with solutions
-- the valid pyjail python script generated by the defender (code only)
-- ReAct process to break the pyjail using the tools with one output:
-    - the string representing the flag
+Game configurations are defined in YAML files located in the `configs/` directory. These files specify:
 
-If the attacker fails to retrieve the flag, it is allowed to retry.
+- Logging settings
+- Game parameters
+- Player configurations
+- LLM settings
 
-## The container and setup
+<details>
+<summary>Example Configuration (chess.yaml):</summary>
 
-To get started, let’s use the container and setup in this challenge: https://github.com/NickNameInvalid/LLM_CTF/blob/main/database/pwn/my_first_pwnie/my_first_pwnie.py
+```yaml
+logging:
+  output_dir: ../output/chess_game
+manager:
+  args:
+    max_rounds: 200
+    win_conditions: 
+      - Checkmate
+    draw_conditions:
+      - Stalemate
+      - ThreefoldRepetition
+      - FiftyMoveRule
+      - InsufficientMaterial
+game:
+  name: chess
+  players:
+    - name: chess_player
+      args:
+        id: gpt4 white
+        roles: 
+          - White
+        optimize: false
+        dataset: chess_dataset
+        dataset_args:
+          filename: ./data/chess/stockfish_examples.jsonl
+          role: White
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: chess_move_validation_metric
+        lm:
+          type: AzureOpenAI
+          args:
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
+            max_tokens: 800
+            temperature: 0.8
+            top_p: 0.95
+            frequency_penalty: 0
+            presence_penalty: 0
+        max_tries: 5
+    - name: chess_player
+      args:
+        id: gpt4 black
+        roles: 
+          - Black
+        optimize: false
+        dataset: chess_dataset
+        dataset_args:
+          filename: ./data/chess/stockfish_examples.jsonl
+          role: Black
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
+        metric: chess_move_validation_metric
+        lm:
+          type: AzureOpenAI
+          args:
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
+            max_tokens: 800
+            temperature: 0.8
+            top_p: 0.95
+            frequency_penalty: 0
+            presence_penalty: 0
+        max_tries: 5
+```
 
-it is the simplest pyjail without any constraints but the useful bit is the container to run the script and interact with.
+</details>
+
+
+## Contributing
+
+Contributions to ZeroSumEval are welcome! Please open a pull request
+
+## License
+
+This project is licensed under the Apache License 2.0. See the LICENSE file for details.

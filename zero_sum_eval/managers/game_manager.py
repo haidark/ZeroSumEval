@@ -82,11 +82,12 @@ class GameManager:
         player_attempts = 0
         for _ in range(self.max_player_attempts):
             new_state: GameState = game_state.query_game()
-            move: str = player.make_move(new_state)
-            player_attempts += 1
+            move, trace = player.make_move(new_state)
+            player_attempts+=1
+            logger.info(f"\t\t--- {player.id} (attempt # {player_attempts}) ---")
+            logger.info(f"{game_state.display()}Move:\n{move}\n\n")
             game_state: GameState = game_state.update_game(move)
             val: Optional[str] = game_state.validate_game()
-            logger.debug(f"{player.id} (attempt # {player_attempts}):\n{game_state.display()}\nMove: {move}")
             if val is None:
                 return game_state, player_attempts
             if val in self.win_conditions:
@@ -96,9 +97,6 @@ class GameManager:
                 return game_state, player_attempts
         return game_state, player_attempts  # Return the original state if all tries fail
 
-    def _log_turn(self, game_state: GameState):
-        with jsonlines.open(self.turns_log_file, "a") as f:
-            f.write(game_state.export())
 
     def _run_game_loop(self, game_state: GameState) -> GameState:
         """
@@ -114,20 +112,24 @@ class GameManager:
         It processes turns for each player and logs the game state after each turn.
         """
         logger = getLogger()
-        round_count: int = 0
+        turn_count: int = 1
         attempts: int = 0
+        turns: List[Dict] = []
         while round_count < self.max_rounds:
             turn_count: int = round_count // len(self.players) + 1
+
             player: Player = self.players[game_state.roles[0]]
-            logger.info(f"{player.id} (attempts {attempts}) turn {turn_count}:\n{game_state.display()}")
             if game_state.validate_game():
                 break
+            logger.info(f"\t\t--- Start Turn {turn_count} ---")
             game_state, attempts = self._process_turn(game_state, player)
-            self._log_turn(game_state)
-
+            turns.append(game_state.export())
             round_count += 1
-
-        self._log_turn(game_state)
+            
+        with jsonlines.open(self.turns_log_file, "w") as f:
+            for turn in turns:
+                f.write(turn)
+        
         return game_state
 
     def start(self) -> GameState:

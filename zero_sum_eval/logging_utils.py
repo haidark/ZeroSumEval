@@ -5,7 +5,7 @@ def setup_logging(config, log_prefix):
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  # Set to lowest level to capture all logs
     
-    output_dir = config['logging'].get('output_dir', './')
+    output_dir = os.path.join(config['logging'].get('output_dir', './'), "logs")
     os.makedirs(output_dir, exist_ok=True)
     
     log_levels = {

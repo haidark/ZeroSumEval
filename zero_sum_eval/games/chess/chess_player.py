@@ -97,6 +97,7 @@ class ChessPlayer(Player):
         
         Returns:
         str: The move made by the player
+        dspy.Prediction: DSPy trace of the move
         """
         trace = self.module(**kwargs) 
         return trace.move

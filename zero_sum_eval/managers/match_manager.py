@@ -152,9 +152,9 @@ class MatchManager:
             self.logger.info(line)
         
 
-    def save_leaderboard(self):
+    def save_leaderboard(self, path = "leaderboard.csv"):
         headers = ['Model', 'Elo', 'Wins', 'Draws', 'Losses']
-        with open(os.path.join(self.output_dir, 'leaderboard.csv'), mode='w', newline='') as f:
+        with open(os.path.join(self.output_dir, path), mode='w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(headers)
             for model, elo in self.llm_elos.items():
@@ -165,6 +165,10 @@ class MatchManager:
 
     def start(self):
         self.logger.info("Let the games begin!")
+
+        os.makedirs(os.path.join(self.output_dir, "leaderboard_history"), exist_ok=True)
+        self.save_leaderboard(f"leaderboard_history/leaderboard_{int(time.time())}.csv")
+
         for _ in range(self.max_matches):
             # Get next matchup
             lms = self.matcher.get_next_match()
@@ -205,8 +209,14 @@ class MatchManager:
             # Update elos of LMs
             self.llm_elos[lms[0]], self.llm_elos[lms[1]] = self.calculate_elo_rating(self.llm_elos[lms[0]], self.llm_elos[lms[1]], result_a)
             
-            with open(os.path.join(turn_dir, "elos_delta.json"), mode='w', newline='') as f:
-                obj = {lm: [elos_before[lm], self.llm_elos[lm]] for lm in lms}
+            with open(os.path.join(turn_dir, "results.json"), mode='w', newline='') as f:
+                obj = {
+                    lm: {
+                        "elos_delta": [elos_before[lm], self.llm_elos[lm]],
+                        "result": result_a if lm == cur_lm_turn else 1 - result_a,
+                    } 
+                    for lm in lms
+                }
                 json.dump(obj, f)
 
             self.display_leaderboard()
