@@ -51,7 +51,7 @@ class NextMove(dspy.Signature):
     board_state = dspy.InputField(desc="FEN formatted current board state")
     role = dspy.InputField(desc="role of the player making the next move")
     history = dspy.InputField(desc="move history")
-    move = dspy.OutputField(desc="a valid SAN move without move number or elipses. Make sure to reply ONLY with the SAN move and nothing else.")
+    move = dspy.OutputField(desc="a valid SAN move without move number, elipses, or any extra formatting.")
 
 class ChessCoT(dspy.Module):
     def __init__(self):
