@@ -10,7 +10,7 @@ def validate_math_question(example, prediction, trace=None):
 @METRIC_REGISTRY.register("math_answer_validation_metric")
 def validate_math_answer(example, prediction, trace=None):
     # TODO: Implement proper validation logic
-    return 1 if prediction.answer else 0
+    return 1 if str(prediction) == str(example.answer) else 0
 
 class GenerateQuestion(dspy.Signature):
     """Given a target number, create a challenging math question with the target number as the answer. Make sure not to include the answer in the question."""
