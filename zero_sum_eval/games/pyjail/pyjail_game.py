@@ -1,4 +1,5 @@
 import docker
+import time
 import re
 import ast
 import json
@@ -31,14 +32,25 @@ class PyJailGame(GameState):
             self.flag = res.output
         except docker.errors.NotFound:
             print(f"Creating container '{container_name}'...")
-            container = self.docker_client.containers.run(
+            self.flag = secrets.token_hex(12) # Generate the flag
+            self.container = self.docker_client.containers.run(
                 'python:3.9',
                 name=container_name,
                 detach=True,
-                environment={'FLAG': secrets.token_hex(12)}, # Generate the flag 
-                command='tail -f /dev/null'  # Keep the container running
+                environment={'FLAG': self.flag},  
+                command='tail -f /dev/null',  # Keep the container running
             )
-
+            # Wait for the container to start
+            max_retries = 10
+            retry_interval = 1
+            for _ in range(max_retries):
+                if self.container.status == 'running':
+                    break
+                time.sleep(retry_interval)
+                self.container.reload()
+            else:
+                raise RuntimeError("Container failed to start within the expected time.")
+    
     def update_game(self, move: str) -> 'PyJailGame':
         new_state = PyJailGame()
         new_state.instantiate(
@@ -105,14 +117,14 @@ class PyJailGame(GameState):
     def _execute_pyjail(self, pyjail_code: str, user_input: str) -> str:
     #TODO: manually set the indent of user code 
         script = f"""
-    import os
+import os
 
 {pyjail_code}
 
-    try:
-        jail({user_input!r})
-    except Exception as e:
-        print(f"Error in jail execution: {{e}}")
+try:
+    jail({user_input!r})
+except Exception as e:
+    print(f"Error in jail execution: {{e}}")
 
 """
         cmd = ["python", "-c", script]
