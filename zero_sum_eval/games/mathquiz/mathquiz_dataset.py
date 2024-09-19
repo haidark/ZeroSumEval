@@ -8,7 +8,7 @@ from zero_sum_eval.registry import DATASET_REGISTRY
 @DATASET_REGISTRY.register("mathquiz_dataset")
 class MathQuizDataset(Dataset):
     def __init__(self, 
-                role: Union[Literal["TeacherGenerateQuestion"], Literal["StudentAnswerQuestion"]], 
+                role: Union[Literal["TeacherGenerateQuestion"], Literal["TeacherAnswerQuestion"], Literal["StudentAnswerQuestion"]], 
                 filename: str,
                 num_examples: int) -> None:
         super().__init__(output_key="math_question" if role == "TeacherGenerateQuestion" else "answer")
@@ -35,13 +35,13 @@ class MathQuizDataset(Dataset):
         for example in examples:
             if self.role == "TeacherGenerateQuestion":
                 example = Example(role=self.role,
-                                  message=example['message'],
-                                  target=example['target'],
-                                  math_question=example['math_question']
+                                  message=f"You will move as {self.role}",
+                                  target=example['answer'],
+                                  question=example['question']
                                   ).with_inputs("role", "message", "target")
             else: 
                 example = Example(role=self.role,
-                                  message=example['message'],
+                                  message=f"You will move as {self.role}",
                                   question=example['question'],
                                   answer=example['answer']
                                   ).with_inputs("role", "message", "question")
