@@ -33,16 +33,9 @@ game:
           max_labeled_demos: 1
         metric: chess_move_validation_metric
         lm:
-          type: AzureOpenAI
+          type: OllamaLocal
           args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+            model: 'mistral'
         max_tries: 5
     - name: chess_player
       args:
@@ -64,14 +57,7 @@ game:
           max_labeled_demos: 1
         metric: chess_move_validation_metric
         lm:
-          type: AzureOpenAI
+          type: OllamaLocal
           args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+            model: 'llama3.1'
         max_tries: 5

@@ -1,0 +1,42 @@
+logging:
+  output_dir: ../output/pyjail_game
+manager:
+  args:
+    max_rounds: 10
+    win_conditions:
+      - AttackerCorrect
+    draw_conditions:
+      - MaxAttemptsReached
+game:
+  name: pyjail
+  players:
+    - name: pyjail_player
+      args:
+        id: defender_generate
+        role: DefenderGenerateCode
+        optimize: false
+        lm:
+          type: OllamaLocal
+          args:
+            model: 'mistral'
+        max_tries: 5
+    - name: pyjail_player
+      args:
+        id: defender_solve
+        role: DefenderSolveCode
+        optimize: false
+        lm:
+          type: OllamaLocal
+          args:
+            model: 'mistral'
+        max_tries: 5
+    - name: pyjail_player
+      args:
+        id: attacker_solve
+        role: AttackerSolveCode
+        optimize: false
+        lm:
+          type: OllamaLocal
+          args:
+            model: 'mistral'
+        max_tries: 5
