@@ -18,7 +18,7 @@ def download_gsm8k():
 def download_math():
     dataset = load_dataset("hendrycks/competition_math")
     train_data = dataset["train"]
-    output_file = Path(__file__).parent / "math_train.jsonl"
+    output_file = Path(__file__).parent / "hendrycks-math_train.jsonl"
     
     with open(output_file, "w", encoding="utf-8") as f:
         for example in train_data:

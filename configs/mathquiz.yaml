@@ -19,14 +19,16 @@ game:
         datasets:
         - dataset: mathquiz_dataset
           dataset_args:
-            filename: data/mathquiz/mathquiz_gsm8k_teacher_examples.jsonl
+            filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+            # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
             role: TeacherGenerateQuestion
             num_examples: 10
           metric: math_question_validation_metric
           optimizer: BootstrapFewShotWithRandomSearch
         - dataset: mathquiz_dataset
           dataset_args:
-            filename: data/mathquiz/mathquiz_gsm8k_student_examples.jsonl
+            filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+            # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
             role: TeacherAnswerQuestion
             num_examples: 10
           metric: math_answer_validation_metric
@@ -53,7 +55,8 @@ game:
         datasets:
         - dataset: mathquiz_dataset
           dataset_args:
-            filename: data/mathquiz/mathquiz_gsm8k_student_examples.jsonl
+            filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+            # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
             role: StudentAnswerQuestion
             num_examples: 10
           metric: math_answer_validation_metric
