@@ -1,58 +1,58 @@
 import json
 from pathlib import Path
-import random
+import re
 import argparse
+import re
+
+
+def extract_gsm8k(example):
+    question = example["question"]
+    answer = example["answer"].split("####")[-1].strip()
+    return question, answer
+
+def extract_hendrycks_math(example):
+    question = example['problem']
+    boxed_content =  re.search(r'\\boxed\{(.*?)\}', example['solution'])
+    answer = boxed_content.group(1) if boxed_content else None
+    answer = answer if answer and answer.replace('.', '').isdigit() else None
+
+    return question, answer
 
 def extract_examples(input_file, dataset_name):
     # Load the dataset
     examples = []
-
+    if dataset_name == 'math':
+        extractor = extract_hendrycks_math
+    else:
+        extractor = extract_gsm8k
+    
     with open(input_file, "r", encoding="utf-8") as f:
         for line in f:
             examples.append(json.loads(line))
 
     # Extract examples (questions and answers)
-    teacher_examples = []
-    student_examples = []
+    extracted_examples = []
     for example in examples:
-        question = example["question"]
-        answer = example["answer"].split("####")[-1].strip()
-        teacher_examples.append({
-            "role": "TeacherGenerateQuestion",
-            "message": "Generate a math question",
-            "target": answer,
-            "math_question": question
-        })
-        student_examples.append({
-            "role": "StudentAnswerQuestion",
-            "message": "Answer the following math question",
-            "question": question,
-            "answer": answer
-        })
+        question, answer = extractor(example)
+        if answer:
+            extracted_examples.append({
+                "question": question,
+                "answer": answer
+            })
 
-    num_examples = min(1000, len(teacher_examples))  # Adjust the number of examples as needed
+    num_examples = min(1000, len(extracted_examples))  # Adjust the number of examples as needed
 
-    # Save teacher examples
-    teacher_output = Path(input_file).parent / f"mathquiz_{dataset_name}_teacher_examples.jsonl"
-    with open(teacher_output, "w", encoding="utf-8") as f:
-        for example in teacher_examples[:num_examples]:
+    extracted_output = Path(input_file).parent / f"mathquiz_{dataset_name}_examples.jsonl"
+    with open(extracted_output, "w", encoding="utf-8") as f:
+        for example in extracted_examples[:num_examples]:
             json.dump(example, f)
             f.write("\n")
 
-    # Save student examples
-    student_output = Path(input_file).parent / f"mathquiz_{dataset_name}_student_examples.jsonl"
-    with open(student_output, "w", encoding="utf-8") as f:
-        for example in student_examples[:num_examples]:
-            json.dump(example, f)
-            f.write("\n")
-
-    print(f"Extracted {num_examples} examples for teacher and student")
-    print(f"Teacher examples saved to {teacher_output}")
-    print(f"Student examples saved to {student_output}")
+    print(f"Extracted {num_examples} examples saved to {extracted_output}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Extract examples from math datasets")
-    parser.add_argument("dataset_name", type=str, choices=["gsm8k", "math"], help="Name of the dataset (gsm8k or math)")
+    parser.add_argument("dataset_name", type=str, choices=["gsm8k", "hendrycks-math"], help="Name of the dataset (gsm8k or math)")
     args = parser.parse_args()
 
     input_file_path = Path(__file__).parent / f"{args.dataset_name}_train.jsonl"

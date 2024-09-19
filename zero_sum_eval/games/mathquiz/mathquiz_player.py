@@ -5,19 +5,19 @@ from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 @METRIC_REGISTRY.register("math_question_validation_metric")
 def validate_math_question(example, prediction, trace=None):
     # TODO: Implement proper validation logic
-    return 1 if prediction.math_question else 0
+    return 1 if prediction.question else 0
 
 @METRIC_REGISTRY.register("math_answer_validation_metric")
 def validate_math_answer(example, prediction, trace=None):
     # TODO: Implement proper validation logic
-    return 1 if prediction.answer else 0
+    return 1 if str(prediction) == str(example.answer) else 0
 
 class GenerateQuestion(dspy.Signature):
     """Given a target number, create a challenging math question with the target number as the answer. Make sure not to include the answer in the question."""
     role = dspy.InputField(desc="role")
     message = dspy.InputField(desc="message")
     target = dspy.InputField(desc="target number")
-    math_question = dspy.OutputField(desc="math question with the target number as the answer")
+    question = dspy.OutputField(desc="math question with the target number as the answer")
 
 class AnswerQuestion(dspy.Signature):
     """Given a challenging math question, give the answer to the question as a number only"""
@@ -74,7 +74,7 @@ class MathQuizTeacher(Player):
         current_role = kwargs.get('role', None)
         trace = self.module(**kwargs)
         if current_role == "TeacherGenerateQuestion":
-            return trace.math_question
+            return trace.question
         elif current_role == "TeacherAnswerQuestion":
             return trace.answer
         else:

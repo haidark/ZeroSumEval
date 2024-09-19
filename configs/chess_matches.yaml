@@ -26,19 +26,20 @@ game:
         roles:
           - White
         optimize: false
-        dataset: chess_dataset
-        dataset_args:
-          filename: ./data/chess/stockfish_examples.jsonl
-          role: White
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: chess_move_validation_metric
+        datasets:
+          - dataset: chess_dataset
+            dataset_args:
+              filename: ./data/chess/stockfish_examples.jsonl
+              role: White
+            metric: chess_move_validation_metric
+            optimizer: MIPROv2
+            optimizer_args:
+              num_candidates: 5
+              minibatch_size: 20
+              minibatch_full_eval_steps: 10
+            compilation_args:
+              max_bootstrapped_demos: 1
+              max_labeled_demos: 1
         max_tries: 5
 
     - name: chess_player
@@ -47,19 +48,20 @@ game:
         roles:
           - Black
         optimize: false
-        dataset: chess_dataset
-        dataset_args:
-          filename: ./data/chess/stockfish_examples.jsonl
-          role: Black
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: chess_move_validation_metric
+        datasets:
+          - dataset: chess_dataset
+            dataset_args:
+              filename: ./data/chess/stockfish_examples.jsonl
+              role: Black
+            metric: chess_move_validation_metric
+            optimizer: MIPROv2
+            optimizer_args:
+              num_candidates: 5
+              minibatch_size: 20
+              minibatch_full_eval_steps: 10
+            compilation_args:
+              max_bootstrapped_demos: 1
+              max_labeled_demos: 1
         max_tries: 5
 
 llms:
