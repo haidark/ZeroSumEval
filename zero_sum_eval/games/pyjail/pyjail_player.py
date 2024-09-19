@@ -5,6 +5,7 @@ from typing import List
 import ast
 import re
 
+
 @METRIC_REGISTRY.register("pyjail_code_validation_metric")
 def validate_pyjail_code(example, prediction, trace=None):
     match = re.search(r'###START(.*?)###END', move.decode('utf-8'), re.DOTALL)
