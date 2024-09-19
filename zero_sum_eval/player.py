@@ -22,8 +22,7 @@ class Player(ABC):
         optimizer_args: dict = {},
         compilation_args: dict = {},
         metric: str = "exact_match",
-        dataset: Optional[str]= None,
-        dataset_args: dict = {},
+        datasets: Optional[List]= None,
         max_tries: int = 10,
         output_dir: str = "",
     ):
@@ -44,19 +43,23 @@ class Player(ABC):
 
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
-            if not dataset:
-                raise ValueError("A dataset must be passed for players with 'optimize = True'")
-            
-            self.dataset = DATASET_REGISTRY.build(dataset, **dataset_args)
-            self.metric = METRIC_REGISTRY.build(metric, output_key=self.dataset.output_key)
-            self.optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=self.metric, prompt_model=self.llm_model, task_model=self.llm_model, **optimizer_args)
-            # Optimize
-            dspy.configure(trace=[])
-            with dspy.context(lm=self.llm_model):
-                self.module = self.optimizer.compile(self.module, trainset=self.dataset.get_dataset(), **compilation_args)
-                print(output_dir)
-                os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
-                self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
+            if not datasets:
+                raise ValueError("A list of datasets must be passed for players with 'optimize = True'")
+            for d_conf in datasets:
+                dataset = DATASET_REGISTRY.build(d_conf['dataset'], **d_conf['dataset_args'])
+                metric = METRIC_REGISTRY.build(d_conf.get('metric', metric), output_key=dataset.output_key)
+                optimizer = d_conf.get('optimizer', optimizer)
+                optimizer_args = d_conf.get('optimizer_args', optimizer_args)
+                if optimizer == "MIPROv2":
+                    optimizer_args.update(prompt_model=self.llm_model, task_model=self.llm_model)
+                optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=metric, **optimizer_args)
+                # Optimize
+                compilation_args = d_conf.get('compilation_args', compilation_args)
+                dspy.configure(trace=[])
+                with dspy.context(lm=self.llm_model):
+                    self.module = optimizer.compile(self.module, trainset=dataset.get_dataset(), **compilation_args)
+                    os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
+                    self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
 
     @abstractmethod
     def _build_module(self, **module_args):

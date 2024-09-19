@@ -11,65 +11,63 @@ game:
   players:
     - name: mathquiz_teacher
       args:
-        id: gpt4 teacher
+        id: llama3.1 teacher
         roles: 
           - TeacherGenerateQuestion
           - TeacherAnswerQuestion
         optimize: true
-        dataset: mathquiz_dataset
-        dataset_args:
-          filename: data/mathquiz/mathquiz_gsm8k_teacher_examples.jsonl
-          role: TeacherGenerateQuestion
-          num_examples: 10
-        optimizer: MiPROv2
-        # optimizer_args:
-        #   num_candidates: 5
-        #   minibatch_size: 5
-        #   minibatch_full_eval_steps: 10
-        # compilation_args:
-        #   max_bootstrapped_demos: 1
-        #   max_labeled_demos: 1
-        metric: math_question_validation_metric
+        datasets:
+        - dataset: mathquiz_dataset
+          dataset_args:
+            filename: data/mathquiz/mathquiz_gsm8k_teacher_examples.jsonl
+            role: TeacherGenerateQuestion
+            num_examples: 10
+          metric: math_question_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+        - dataset: mathquiz_dataset
+          dataset_args:
+            filename: data/mathquiz/mathquiz_gsm8k_student_examples.jsonl
+            role: TeacherAnswerQuestion
+            num_examples: 10
+          metric: math_answer_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+          # optimizer_args:
+          #   num_candidates: 5
+          #   minibatch_size: 5
+          #   minibatch_full_eval_steps: 10
+          # compilation_args:
+          #   max_bootstrapped_demos: 1
+          #   max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
+          type: OllamaLocal
           args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+            model: llama3.1
+            base_url: http://localhost:11434
         max_tries: 5
     - name: mathquiz_student
       args:
-        id: gpt4 student
+        id: llama3.1 student
         roles: 
           - StudentAnswerQuestion
-        optimize: false
-        dataset: mathquiz_dataset
-        dataset_args:
-          filename: ./data/mathquiz/examples.jsonl
-          role: Student
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: math_answer_validation_metric
+        optimize: true
+        datasets:
+        - dataset: mathquiz_dataset
+          dataset_args:
+            filename: data/mathquiz/mathquiz_gsm8k_student_examples.jsonl
+            role: StudentAnswerQuestion
+            num_examples: 10
+          metric: math_answer_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+          # optimizer_args:
+          #   num_candidates: 5
+          #   minibatch_size: 20
+          #   minibatch_full_eval_steps: 10
+          # compilation_args:
+          #   max_bootstrapped_demos: 1
+          #   max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
+          type: OllamaLocal
           args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+            model: llama3.1
+            base_url: http://localhost:11434
         max_tries: 5
