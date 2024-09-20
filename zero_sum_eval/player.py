@@ -36,6 +36,12 @@ class Player(ABC):
         self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
         self.module = self._build_module(**module_args)
+        if "module_paths" in lm:
+            for role, path in lm["module_paths"].items():
+                if role in self.roles:
+                    self.module.load(path)
+                    logger.info(f"Loaded module for role {role} from {path}")
+
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
             if not dataset:
