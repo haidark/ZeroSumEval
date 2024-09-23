@@ -1,4 +1,5 @@
 import docker
+import textwrap
 import time
 import re
 import ast
@@ -28,6 +29,9 @@ class PyJailGame(GameState):
         container_name = 'pyjail_container'
         try:
             self.container = self.docker_client.containers.get(container_name)
+
+            if self.container.status != 'running':
+                self.container.start()
             res = self.container.exec_run("printenv FLAG")
             self.flag = res.output
         except docker.errors.NotFound:
@@ -37,7 +41,7 @@ class PyJailGame(GameState):
                 'python:3.9',
                 name=container_name,
                 detach=True,
-                environment={'FLAG': self.flag},  
+                environment={'FLAG': self.flag},
                 command='tail -f /dev/null',  # Keep the container running
             )
             # Wait for the container to start
@@ -50,7 +54,7 @@ class PyJailGame(GameState):
                 self.container.reload()
             else:
                 raise RuntimeError("Container failed to start within the expected time.")
-    
+
     def update_game(self, move: str) -> 'PyJailGame':
         new_state = PyJailGame()
         new_state.instantiate(
@@ -61,7 +65,7 @@ class PyJailGame(GameState):
         new_state.docker_client = self.docker_client
         new_state.container = self.container
         new_state.flag = self.flag
-        
+
         new_state.context['move_history'].append(move)
         try:
             match = re.search(r'###START(.*?)###END', move, re.DOTALL)
@@ -72,35 +76,53 @@ class PyJailGame(GameState):
 
         if current_role == "DefenderGenerateCode":
             try:
-                ast.parse(move)
+                tree = ast.parse(move)
+
+                functions = []
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        functions.append(node.name)
+                        #must have function named jail
+                        if node.name == 'jail':
+                            #jail must take one argument
+                            if len(node.args.args) != 1:
+                                raise ValueError("function  'jail' must have exactly one argument")
+
+                            break
+                else:   #if we did not break due to jail() being found
+                    raise ValueError("pyjail must contain function 'jail'")
+
+
                 new_state.environment['defender_code'] = move
                 new_state.last_move_successful = True
                 new_state.context['message'] = None
             except SyntaxError as e:
-                new_state.context['message'] =  f"Syntax error in pyjail: {str(e)}" 
-                
+                new_state.context['message'] =  f"Syntax error in pyjail: {str(e)}"
+            except ValueError as e:
+                new_state.context['message'] =  f"{str(e)}"
 
         elif current_role in ["DefenderSolveCode", "AttackerSolveCode"]:
             defender_code = new_state.environment['defender_code']
             user_input = move
 
             res = new_state._execute_pyjail(defender_code, user_input)
+                
             output = res.output
             new_state.context['message'] = new_state.context['message'] or ''
-            
+
             hist_res = f"attempt result: {output.decode('utf-8').strip()}"
             histname = 'defender' if not self.roles[0] == 'AttackerSolve' else 'attacker'
             new_state.context['history'][f'{histname}_history'].append(hist_res)
 
-            if new_state.flag in output: 
+            if new_state.flag in output:
 
                 new_state.last_move_successful = True
 
                 if current_role == "DefenderSolveCode":
 
                     new_state.environment['defender_solution'] = user_input
-                    new_state.context['message'] = None 
-                else:  
+                    new_state.context['message'] = None
+                else:
                     new_state.environment['attacker_solution'] = user_input
                     new_state.context['message'] = 'AttackerWins'
                     self.last_move_successful = True
@@ -108,27 +130,32 @@ class PyJailGame(GameState):
                 if current_role == "DefenderSolveCode":
                     new_state.environment['defender_solution'] = user_input
                     new_state.context['message'] += "\nDefender failed to retrieve the flag."
-                else:  
+                else:
                     new_state.context['message'] += "\nAttacker failed to retrieve the flag."
 
         new_state.roles = new_state.get_next_roles()
         return new_state
 
     def _execute_pyjail(self, pyjail_code: str, user_input: str) -> str:
-    #TODO: manually set the indent of user code 
         script = f"""
-import os
 
-{pyjail_code}
+    {pyjail_code}
 
-try:
-    jail({user_input!r})
-except Exception as e:
-    print(f"Error in jail execution: {{e}}")
-
+    try:
+        jail({user_input!r})
+        
+    except Exception as e:
+        print(f"Error in jail execution: {{e}}")
 """
-        cmd = ["python", "-c", script]
-        output = self.container.exec_run(cmd, stream=False)
+        dedented_script = textwrap.dedent(script)
+        
+        cmd = ["python", "-c", str(dedented_script)]
+        try:
+            #run the pyjail
+            output = self.container.exec_run(cmd, stream=False, environment={"FLAG":self.flag})
+        except docker.errors.APIError as e:
+            #as specified by the API
+            raise ValueError()
         return output
 
     def query_game(self) -> GameState:
@@ -141,7 +168,7 @@ except Exception as e:
             self.context.copy(),
             self.roles.copy()
         )
-        
+
         msg = new_state.validate_game()
         new_state.context['message'] = msg if msg is not None else f"You will move as {new_state.roles[0]}"
 
@@ -169,7 +196,7 @@ except Exception as e:
             return ['DefenderSolveCode', 'AttackerSolveCode', "DefenderGenerateCode"]
         elif self.roles[0] == "DefenderSolveCode":
             return ['AttackerSolveCode', "DefenderGenerateCode",'DefenderSolveCode']
-        else:  
+        else:
             return ['DefenderGenerateCode', 'DefenderSolveCode', 'AttackerSolveCode']  # Reset the game
 
 
@@ -189,20 +216,20 @@ except Exception as e:
                 'history': self.context['history']['defender_history']
             }
         elif current_role == "AttackerSolveCode":
-            
+
             return {
                 'role': current_role,
                 'defender_code': self.environment['defender_code'],
                 'message': self.context['message'],
                 'history': self.context['history']['attacker_history']
             }
-        else: 
+        else:
             raise ValueError(f"Invalid role: {current_role}")
 
     def display(self) -> str:
         display_str = f"Current Role: {self.roles[0] if self.roles else 'Not set'}\n"
         display_str += f"Message: {self.context['message']}\n\n"
-        
+
         display_str += "Environment:\n"
         display_str += f"  Defender Code: {'Set' if self.environment['defender_code'] else 'Not set'}\n"
         if self.environment['defender_code']:
@@ -215,10 +242,10 @@ except Exception as e:
             display_str += f"    {self.environment['attacker_solution']}\n"
         histname = 'defender' if not self.roles[0] == 'AttackerSolve' else 'attacker'
         display_str += "\nHistory:\n"
-        for entry in self.context['history'][f"{histname}_history"][-5:]:  
+        for entry in self.context['history'][f"{histname}_history"][-5:]:
 
             display_str += f"  {entry}\n"
-        
+
         return display_str
 
     def export(self):
@@ -232,20 +259,6 @@ except Exception as e:
 
 if __name__ == "__main__":
     def run_test():
-        docker_client = docker.from_env()
-        container_name = 'pyjail_container'
-        try:
-            container = docker_client.containers.get(container_name)
-            print(f"Container '{container_name}' already exists.")
-        except docker.errors.NotFound:
-            print(f"Creating container '{container_name}'...")
-            container = docker_client.containers.run(
-                'python:3.9',
-                name=container_name,
-                detach=True,
-                environment={'FLAG': secrets.token_hex(12)},
-                command='tail -f /dev/null'  # Keep the container running
-            )
         # Initialize the game
         game = PyJailGame()
         game.instantiate()
@@ -281,16 +294,10 @@ if __name__ == "__main__":
     __import__('os').system('echo $NOPE')
     ###END
     """
-        game = game.update_game(attacker_solution).query_game()
+        game = game.update_game(attacker_solution)
         print(game.display())
 
-         
+
         print(game.validate_game())
 
-        print("\nCleaning up...")
-        container.stop()
-        container.remove()
-        docker_client.close()
-
     run_test()
-
