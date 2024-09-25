@@ -89,12 +89,8 @@ class SolvePyjailCoT(dspy.Module):
         super().__init__()
         self.cot_solve = dspy.ChainOfThought(SolveCode)
 
-    def forward(self, role, message, pyjail_code, history):        
-        if role == 'AttackerSolveCode':
-            cot_solve_no_source = self.cot_solve.excluding('pyjail_code')
-            cot_out = cot_solve_no_source(role=role, message=message)
-        else:
-            cot_out = self.cot_solve(role=role, message=message, pyjail_code=pyjail_code, history=f"{history}")
+    def forward(self, role, message,  history, pyjail_code = 'source hidden for challenge'):        
+        cot_out = self.cot_solve(role=role, message=message, pyjail_code=pyjail_code, history=f"{history}")
         return cot_out
             
 
@@ -144,3 +140,5 @@ class PyjailPlayer(Player):
             
         trace = self.module(**kwargs) 
         return trace.code
+
+
