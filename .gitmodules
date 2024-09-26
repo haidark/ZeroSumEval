@@ -1,0 +1,3 @@
+[submodule "leaderboard_app"]
+	path = leaderboard_app
+	url = https://huggingface.co/spaces/HishamYahya/ZeroSumEval_Leaderboard

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import Optional, List, Tuple
 import logging
 import functools
 
@@ -65,7 +65,7 @@ class Player(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _make_move(self, game_state):
+    def _make_move(self, game_state) -> Tuple[str, dspy.Prediction]:
         """
         Abstract method for making a move based on the current game state.
         
@@ -74,6 +74,7 @@ class Player(ABC):
         
         Returns:
         dict: The move made by the player
+        dspy.Prediction: DSPy trace of the move
         """
         raise NotImplementedError
 
