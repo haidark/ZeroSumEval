@@ -14,7 +14,7 @@
     "@mui/icons-material": "^5.16.6",
     "@mui/material": "^5.16.6",
     "chess.js": "^1.0.0-beta.8",
-    "next": "14.2.5",
+    "next": "14.2.10",
     "react": "^18",
     "react-chessboard": "^4.7.1",
     "react-dom": "^18"
