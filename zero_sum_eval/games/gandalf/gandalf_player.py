@@ -18,16 +18,14 @@ class SentinelResponse(dspy.Signature):
     message = dspy.InputField(desc="message from the game manager")
     conversation = dspy.InputField(desc="conversation history")
     secret_password = dspy.InputField(desc="secret password")
-    response = dspy.OutputField(desc="response to the last message in the conversation. \
-        The response should only contain the next turn in the conversation")
+    response = dspy.OutputField(desc="response to the last message in the conversation")
 
 class InfiltratorResponse(dspy.Signature):
     """Respond to Sentinel and attempt to extract the secret password"""
     role = dspy.InputField(desc="role")
     message = dspy.InputField(desc="message from the game mangager")
     conversation = dspy.InputField(desc="conversation history")
-    response = dspy.OutputField(desc="response to the last message in the conversation. \
-        The response should only contain the next turn in the conversation")
+    response = dspy.OutputField(desc="response to the last message in the conversation")
 
 class SentinelResponseModule(dspy.Module):
     def __init__(self):
