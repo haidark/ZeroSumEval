@@ -25,6 +25,7 @@ class GameManager:
         self.games: List[GameState] = []
         self.players: Dict[str, Player] = {}
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
+        self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
         self.draw_conditions: List[str] = self.config["manager"]["args"]["draw_conditions"]
         self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
@@ -54,6 +55,7 @@ class GameManager:
             player: Player = PLAYER_REGISTRY.build(
                 self.config["game"]["name"],
                 player_config["name"],
+                output_dir=self.config["logging"]["output_dir"],
                 **player_config["args"],
             )
             if player.roles[0] not in self.games[0].roles: 
@@ -78,7 +80,7 @@ class GameManager:
         logger = getLogger()
         
         player_attempts = 0
-        for _ in range(player.max_tries):
+        for _ in range(self.max_player_attempts):
             new_state: GameState = game_state.query_game()
             move, trace = player.make_move(new_state)
             player_attempts+=1
@@ -116,7 +118,6 @@ class GameManager:
         turns: List[Dict] = []
         while round_count < self.max_rounds:
             turn_count: int = round_count // len(self.players) + 1
-
             player: Player = self.players[game_state.roles[0]]
             if game_state.validate_game():
                 break

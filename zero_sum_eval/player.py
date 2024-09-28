@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List, Tuple
 import logging
 import functools
+import os
 
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 import dspy
@@ -23,6 +24,7 @@ class Player(ABC):
         metric: str = "exact_match",
         datasets: Optional[List]= None,
         max_tries: int = 10,
+        output_dir: str = "",
     ):
         from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
@@ -33,6 +35,12 @@ class Player(ABC):
         self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
         self.module = self._build_module(**module_args)
+        if "module_paths" in lm:
+            for role, path in lm["module_paths"].items():
+                if role in self.roles:
+                    self.module.load(path)
+                    logger.info(f"Loaded module for role {role} from {path}")
+
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
             if not datasets:
@@ -50,6 +58,8 @@ class Player(ABC):
                 dspy.configure(trace=[])
                 with dspy.context(lm=self.llm_model):
                     self.module = optimizer.compile(self.module, trainset=dataset.get_dataset(), **compilation_args)
+                    os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
+                    self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
 
     @abstractmethod
     def _build_module(self, **module_args):
