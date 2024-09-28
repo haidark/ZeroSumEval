@@ -38,11 +38,6 @@ class Registry:
             raise ValueError(
                 f"Type '{name}' is not registered in '{self.registry_name}'."
             )
-        if key == "bootstrapfewshot":
-            if "prompt_model" in kwargs:
-                del kwargs["prompt_model"]
-            if "task_model" in kwargs:
-                del kwargs["task_model"]
         cls = self._classes_dict[key]
         return cls(*args, **kwargs)
 
