@@ -16,22 +16,22 @@ game:
         id: gpt4 sentinel
         roles: 
           - Sentinel
-        optimize: false
+        optimize: true
         datasets:
         - dataset: gandalf_dataset
           dataset_args:
-            filename: ./data/gandalf/examples.jsonl
+            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
             role: Sentinel
             num_examples: 10
           metric: sentinel_response_validation_metric
-          optimizer: MIPROv2
-          optimizer_args:
-            num_candidates: 5
-            minibatch_size: 20
-            minibatch_full_eval_steps: 10
-          compilation_args:
-            max_bootstrapped_demos: 1
-            max_labeled_demos: 1
+          optimizer: BootstrapFewShotWithRandomSearch
+          # optimizer_args:
+          #   num_candidates: 5
+          #   minibatch_size: 20
+          #   minibatch_full_eval_steps: 10
+          # compilation_args:
+          #   max_bootstrapped_demos: 1
+          #   max_labeled_demos: 1
         lm:
           type: AzureOpenAI
           args:
@@ -49,22 +49,22 @@ game:
         id: gpt4 infiltrator
         roles: 
           - Infiltrator
-        optimize: false
+        optimize: true
         datasets:
         - dataset: gandalf_dataset
           dataset_args:
-            filename: ./data/gandalf/examples.jsonl
+            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
             role: Infiltrator
             num_examples: 10
           metric: infiltrator_guess_validation_metric
-          optimizer: MIPROv2
-          optimizer_args:
-            num_candidates: 5
-            minibatch_size: 20
-            minibatch_full_eval_steps: 10
-          compilation_args:
-            max_bootstrapped_demos: 1
-            max_labeled_demos: 1
+          optimizer: BootstrapFewShotWithRandomSearch
+          # optimizer_args:
+          #   num_candidates: 5
+          #   minibatch_size: 20
+          #   minibatch_full_eval_steps: 10
+          # compilation_args:
+          #   max_bootstrapped_demos: 1
+          #   max_labeled_demos: 1
         lm:
           type: AzureOpenAI
           args:
