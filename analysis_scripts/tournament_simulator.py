@@ -1,25 +1,44 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 import itertools
-from typing import Dict, List
+from typing import Dict, List, Optional
 from log_types import Match, Model, ModelName, OptimizerName
 import argparse
 import sys
 
 @dataclass
 class ModelFilter:
-    models: List[ModelName] = field(default_factory=lambda: [model.value for model in ModelName])
+    model_name: ModelName
     with_non_optimized: bool = True
     optimizers: List[OptimizerName] = field(default_factory=lambda: [optimizer.value for optimizer in OptimizerName])
 
     def is_valid_model(self, model: Model) -> bool:
-        if model.name.value in [model.value for model in self.models]:
+        if model.name == self.model_name:
             if model.is_optimized:
                 return model.optimizer in self.optimizers
             else:
                 return self.with_non_optimized
         else:
             return False
+
+class RoleFilter:
+    def __init__(self, model_filters: Optional[List[ModelFilter]] = None):
+        if model_filters is None:
+            self.model_filters = []
+            for model_name in ModelName:
+                self.model_filters.append(ModelFilter(model_name=model_name))
+        else:
+            self.model_filters = model_filters
+    
+    def is_valid_model(self, model: Model) -> bool:
+        for model_filter in self.model_filters:
+            if model_filter.is_valid_model(model):
+                return True
+        return False
+
+    @property
+    def model_names(self):
+        return [model_filter.model_name for model_filter in self.model_filters]
 
 class Matcher(ABC):
     def __init__(self, llm_elos: List[Dict[str, int]]):
@@ -30,7 +49,7 @@ class Matcher(ABC):
         raise NotImplementedError()
 
 class RoundRobin(Matcher):
-    def __init__(self, llm_elos: Dict[str, int], max_rounds: int = 5, model_1_filter: ModelFilter = ModelFilter(), model_2_filter: ModelFilter = ModelFilter()):
+    def __init__(self, llm_elos: Dict[str, int], max_rounds: int = 5):
         super().__init__(llm_elos=llm_elos)
         self.max_rounds = max_rounds
         self.round = 0
@@ -77,13 +96,13 @@ def calculate_elo_rating(rating_a, rating_b, result_a, k=32):
 
 
 class Tournament:
-    def __init__(self, match_logs_path: str, model_1_filter: ModelFilter = ModelFilter(), model_2_filter: ModelFilter = ModelFilter(), max_rounds: int = 5):
+    def __init__(self, match_logs_path: str, role_1_filter: RoleFilter = RoleFilter(), role_2_filter: RoleFilter = RoleFilter(), max_rounds: int = 5):
         self.matches = Match.load_matches(match_logs_path)
-        self.model_1_filter = model_1_filter
-        self.model_2_filter = model_2_filter
+        self.role_1_filter = role_1_filter
+        self.role_2_filter = role_2_filter
         self.max_rounds = max_rounds
         self.played_matches = set()
-        self.llm_elos = {name: 1000 for name in set([*model_1_filter.models, *model_2_filter.models])}
+        self.llm_elos = {name: 1000 for name in set([*self.role_1_filter.model_names, *self.role_2_filter.model_names])}
 
     def run(self):
         failed = False
@@ -93,12 +112,12 @@ class Tournament:
         for i in range(self.max_rounds):
             matcher = RoundRobin(self.llm_elos)
             scheduled_matchups = matcher.matches
-            scheduled_matchups = [matchup for matchup in scheduled_matchups if matchup[0] in self.model_1_filter.models and matchup[1] in self.model_2_filter.models]
+            scheduled_matchups = [matchup for matchup in scheduled_matchups if matchup[0] in self.role_1_filter.model_names and matchup[1] in self.role_2_filter.model_names]
             rnd = []
             for matchup in scheduled_matchups:
                 non_played_matches = []
                 for match in self.matches:
-                    if self.model_1_filter.is_valid_model(match.models[0]) and self.model_2_filter.is_valid_model(match.models[1]) and match not in self.played_matches:
+                    if self.role_1_filter.is_valid_model(match.models[0]) and self.role_2_filter.is_valid_model(match.models[1]) and match not in self.played_matches:
                         non_played_matches.append(match)
 
                 if non_played_matches:
@@ -108,7 +127,7 @@ class Tournament:
                 else:
                     print("No more matches to play after round", i)
                     print(f"Failed to find a match for", matchup)
-                    print("With filters", self.model_1_filter, self.model_2_filter)
+                    print("With filters", self.role_1_filter, self.role_2_filter)
                     failed = True
                     break
             if failed:
@@ -130,18 +149,28 @@ if __name__ == "__main__":
     parser.add_argument("--max-rounds", "-r", help="Maximum number of rounds to run the tournament", type=int, default=5)
     args = parser.parse_args()
 
-    # Example: matches where llama is the first model and claude is the second model
-    # where llama is optimized with bsfs and claude is either optimized with bsfs or not optimized
-    filter_1 = ModelFilter(
-        models=[ModelName.llama],
-        with_non_optimized=False,
-        optimizers=[OptimizerName.bsfs]
-    )
-    filter_2 = ModelFilter(
-        models=[ModelName.claude],
-        with_non_optimized=True,
-        optimizers=[OptimizerName.bsfs]
+    # Example: matches between MIPRO-optimized llama, non-optimized Claude, and BSFS-optimized Mistral
+    filter_1 = RoleFilter(
+        model_filters=[
+            ModelFilter(
+                model_name=ModelName.llama,
+                with_non_optimized=False,
+                optimizers=[OptimizerName.mipro]
+            ),
+            ModelFilter(
+                model_name=ModelName.claude,
+                with_non_optimized=True,
+                optimizers=[]
+            ),
+            ModelFilter(
+                model_name=ModelName.mistral,
+                with_non_optimized=False,
+                optimizers=[OptimizerName.mipro]
+            ),
+        ]
     )
 
-    tournament = Tournament(args.logs_path, model_1_filter=filter_1, model_2_filter=filter_2, max_rounds=args.max_rounds)
+    filter_2 = filter_1
+
+    tournament = Tournament(args.logs_path, role_1_filter=filter_1, role_2_filter=filter_2, max_rounds=args.max_rounds)
     tournament.run()
