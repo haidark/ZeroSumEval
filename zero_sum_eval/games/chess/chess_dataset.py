@@ -46,7 +46,6 @@ class ChessPuzzleDataset(Dataset):
         super().__init__(output_key="move")
         self.role = role
         self.num_samples = num_samples
-        print(num_samples)
 
     def _get_board(self, ex: dict) -> chess.Board:
         board = chess.Board()

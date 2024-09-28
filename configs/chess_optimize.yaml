@@ -3,6 +3,7 @@ logging:
 manager:
   args:
     max_rounds: 200
+    max_player_attempts: 5
     win_conditions:
       - Checkmate
     draw_conditions:
@@ -19,20 +20,22 @@ game:
         roles:
           - White
         optimize: true
-        dataset: chess_puzzle_dataset
-        dataset_args:
-          role: White
-          num_samples: 50
-        optimizer: BootstrapFewShot
-        optimizer_args:
-          max_bootstrapped_demos: 3
-          max_labeled_demos: 3
-        metric: chess_stockfish_metric
+        datasets:
+          - dataset: chess_puzzle_dataset
+            dataset_args:
+              role: White
+              num_samples: 50
+            optimizer: BootstrapFewShot
+            optimizer_args:
+              max_bootstrapped_demos: 3
+              max_labeled_demos: 3
+            metric: chess_stockfish_metric
         lm:
-          type: OpenAI
+          type: AzureOpenAI
           args:
-            model: gpt-4o-mini
-            model_type: chat
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
             max_tokens: 800
             temperature: 0.8
             top_p: 0.95
@@ -45,20 +48,22 @@ game:
         roles:
           - Black
         optimize: true
-        dataset: chess_puzzle_dataset
-        dataset_args:
-          role: Black
-          num_samples: 50
-        optimizer: BootstrapFewShot
-        optimizer_args:
-          max_bootstrapped_demos: 3
-          max_labeled_demos: 3
-        metric: chess_stockfish_metric
+        datasets:
+          - dataset: chess_puzzle_dataset
+            dataset_args:
+              role: Black
+              num_samples: 50
+            optimizer: BootstrapFewShot
+            optimizer_args:
+              max_bootstrapped_demos: 3
+              max_labeled_demos: 3
+            metric: chess_stockfish_metric
         lm:
-          type: OpenAI
+          type: AzureOpenAI
           args:
-            model: gpt-4o-mini
-            model_type: chat
+            api_base: https://allam-swn-gpt-01.openai.azure.com/
+            api_version: 2023-07-01-preview
+            deployment_id: gpt-4o-900ptu
             max_tokens: 800
             temperature: 0.8
             top_p: 0.95
