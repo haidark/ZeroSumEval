@@ -98,9 +98,7 @@ class Tournament:
             for matchup in scheduled_matchups:
                 non_played_matches = []
                 for match in self.matches:
-                    if not self.model_1_filter.is_valid_model(match.models[0]) or not self.model_2_filter.is_valid_model(match.models[1]):
-                        continue
-                    else:
+                    if self.model_1_filter.is_valid_model(match.models[0]) and self.model_2_filter.is_valid_model(match.models[1]) and match not in self.played_matches:
                         non_played_matches.append(match)
 
                 if non_played_matches:
