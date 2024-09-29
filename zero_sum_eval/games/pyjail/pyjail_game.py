@@ -1,4 +1,5 @@
 import docker
+from io import StringIO
 import textwrap
 import time
 import re
@@ -26,7 +27,6 @@ class PyjailGame(GameState):
     def instantiate(self, environment: Dict = None, context: Dict = None, roles: List[str] = None, **kwargs) -> None:
         self.last_move_successful = False
         self.roles = roles if roles is not None else self.get_next_roles() 
-      #  self.roles = []#['DefenderSolveCode', 'AttackerSolveCode', "DefenderGenerateCode"]
         self.docker_client = docker.from_env()
         self.container = None
         self.environment = environment or {
@@ -129,10 +129,11 @@ class PyjailGame(GameState):
 
                     new_state.environment['defender_solution'] = user_input
                     new_state.context['message'] = None
+                    new_state.last_move_successful = True
                 else:
                     new_state.environment['attacker_solution'] = user_input
                     new_state.context['message'] = 'AttackerWins'
-                    self.last_move_successful = True
+                    new_state.last_move_successful = True
             else:
                 if current_role == "DefenderSolveCode":
                     new_state.environment['defender_solution'] = user_input
@@ -169,25 +170,24 @@ class PyjailGame(GameState):
             logger.info(f"error in tree walk: {e}")
 
 
-    def _execute_pyjail(self, pyjail_code: str, user_input: str) -> str:
+    def _execute_pyjail(self, defender_code: str, user_input: str) -> str:
+
+        user_input = textwrap.dedent(user_input)
         script = f"""
-{pyjail_code}
+# Defender's code
+{defender_code}
 
-try:
+# User input
+user_input = '''{user_input}'''
 
-    jail({user_input!r}) 
-except Exception as e:
-    print("Exception during execution:",str(e)) 
+x = jail(user_input)
+print(x)
 """
-        dedented_script =  script # textwrap.dedent(script)
         
-        cmd = ["python", "-c", dedented_script]
         try:
-            #run the pyjail
-            output = self.container.exec_run(cmd, stream=False, environment={"FLAG":self.flag})
+            output = self.container.exec_run(["python", "-c", script], environment={"FLAG": self.flag})
         except docker.errors.APIError as e:
-            #as specified by the API
-            raise ValueError()
+            raise ValueError(str(e))
         return output
 
     def query_game(self) -> GameState:
@@ -223,6 +223,8 @@ except Exception as e:
     def get_next_roles(self) -> List[str]:
         if hasattr(self,'roles'):
             if not self.last_move_successful:
+                if not self.roles:
+                    return ['DefenderSolveCode', 'AttackerSolveCode', "DefenderGenerateCode"]
                 return self.roles.copy()
 
             if self.roles[0] == "DefenderGenerateCode":
@@ -297,21 +299,18 @@ if __name__ == "__main__":
         logger.info("Initial game state:")
         logger.info(game.display())
 
-        # Test Defender Generate Code
         defender_code = """
 python
 ###START
-import os
 
 def jail(user_input):
-    eval(user_input)
+    exec(user_input)
 ###END
 """
         game = game.update_game(defender_code)
         logger.info("\nAfter Defender Generate Code:")
         logger.info(game.display())
 
-        # Test Defender Solve Code (should fail)
         defender_solution = """
     ###START
     __import__('os').system('echo $FLAG')
@@ -324,7 +323,10 @@ def jail(user_input):
         #defender wins
         attacker_solution = """
     ###START
-    __import__('os').system('echo $FLAG')
+def custom(): 
+    import os
+    os.system('echo $FLAG')
+custom()
     ###END
     """
         game = game.update_game(attacker_solution)
