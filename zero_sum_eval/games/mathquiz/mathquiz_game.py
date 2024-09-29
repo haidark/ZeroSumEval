@@ -2,6 +2,7 @@ from zero_sum_eval.game_state import GameState
 from random import randint
 from zero_sum_eval.registry import GAME_REGISTRY
 from typing import Dict, List, Optional
+from dspy import Prediction
 
 @GAME_REGISTRY.register("mathquiz")
 class MathQuizGame(GameState):
@@ -35,7 +36,7 @@ class MathQuizGame(GameState):
         self.roles = roles if roles else self.get_next_roles()
         self.target = kwargs.get('target', str(randint(1, 1000)))
 
-    def update_game(self, move: str) -> GameState:
+    def update_game(self, move: str, trace: Optional[Prediction] = None) -> GameState:
         new_state = MathQuizGame()
         new_state.instantiate(
             self.environment.copy(),

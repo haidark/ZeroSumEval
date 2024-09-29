@@ -2,7 +2,7 @@ from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
 from typing import Dict, List, Optional
 from random_word import RandomWords
-
+from dspy import Prediction
 
 @GAME_REGISTRY.register("gandalf")
 class GandalfGame(GameState):
@@ -29,7 +29,7 @@ class GandalfGame(GameState):
         self.context = context if context else {"message": None}
         self.roles = roles if roles else ['Infiltrator', 'Sentinel']
 
-    def update_game(self, move: str) -> GameState:
+    def update_game(self, move: str, trace: Optional[Prediction] = None) -> GameState:
         new_state = GandalfGame()
         new_state.instantiate(
             self.environment.copy(),
