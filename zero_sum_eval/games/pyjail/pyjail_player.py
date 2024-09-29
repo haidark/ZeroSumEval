@@ -128,7 +128,7 @@ class DefenderGenerateCode(Player):
     def _make_move(self, **kwargs):
         
         trace = self.module(**kwargs)
-        return trace.code
+        return str(trace.code), trace
         
 
 @PLAYER_REGISTRY.register("pyjail", "pyjail_player")
@@ -139,6 +139,6 @@ class PyjailPlayer(Player):
     def _make_move(self, **kwargs):
             
         trace = self.module(**kwargs) 
-        return trace.code
+        return str(trace.code), trace
 
 

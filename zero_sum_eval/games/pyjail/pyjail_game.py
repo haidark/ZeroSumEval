@@ -8,6 +8,7 @@ import json
 import yaml
 import logging
 import secrets
+from dspy import Prediction
 from typing import Dict, List, Optional
 from zero_sum_eval.game_state import GameState
 from zero_sum_eval.registry import GAME_REGISTRY
@@ -25,12 +26,14 @@ logger = logging.getLogger(__name__)
 class PyjailGame(GameState):
 
     def instantiate(self, environment: Dict = None, context: Dict = None, roles: List[str] = None, **kwargs) -> None:
-        self.last_move_successful = False
+        self.generate_pyjail_successful = False
+        self.validate_pyjail_successful = False
+        self.solve_pyjail_successful = False
         self.roles = roles if roles is not None else self.get_next_roles() 
         self.docker_client = docker.from_env()
         self.container = None
         self.environment = environment or {
-            "defender_code": None,
+            "pyjail_code": None,
             "defender_solution": None,
             "attacker_solution": None
         }
@@ -66,7 +69,7 @@ class PyjailGame(GameState):
             else:
                 raise RuntimeError("Container failed to start within the expected time.")
 
-    def update_game(self, move: str) -> 'PyjailGame':
+    def update_game(self, move: str, trace: Optional[Prediction] = None) -> 'PyjailGame':
         new_state = PyjailGame()
         new_state.instantiate(
             self.environment.copy(),
@@ -77,45 +80,44 @@ class PyjailGame(GameState):
         new_state.container = self.container
         new_state.flag = self.flag
 
+        new_state.generate_pyjail_successful = self.generate_pyjail_successful  
+        new_state.validate_pyjail_successful  = self.validate_pyjail_successful 
+        new_state.solve_pyjail_successful = self.solve_pyjail_successful
         new_state.context['move_history'].append(move)
         try:
-            match = re.search(r'###START(.*?)###END', move, re.DOTALL)
-            move = match.group(1).strip()
+            last_code_block = self._extract_last_code_block(move)
+            if last_code_block:
+                move = last_code_block
+            else:
+                logger.debug(f"No code block found in: {move}")
         except Exception as e:
-            move = move
+            logger.exception(f"Error processing move: {e}")
 
         dedented_move = textwrap.dedent(move)
 
         current_role = new_state.roles[0]
 
-        functions = []
         if current_role == "DefenderGenerateCode":
             try:
-                tree = ast.parse(dedented_move)
-
-
+                tree = ast.parse(move)
                 code_has_func = self._verify_code_has_function(tree, 'jail')
-                
-                if code_has_func != None:
+                if code_has_func is not None:
                     raise ValueError(code_has_func)
- 
-                new_state.environment['defender_code'] = dedented_move
-                new_state.last_move_successful = True
-                new_state.context['message'] = None
-
+                new_state.generate_pyjail_successful = True 
+                new_state.environment['pyjail_code'] = dedented_move
             except SyntaxError as e:
                 new_state.context['message'] =  f"Syntax error in pyjail: {str(e)}"
-            except ValueError as e:
+            except Exception as e:
                 new_state.context['message'] =  f"{str(e)}"
 
         elif current_role in ["DefenderSolveCode", "AttackerSolveCode"]:
-            defender_code = new_state.environment['defender_code']
+            pyjail_code = self.environment['pyjail_code']
             user_input = dedented_move
 
-            res = new_state._execute_pyjail(defender_code, user_input)
+            res = new_state._execute_pyjail(pyjail_code, user_input)
+            new_state.generate_pyjail_successful = self.generate_pyjail_successful  
 
             output = res.output
-            new_state.context['message'] = new_state.context['message'] or ''
 
             hist_res = f"attempt result: {output.decode('utf-8').strip()}"
             histname = 'defender' if not self.roles[0] == 'AttackerSolveCode' else 'attacker'
@@ -123,17 +125,15 @@ class PyjailGame(GameState):
 
             if new_state.flag in output:
 
-                new_state.last_move_successful = True
-
                 if current_role == "DefenderSolveCode":
 
                     new_state.environment['defender_solution'] = user_input
                     new_state.context['message'] = None
-                    new_state.last_move_successful = True
+                    new_state.validate_pyjail_successful = True
                 else:
                     new_state.environment['attacker_solution'] = user_input
-                    new_state.context['message'] = 'AttackerWins'
-                    new_state.last_move_successful = True
+                    new_state.context['message'] = 'AttackerCorrect'
+                    new_state.solve_pyjail_successful = True
             else:
                 if current_role == "DefenderSolveCode":
                     new_state.environment['defender_solution'] = user_input
@@ -141,41 +141,37 @@ class PyjailGame(GameState):
                 else:
                     new_state.context['message'] += "\nAttacker failed to retrieve the flag."
 
+         
         new_state.roles = new_state.get_next_roles()
+
         return new_state
 
+    def _extract_last_code_block(self,text):
+        matches = re.findall(r'###START(.*?)###END', text, re.DOTALL)
+        if matches:
+            return matches[-1].strip()
+        return None
+
     def _verify_code_has_function(self, tree, name):
+        functions = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                functions.append(node.name)
+            
+        if name in functions:
+        
+        
+            return None 
+        else:
+            return "pyjail must have function definition 'def jail(user_input):'"
 
-        class functionVisitor(ast.NodeVisitor):
-
-            def visit_FunctionDef(self, node):
-                if node.name == name:
-                    if len(node.args.args) == 1:
-                        self.found_jail = True
-
-                self.generic_visit(node)
-
-
-        '''return None if the code has the function of name name, otherwise return a message'''
-        try:
-            for node in ast.walk(tree):
-                if isinstance(node, (ast.Import, ast.ImportFrom)):
-                    continue
-                if isinstance(node,ast.FunctionDef) and node.name == 'jail':
-
-                    return None if (len(node.args.args) == 1) else "function  'jail' must have exactly one argument"
-            return "pyjail must contain function 'jail'"
-
-        except Exception as e:
-            logger.info(f"error in tree walk: {e}")
-
-
-    def _execute_pyjail(self, defender_code: str, user_input: str) -> str:
+    def _execute_pyjail(self, pyjail_code: str, user_input: str) -> str:
 
         user_input = textwrap.dedent(user_input)
+        
         script = f"""
 # Defender's code
-{defender_code}
+{pyjail_code}
 
 # User input
 user_input = '''{user_input}'''
@@ -201,10 +197,14 @@ print(x)
             self.roles.copy()
         )
 
+        new_state.generate_pyjail_successful = self.generate_pyjail_successful  
+        new_state.validate_pyjail_successful  = self.validate_pyjail_successful 
+        new_state.solve_pyjail_successful = self.solve_pyjail_successful
+
         msg = new_state.validate_game()
         new_state.context['message'] = msg if msg is not None else f"You will move as {new_state.roles[0]}"
 
-        current_role = new_state.roles[0]
+        current_role = new_state.get_next_roles
 
         if current_role == "DefenderGenerateCode":
             new_state.context['message'] += "\nImplement a Pyjail by defining a 'jail(user_input)' function. Start and end your code with ###START and ###END. Example:\n###START\ndef jail(user_input):\n    # Your code here\n    pass\n###END"
@@ -216,23 +216,23 @@ print(x)
         return new_state
 
     def validate_game(self) -> Optional[str]:
-        if self.roles[0] == "AttackerSolveCode" and not self.last_move_successful:
+        if self.roles[0] == "AttackerSolveCode" and not self.solve_pyjail_successful:
             return "DefenderWins"
+        
         return self.context['message']
 
     def get_next_roles(self) -> List[str]:
-        if hasattr(self,'roles'):
-            if not self.last_move_successful:
-                if not self.roles:
-                    return ['DefenderSolveCode', 'AttackerSolveCode', "DefenderGenerateCode"]
-                return self.roles.copy()
+        
+        if self.solve_pyjail_successful == True: 
+            return ['AttackerSolveCode', "DefenderGenerateCode", 'DefenderSolveCode']
+        elif self.validate_pyjail_successful == True:
+            return ['AttackerSolveCode', "DefenderGenerateCode", 'DefenderSolveCode']
+        elif self.generate_pyjail_successful == True:
+            return ['DefenderSolveCode', 'AttackerSolveCode', "DefenderGenerateCode"]
 
-            if self.roles[0] == "DefenderGenerateCode":
-                return ['DefenderSolveCode', 'AttackerSolveCode', "DefenderGenerateCode"]
-            elif self.roles[0] == "DefenderSolveCode":
-                return ['AttackerSolveCode', "DefenderGenerateCode",'DefenderSolveCode']
-        return ['DefenderGenerateCode', 'DefenderSolveCode', 'AttackerSolveCode']  # Reset the game
+        else:
 
+            return [ "DefenderGenerateCode", 'DefenderSolveCode', 'AttackerSolveCode']
 
     def player_inputs(self) -> Dict[str, str]:
         current_role = self.roles[0]
@@ -245,7 +245,7 @@ print(x)
         elif current_role == "DefenderSolveCode":
             return {
                 'role': current_role,
-                'defender_code': self.environment['defender_code'],
+                'pyjail_code': self.environment['pyjail_code'],
                 'message': self.context['message'],
                 'history': self.context['history']['defender_history']
             }
@@ -253,7 +253,7 @@ print(x)
 
             return {
                 'role': current_role,
-                'defender_code': self.environment['defender_code'],
+                'pyjail_code': self.environment['pyjail_code'],
                 'message': self.context['message'],
                 'history': self.context['history']['attacker_history']
             }
@@ -265,9 +265,9 @@ print(x)
         display_str += f"Message: {self.context['message']}\n\n"
 
         display_str += "Environment:\n"
-        display_str += f"  Defender Code: {'Set' if self.environment['defender_code'] else 'Not set'}\n"
-        if self.environment['defender_code']:
-            display_str += f"    {self.environment['defender_code']}\n"
+        display_str += f"  Defender Code: {'Set' if self.environment['pyjail_code'] else 'Not set'}\n"
+        if self.environment['pyjail_code']:
+            display_str += f"    {self.environment['pyjail_code']}\n"
         display_str += f"  Defender Solution: {'Set' if self.environment['defender_solution'] else 'Not set'}\n"
         if self.environment['defender_solution']:
             display_str += f"    {self.environment['defender_solution']}\n"
@@ -298,27 +298,29 @@ if __name__ == "__main__":
         game.instantiate()
         logger.info("Initial game state:")
         logger.info(game.display())
-
-        defender_code = """
+        game=game.query_game()
+        pyjail_code = """
 python
 ###START
-
+import os
 def jail(user_input):
     exec(user_input)
 ###END
 """
-        game = game.update_game(defender_code)
+        game = game.update_game(pyjail_code)
         logger.info("\nAfter Defender Generate Code:")
         logger.info(game.display())
+        logger.info(game.query_game().validate_game())
 
-        defender_solution = """
+        ''' 
+       defender_solution = """
     ###START
     __import__('os').system('echo $FLAG')
     ###END
     """
         game = game.update_game(defender_solution)
-        game = game.query_game()
         logger.info(game.display())
+        game = game.query_game()
 
         #defender wins
         attacker_solution = """
@@ -332,6 +334,7 @@ custom()
         game = game.update_game(attacker_solution)
         logger.info(game.display())
 
+        '''
 
         logger.info(game.validate_game())
 
