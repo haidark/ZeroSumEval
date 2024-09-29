@@ -50,7 +50,8 @@ class SentinelPlayer(Player):
         return self.sentinel_module
 
     def _make_move(self, **kwargs):
-        return self.sentinel_module(**kwargs).response
+        trace = self.sentinel_module(**kwargs)
+        return trace.response, trace
 
 @PLAYER_REGISTRY.register("gandalf", "infiltrator_player")
 class InfiltratorPlayer(Player):
@@ -59,4 +60,5 @@ class InfiltratorPlayer(Player):
         return self.infiltrator_module
 
     def _make_move(self, **kwargs):
-        return self.infiltrator_module(**kwargs).response
+        trace = self.infiltrator_module(**kwargs)
+        return trace.response, trace

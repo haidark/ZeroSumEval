@@ -2,6 +2,7 @@ logging:
   output_dir: ../output/mathquiz_game
 manager:
   args:
+    max_player_attempts: 5
     max_rounds: 100
     win_conditions:
       - StudentCorrect

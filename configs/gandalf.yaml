@@ -3,6 +3,7 @@ logging:
 
 manager:
   args:
+    max_player_attempts: 5
     max_rounds: 20
     win_conditions:
       - SecretGuessed
@@ -16,7 +17,7 @@ game:
         id: gpt4 sentinel
         roles: 
           - Sentinel
-        optimize: true
+        optimize: false
         datasets:
         - dataset: gandalf_dataset
           dataset_args:
@@ -49,7 +50,7 @@ game:
         id: gpt4 infiltrator
         roles: 
           - Infiltrator
-        optimize: true
+        optimize: false
         datasets:
         - dataset: gandalf_dataset
           dataset_args:
