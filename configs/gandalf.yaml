@@ -3,6 +3,7 @@ logging:
 
 manager:
   args:
+    max_player_attempts: 5
     max_rounds: 20
     win_conditions:
       - SecretGuessed
