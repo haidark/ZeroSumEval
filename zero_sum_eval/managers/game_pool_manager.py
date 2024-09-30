@@ -18,7 +18,6 @@ class GamePoolManager:
         self.config = config
         self.pool_manager_args = config["manager"]["game_pool_manager_args"]
         self.game_manager_args = config["manager"]["game_manager_args"]
-        self.players = dict()
         self.roles = dict()
         self.logger = getLogger()
 
@@ -50,7 +49,8 @@ class GamePoolManager:
         config["game"] = copy(self.config["game"])
         self.roles = dict()
         for lm_name, player_config in zip(lms, config["game"]["players"]):
-            self.roles[player_config["args"]["roles"][0]] = lm_name
+            for role in player_config["args"]["roles"]:
+                self.roles[role] = lm_name
             player_config["args"]["lm"] = self.llm_configs[lm_name]
         
         config["manager"]["args"] = self.config["manager"]["game_manager_args"]
