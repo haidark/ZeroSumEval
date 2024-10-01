@@ -1,0 +1,58 @@
+logging:
+  output_dir: ../output/results_mistral_only
+manager:
+  name: rating_games
+  game_pool_manager_args:
+    max_matches: 100
+  game_manager_args:
+    max_rounds: 200
+    max_player_attempts: 1
+    win_conditions: 
+      - Checkmate
+      - Invalid
+    draw_conditions:
+      - Stalemate
+      - Insufficient material
+      - 75-move rule
+      - Fivefold repetition
+game:
+  name: chess
+  players:
+    - name: chess_player
+      args:
+        id: white
+        roles:
+          - White
+        max_tries: 5
+    - name: chess_player
+      args:
+        id: black
+        roles:
+          - Black
+        max_tries: 5
+llms:
+  - type: Mistral
+    name: mistral-large-default
+    args:
+      model: mistral-large-latest
+      
+  
+  - type: Mistral
+    name: mistral-large-optimized-mipro
+    module_paths:
+      White: compiled_modules/mipro/mistral-large/white_prompts.json
+      Black: compiled_modules/mipro/mistral-large/black_prompts.json
+    args:
+      model: mistral-large-latest
+      
+      max_tokens: 1600
+
+  - type: Mistral
+    name: mistral-large-optimized-bsfs
+    module_paths:
+      White: compiled_modules/bsfs/mistral-large/white_prompts.json
+      Black: compiled_modules/bsfs/mistral-large/black_prompts.json
+    args:
+      model: mistral-large-latest
+      
+      max_tokens: 1600
