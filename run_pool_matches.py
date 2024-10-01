@@ -27,23 +27,12 @@ def main():
     # Set up logging with 'match_series' prefix
     handlers = setup_logging(config, 'match_series')
 
-    try:
-        while True:
-            try:
-                match_manager = GamePoolManager(config)
-                logger.info("Starting a new match pool series!")
-                wdl = match_manager.start()
-                logger.info(f"Match pool series over. WDL: {wdl}")
-            except Exception as e:
-                print(e)
-                print("Error in pool matches")
-                print("Sleeping for 10 seconds then restarting")
-                time.sleep(10)
-                continue
-            
-    finally:
-        # Clean up logging
-        cleanup_logging(logger, handlers)
+    match_manager = GamePoolManager(config)
+    logger.info("Starting a new match pool series!")
+    wdl = match_manager.start()
+    logger.info(f"Match pool series over. WDL: {wdl}")
+    # Clean up logging
+    cleanup_logging(logger, handlers)
 
 
 if __name__ == "__main__":

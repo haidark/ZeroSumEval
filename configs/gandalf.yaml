@@ -17,7 +17,7 @@ game:
         id: gpt4 sentinel
         roles: 
           - Sentinel
-        optimize: false
+        optimize: true
         datasets:
         - dataset: gandalf_dataset
           dataset_args:
@@ -50,7 +50,7 @@ game:
         id: gpt4 infiltrator
         roles: 
           - Infiltrator
-        optimize: false
+        optimize: true
         datasets:
         - dataset: gandalf_dataset
           dataset_args:

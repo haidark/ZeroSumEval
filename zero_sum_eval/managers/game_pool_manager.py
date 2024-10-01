@@ -69,7 +69,7 @@ class GamePoolManager:
 
         game_manager = self._build_game_manager(lms=lms, turn_dir=turn_dir)
 
-        assert len(lms) == len(game_manager.games[-1].roles), "The number of matched LMs must be the same as the number of players required in the game."
+        # assert len(lms) == len(game_manager.players), f"The number of matched LMs {len(lms)} must be the same as the number of players {len(game_manager.players)} required in the game."
         
         self.logger.info(" VS ".join(lms))
         

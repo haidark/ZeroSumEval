@@ -34,12 +34,11 @@ class Player(ABC):
         lm_args = lm["args"] if "args" in lm else {}
         self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
-        self.module = self._build_module(**module_args)
-        if "module_paths" in lm:
-            for role, path in lm["module_paths"].items():
-                if role in self.roles:
-                    self.module.load(path)
-                    logger.info(f"Loaded module for role {role} from {path}")
+        self.module = self._build_module(roles, **module_args)
+        if "module_path" in lm:
+            path = lm["module_path"]
+            self.module.load(path)
+            logger.info(f"Loaded module from {path}")
 
         self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
         if optimize:
@@ -56,13 +55,16 @@ class Player(ABC):
                 # Optimize
                 compilation_args = d_conf.get('compilation_args', compilation_args)
                 dspy.configure(trace=[])
+                logger.info(f"Optimizing Player:{self.id} for Role:{dataset.role} with Optimzer:TBD ...")
                 with dspy.context(lm=self.llm_model):
-                    self.module = optimizer.compile(self.module, trainset=dataset.get_dataset(), **compilation_args)
-                    os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
-                    self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
+                    self.module.module_dict[dataset.role] = optimizer.compile(self.module.module_dict[dataset.role],
+                                                                            trainset=dataset.get_dataset(), 
+                                                                            **compilation_args)
+            os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
+            self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
 
     @abstractmethod
-    def _build_module(self, **module_args):
+    def _build_module(self, roles, **module_args):
         """
         Abstract method for building the main dspy module for the Player
         

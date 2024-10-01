@@ -28,16 +28,20 @@ class InfiltratorResponse(dspy.Signature):
     response = dspy.OutputField(desc="response to the last message in the conversation")
 
 class SentinelResponseModule(dspy.Module):
-    def __init__(self):
+    def __init__(self, roles, **kwargs):
         super().__init__()
+        self.module_dict = dict()
+        self.module_dict[roles[0]] = self
         self.sentinel_response = dspy.ChainOfThought(SentinelResponse)
 
     def forward(self, **kwargs):
         return self.sentinel_response(**kwargs)
 
 class InfiltratorGuessModule(dspy.Module):
-    def __init__(self):
+    def __init__(self, roles, **kwargs):
         super().__init__()
+        self.module_dict = dict()
+        self.module_dict[roles[0]] = self
         self.infiltrator_response = dspy.ChainOfThought(InfiltratorResponse)
 
     def forward(self, **kwargs):
@@ -45,8 +49,8 @@ class InfiltratorGuessModule(dspy.Module):
 
 @PLAYER_REGISTRY.register("gandalf", "sentinel_player")
 class SentinelPlayer(Player):
-    def _build_module(self, **module_args):
-        self.sentinel_module = SentinelResponseModule(**module_args)
+    def _build_module(self, roles, **module_args):
+        self.sentinel_module = SentinelResponseModule(roles, **module_args)
         return self.sentinel_module
 
     def _make_move(self, **kwargs):
@@ -55,8 +59,8 @@ class SentinelPlayer(Player):
 
 @PLAYER_REGISTRY.register("gandalf", "infiltrator_player")
 class InfiltratorPlayer(Player):
-    def _build_module(self, **module_args):
-        self.infiltrator_module = InfiltratorGuessModule(**module_args)
+    def _build_module(self, roles, **module_args):
+        self.infiltrator_module = InfiltratorGuessModule(roles, **module_args)
         return self.infiltrator_module
 
     def _make_move(self, **kwargs):
