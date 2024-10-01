@@ -8,6 +8,7 @@ manager:
     starting_elo: 800
     matching: round_robin
   game_manager_args:
+    max_player_attempts: 5
     max_rounds: 200
     win_conditions: 
       - Checkmate

@@ -74,9 +74,9 @@ class MathQuizTeacher(Player):
         current_role = kwargs.get('role', None)
         trace = self.module(**kwargs)
         if current_role == "TeacherGenerateQuestion":
-            return trace.question
+            return trace.question, trace
         elif current_role == "TeacherAnswerQuestion":
-            return trace.answer
+            return trace.answer, trace
         else:
             raise ValueError(f"Invalid role for teacher: {current_role}")
 
@@ -89,6 +89,6 @@ class MathQuizStudent(Player):
         current_role = kwargs.get('role', None)
         if current_role == "StudentAnswerQuestion":
             trace = self.module(**kwargs)
-            return trace.answer
+            return trace.answer, trace
         else:
             raise ValueError(f"Invalid role for student: {current_role}")
