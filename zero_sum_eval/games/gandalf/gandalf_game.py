@@ -73,14 +73,14 @@ class GandalfGame(GameState):
         current_role = self.roles[0]
         if current_role == "Sentinel":
             return {
-                'role': f"You will move as {current_role}",
+                'role': current_role,
                 'message': self.context['message'],
                 'conversation': GandalfGame.format_conversation(self.environment['conversation'], len(self.environment['conversation'])),
                 'secret_password': self.environment['secret_password']
             }
         elif current_role == "Infiltrator":
             return {
-                'role': f"You will move as {current_role}", 
+                'role': current_role, 
                 'message': self.context['message'],
                 'conversation': GandalfGame.format_conversation(self.environment['conversation'], len(self.environment['conversation']))
             }

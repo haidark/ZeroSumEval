@@ -95,49 +95,45 @@ class SolvePyjailCoT(dspy.Module):
             
 
 class PyjailGeneratorModule(dspy.Module):
-    def __init__(self):
+    def __init__(self, roles, **kwargs):
         super().__init__()
-        self.generate_pyjail = GeneratePyjailCoT()
-        self.pyjail_solve = SolvePyjailCoT()
+        self.module_dict = dict()
+        for role in roles:
+            if role == "DefenderGenerateCode":
+                 self.module_dict[role] = GeneratePyjailCoT()
+            elif role == "DefenderSolveCode":
+                self.module_dict[role] = SolvePyjailCoT()
     
     def forward(self, **kwargs):
         role = kwargs.get('role', None) 
-        if role == "DefenderGenerateCode":
-            module_out = self.generate_pyjail(**kwargs)
-        elif role == "DefenderSolveCode": 
-            module_out = self.pyjail_solve(**kwargs)
-        else: 
-            raise ValueError(f"Invalid role for teacher: {role}")
-        return module_out
+        return self.module_dict[role](**kwargs)
 
 class PyjailPlayerModule(dspy.Module):
-    def __init__(self):
+    def __init__(self, roles, **kwargs):
         super().__init__()
-        self.solve_pyjail = SolvePyjailCoT()
+        self.module_dict = {roles[0]: SolvePyjailCoT()}
     
-    def forward(self, **kwargs): 
-        module_out = self.solve_pyjail(**kwargs)
-        return module_out
+    def forward(self, **kwargs):
+        role = kwargs.get('role', None)
+        return self.module_dict[role](**kwargs)
 
 
 @PLAYER_REGISTRY.register("pyjail", "pyjail_generator")
 class DefenderGenerateCode(Player):
-    def _build_module(self, **kwargs):        
-        return PyjailGeneratorModule(**kwargs)
+    def _build_module(self, roles, **kwargs):        
+        return PyjailGeneratorModule(roles, **kwargs)
 
     def _make_move(self, **kwargs):
-        
         trace = self.module(**kwargs)
         return str(trace.code), trace
         
 
 @PLAYER_REGISTRY.register("pyjail", "pyjail_player")
 class PyjailPlayer(Player):
-    def _build_module(self, **kwargs):
-        return PyjailPlayerModule(**kwargs)
+    def _build_module(self, roles, **kwargs):
+        return PyjailPlayerModule(roles, **kwargs)
 
     def _make_move(self, **kwargs):
-            
         trace = self.module(**kwargs) 
         return str(trace.code), trace
 

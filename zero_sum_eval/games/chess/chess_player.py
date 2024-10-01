@@ -54,8 +54,10 @@ class NextMove(dspy.Signature):
     move = dspy.OutputField(desc="a valid SAN move without move number, elipses, or any extra formatting.")
 
 class ChessCoT(dspy.Module):
-    def __init__(self):
+    def __init__(self, roles, **kwargs):
         super().__init__()
+        self.module_dict = dict()
+        self.module_dict[roles[0]] = self
         self.cot_move = dspy.ChainOfThought(NextMove)
 
     def forward(self, message, board_state, role, history):
@@ -85,8 +87,8 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def _build_module(self, **module_args):
-        return ChessCoT(**module_args)
+    def _build_module(self, roles, **module_args):
+        return ChessCoT(roles, **module_args)
 
     def _make_move(self, **kwargs):
         """
