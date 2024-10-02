@@ -111,8 +111,8 @@ def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
 
 
 def main(args: argparse.Namespace) -> None:
-
     match_df = convert_matches_to_df(args)
+    print(compute_mle_elo(match_df))
 
     np.random.seed(1)
     bootstrap_elo_lu = get_bootstrap_result(match_df, compute_mle_elo, args.bootstrap_rounds)
