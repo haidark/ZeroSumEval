@@ -1,63 +1,70 @@
 logging:
-  output_dir: ../output/chess_game/claude
+  output_dir: ../output/gandalf_game
+
 manager:
   args:
-    max_rounds: 200
+    max_player_attempts: 5
+    max_rounds: 20
     win_conditions:
-      - Checkmate
+      - SecretGuessed
+      - MaxTurnsExceeded
     draw_conditions:
-      - Stalemate
-      - ThreefoldRepetition
-      - FiftyMoveRule
-      - InsufficientMaterial
-    max_player_attempts: 1
 game:
-  name: chess
+  name: gandalf
   players:
-    - name: chess_player
+    - name: sentinel_player
       args:
-        id: claude_black_bsfsrs
-        roles:
-          - Black
+        id: claude_sentinel
+        roles: 
+          - Sentinel
         optimize: true
         datasets:
-          - dataset: chess_puzzle_dataset
-            dataset_args:
-              role: Black
-              num_samples: 50
-        optimizer: BootstrapFewshotWithRandomSearch
-        optimizer_args:
-          max_bootstrapped_demos: 3
-          max_labeled_demos: 3
-          num_candidate_programs: 8
-        metric: chess_move_validation_metric
+        - dataset: gandalf_dataset
+          dataset_args:
+            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+            role: Sentinel
+            num_examples: 10
+          metric: sentinel_response_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+          optimizer_args:
+            max_bootstrapped_demos: 3
+            max_labeled_demos: 3
+            num_candidate_programs: 8
         lm:
           type: Claude
           args:
             model: claude-3-5-sonnet-20240620
             max_tokens: 1600
-        max_tries: 0
-    - name: chess_player
+            temperature: 0.8
+            top_p: 0.95
+            presence_penalty: 0
+          module_path: ../output/gandalf_game/claude/compiled_modules/claude_sentinel_bsfsrs_prompts.json
+        max_tries: 5
+    - name: infiltrator_player
       args:
-        id: claude_white_bsfsrs
-        roles:
-          - White
+        id: claude_infiltrator
+        roles: 
+          - Infiltrator
         optimize: true
         datasets:
-          - dataset: chess_puzzle_dataset
-            dataset_args:
-              role: White
-              num_samples: 50
-        optimizer: BootstrapFewshotWithRandomSearch
-        optimizer_args:
-          max_bootstrapped_demos: 3
-          max_labeled_demos: 3
-          num_candidate_programs: 8
-        metric: chess_move_validation_metric
+        - dataset: gandalf_dataset
+          dataset_args:
+            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+            role: Infiltrator
+            num_examples: 10
+          metric: infiltrator_guess_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+          optimizer_args:
+            max_bootstrapped_demos: 3
+            max_labeled_demos: 3
+            num_candidate_programs: 8
         lm:
           type: Claude
           args:
             model: claude-3-5-sonnet-20240620
             max_tokens: 1600
-        max_tries: 0
-    
+            temperature: 0.8
+            top_p: 0.95
+            presence_penalty: 0
+          module_path: ../output/gandalf_game/claude/compiled_modules/claude_infiltrator_bsfsrs_prompts.json
+        max_tries: 5
