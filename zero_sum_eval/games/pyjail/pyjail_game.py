@@ -16,7 +16,7 @@ from zero_sum_eval.registry import GAME_REGISTRY
 
 #TODO add support for custom imports for pyjail 
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level = logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("docker").setLevel(logging.WARNING)
 
@@ -98,17 +98,22 @@ class PyjailGame(GameState):
         current_role = new_state.roles[0]
 
         if current_role == "DefenderGenerateCode":
+            
             try:
-                tree = ast.parse(move)
-                code_has_func = self._verify_code_has_function(tree, 'jail')
-                if code_has_func is not None:
-                    raise ValueError(code_has_func)
-                new_state.generate_pyjail_successful = True 
-                new_state.environment['pyjail_code'] = dedented_move
+                code_has_func = self._verify_code_has_function(move, 'jail')
+                if code_has_func == False:
+
+                    new_state.context['message'] =  'please include function jail(user_input):'
+                else:
+                    new_state.generate_pyjail_successful = True 
+                    new_state.context['history']['defender_history'] = []
+                    new_state.environment['pyjail_code'] = dedented_move
+                    new_state.context['message'] = None 
             except SyntaxError as e:
                 new_state.context['message'] =  f"Syntax error in pyjail: {str(e)}"
             except Exception as e:
                 new_state.context['message'] =  f"{str(e)}"
+
 
         elif current_role in ["DefenderSolveCode", "AttackerSolveCode"]:
             pyjail_code = self.environment['pyjail_code']
@@ -137,9 +142,9 @@ class PyjailGame(GameState):
             else:
                 if current_role == "DefenderSolveCode":
                     new_state.environment['defender_solution'] = user_input
-                    new_state.context['message'] += "\nDefender failed to retrieve the flag."
+                    new_state.context['message'] = "Defender failed to retrieve the flag."
                 else:
-                    new_state.context['message'] += "\nAttacker failed to retrieve the flag."
+                    new_state.context['message'] = "Attacker failed to retrieve the flag."
 
          
         new_state.roles = new_state.get_next_roles()
@@ -152,28 +157,25 @@ class PyjailGame(GameState):
             return matches[-1].strip()
         return None
 
-    def _verify_code_has_function(self, tree, name):
-        functions = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef):
-                functions.append(node.name)
+    def _verify_code_has_function(self, code_string, name):
+        try:
+            tree = ast.parse(code_string)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef) and node.name == 'jail':
+                    return True
+            return False
+        except SyntaxError:
+            return False
+           
             
-        if name in functions:
-        
-        
-            return None 
-        else:
-            return "pyjail must have function definition 'def jail(user_input):'"
 
     def _execute_pyjail(self, pyjail_code: str, user_input: str) -> str:
 
         user_input = textwrap.dedent(user_input)
         
         script = f"""
-# Defender's code
 {pyjail_code}
 
-# User input
 user_input = '''{user_input}'''
 
 x = jail(user_input)
@@ -207,7 +209,7 @@ print(x)
         current_role = new_state.get_next_roles
 
         if current_role == "DefenderGenerateCode":
-            new_state.context['message'] += "\nImplement a Pyjail by defining a 'jail(user_input)' function. Start and end your code with ###START and ###END. Example:\n###START\ndef jail(user_input):\n    # Your code here\n    pass\n###END"
+            new_state.context['message'] += "\\nImplement a Pyjail by defining a 'jail(user_input)' function. Start and end your code with ###START and ###END. Example:\\n###START\\ndef jail(user_input):\\n    # Your code here\\n    pass\\n###END"
 
         elif current_role == "DefenderSolveCode":
             new_state.context['message'] += "\noutput valid python syntax, starting and ending valid python with ###START, and ###END that will be the solution to the pyjail ctf challenge you generated"
@@ -276,7 +278,7 @@ print(x)
             display_str += f"    {self.environment['attacker_solution']}\n"
         histname = 'defender' if not self.roles[0] == 'AttackerSolveCode' else 'attacker'
         display_str += "\nHistory:\n"
-        for entry in self.context['history'][f"{histname}_history"][-5:]:
+        for entry in self.context['history'][f"{histname}_history"]:
 
             display_str += f"  {entry}\n"
 
@@ -303,8 +305,35 @@ if __name__ == "__main__":
 python
 ###START
 import os
+
 def jail(user_input):
-    exec(user_input)
+    # Create a custom dictionary with modified environment variables
+    custom_env = dict(os.environ)
+
+    # Remove the FLAG from the custom environment
+    if 'FLAG' in custom_env:
+        del custom_env['FLAG']
+
+    # Limit available built-in functions
+    safe_builtins = {
+        'abs': abs, 'bool': bool, 'int': int, 'float': float, 'str': str,
+        'list': list, 'tuple': tuple, 'dict': dict, 'set': set,
+        'max': max, 'min': min, 'sum': sum, 'len': len,
+        'print': print
+    }
+
+    # Create a restricted global environment
+    restricted_globals = {
+        '__builtins__': safe_builtins,
+        'env': custom_env
+    }
+
+    try:
+        # Execute user input in the restricted environment
+        exec(user_input, restricted_globals)
+    except Exception as e:
+        print(f"Error: {e}")
+
 ###END
 """
         game = game.update_game(pyjail_code)

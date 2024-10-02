@@ -1,66 +1,66 @@
 logging:
-  output_dir: ../output/chess_game/gpt
+  output_dir: ../output/pyjail_game/gpt
 manager:
   args:
-    max_rounds: 200
+    max_rounds: 20
     win_conditions:
-      - Checkmate
+      - DefenderWins
+      - AttackerCorrect
     draw_conditions:
-      - Stalemate
-      - ThreefoldRepetition
-      - FiftyMoveRule
-      - InsufficientMaterial
+      - Placeholder
     max_player_attempts: 1
 game:
-  name: chess
+  name: pyjail
   players:
-    - name: chess_player
+    - name: pyjail_generator
       args:
-        id: gpt_black_bsfsrs
+        id: gpt_generator_bsfsrs
         roles:
-          - Black
+          - DefenderGenerateCode
+          - DefenderSolveCode
         optimize: true
         datasets:
-          - dataset: chess_puzzle_dataset
+          - dataset: pyjail_dataset
             dataset_args:
-              role: Black
-              num_samples: 50
+              filename: ./data/pyjail/pyjail_dataset.jsonl
+              role: DefenderGenerateCode
+              num_samples: 2 
         optimizer: BootstrapFewshotWithRandomSearch
         optimizer_args:
           num_candidate_programs: 8
           max_bootstrapped_demos: 3
           max_labeled_demos: 3
-        metric: chess_move_validation_metric
+        metric: pyjail_code_validation_metric
         lm:
           type: OpenAI
           args:
-            base_url: https://api.openai.com/v1/
+            #base_url: https://api.openai.com/v1/
             
             model: gpt-4o
             max_tokens: 1600
         max_tries: 0
-    - name: chess_player
+    - name: pyjail_player
       args:
-        id: gpt_white_bsfsrs
+        id: gpt_attacker_bsfsrs
         roles:
-          - White
+          - AttackerSolveCode
         optimize: true
         datasets:
-          - dataset: chess_puzzle_dataset
+          - dataset: pyjail_dataset
             dataset_args:
-              role: White
-              num_samples: 50
+              filename: ./data/pyjail/pyjail_dataset.jsonl
+              role: AttackerSolveCode
+              num_samples: 2
         optimizer: BootstrapFewshotWithRandomSearch
         optimizer_args:
           num_candidate_programs: 8
           max_bootstrapped_demos: 3
           max_labeled_demos: 3
-        metric: chess_move_validation_metric
-        lm:
+        metric: pyjail_solution_validation_metric     
+        lm: 
           type: OpenAI
           args:
-            base_url: https://api.openai.com/v1/
-            
+            #base_url: https://api.openai.com/v1/    
             model: gpt-4o
             max_tokens: 1600
         max_tries: 0

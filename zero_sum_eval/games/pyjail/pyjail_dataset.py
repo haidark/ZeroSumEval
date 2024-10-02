@@ -7,18 +7,22 @@ from zero_sum_eval.registry import DATASET_REGISTRY
 
 @DATASET_REGISTRY.register("pyjail_dataset")
 class PyJailDataset(Dataset):
-    def __init__(self, filename: str, role: Union[Literal["DefenderGenerateCode"], Literal["DefenderSolveCode"], Literal["AttackerSolveCode"]]) -> None:
+    def __init__(self, num_samples: int, filename: str, role: Union[Literal["DefenderGenerateCode"], Literal["DefenderSolveCode"], Literal["AttackerSolveCode"]]) -> None:
         super().__init__(output_key="code")
+        self.num_examples = num_samples
         self.filename = filename
         self.role = role
 
     def _load_examples(self):
         examples = []
         with open(self.filename, 'r') as f:
+            counter = 0
             for line in f:
                 examples.append(json.loads(line))
-        return examples
-
+                counter += 1
+                if counter >= self.num_examples:
+                    break
+            return examples
     def _extract_code(self, source_code):
         match = re.search(r'###START(.*?)###END', source_code, re.DOTALL)
         return match.group(1).strip() if match else source_code
