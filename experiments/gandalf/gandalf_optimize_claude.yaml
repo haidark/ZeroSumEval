@@ -37,8 +37,6 @@ game:
             max_tokens: 1600
             temperature: 0.8
             top_p: 0.95
-            presence_penalty: 0
-          module_path: ../output/gandalf_game/claude/compiled_modules/claude_sentinel_bsfsrs_prompts.json
         max_tries: 5
     - name: infiltrator_player
       args:
@@ -65,6 +63,4 @@ game:
             max_tokens: 1600
             temperature: 0.8
             top_p: 0.95
-            presence_penalty: 0
-          module_path: ../output/gandalf_game/claude/compiled_modules/claude_infiltrator_bsfsrs_prompts.json
         max_tries: 5

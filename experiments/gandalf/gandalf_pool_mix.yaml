@@ -1,5 +1,5 @@
 logging:
-  output_dir: ../output/results_mix_all_chess
+  output_dir: ../output/results_mix_all_gandalf
 manager:
   name: rating_games
   game_pool_manager_args:
@@ -7,28 +7,24 @@ manager:
   game_manager_args:
     max_rounds: 200
     max_player_attempts: 1
-    win_conditions: 
-      - Checkmate
-      - Invalid
+    win_conditions:
+      - SecretGuessed
+      - MaxTurnsExceeded
     draw_conditions:
-      - Stalemate
-      - Insufficient material
-      - 75-move rule
-      - Fivefold repetition
 game:
-  name: chess
+  name: gandalf
   players:
-    - name: chess_player
+    - name: sentinel_player
       args:
-        id: white
+        id: sentinel
         roles:
-          - White
+          - Sentinel
         max_tries: 5
-    - name: chess_player
+    - name: infiltrator_player
       args:
-        id: black
+        id: infiltrator
         roles:
-          - Black
+          - Infiltrator
         max_tries: 5
 llms:
   # - type: GoogleVertexAI
@@ -55,22 +51,22 @@ llms:
     name: gpt-4o-default
     args:
       base_url: https://api.openai.com/v1/
-      
       model: gpt-4o
       max_tokens: 1600
+
   - type: OpenAI
     name: llama3.1-70b-default
     args:
-      
       model_type: chat
       base_url: http://localhost:8000/v1/
       model: meta-llama/Meta-Llama-3.1-70B-Instruct
       max_tokens: 1600
+
   - type: Mistral
     name: mistral-large-default
     args:
       model: mistral-large-latest
-      
+
   - type: Claude
     name: claude-3-5-sonnet-default
     args:
@@ -81,13 +77,13 @@ llms:
   - type: OpenAI
     name: gpt-4o-optimized-mipro
     module_paths:
-      White: compiled_modules/mipro/gpt-4o/white_prompts.json
-      Black: compiled_modules/mipro/gpt-4o/black_prompts.json
+      Sentinel: compiled_modules/bsfsrs/gpt-4o/inf_prompts.json
+      Infiltrator: compiled_modules/mipro/gpt-4o/black_prompts.json
     args:
       base_url: https://api.openai.com/v1/
-      
       model: gpt-4o
       max_tokens: 1600
+
   - type: OpenAI
     name: llama3.1-70b-optimized-mipro
     module_paths:
