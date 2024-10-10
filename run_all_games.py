@@ -1,6 +1,6 @@
 from glob import glob
-import yaml
 import time
+from zero_sum_eval.config_utils import load_yaml_with_env_vars
 from zero_sum_eval.logging_utils import setup_logging, cleanup_logging
 from zero_sum_eval.managers.match_manager import MatchManager
 import logging
@@ -23,15 +23,11 @@ if __name__ == "__main__":
     game_configs = []
 
     for game in glob("configs/game_configs/*.yaml"):
-        with open(game) as f:
-            game_configs.append(yaml.safe_load(f))
+        game_configs.append(load_yaml_with_env_vars(game))
 
-    with open("configs/match_manager_config.yaml") as f:
-        match_manager_config = yaml.safe_load(f)
+    match_manager_config = load_yaml_with_env_vars("configs/match_manager_config.yaml")
 
-    with open("configs/llms_config.yaml") as f:
-        llms_config = yaml.safe_load(f)
-
+    llms_config = load_yaml_with_env_vars("configs/llms_config.yaml")
 
     config = dict()
     config["llms"] = llms_config

@@ -1,8 +1,6 @@
 import argparse
-import time
-import yaml
 from collections import defaultdict
-
+from zero_sum_eval.config_utils import load_yaml_with_env_vars
 from zero_sum_eval.managers import GamePoolManager
 from zero_sum_eval.logging_utils import setup_logging, cleanup_logging
 import logging
@@ -11,8 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def read_config(path):
-    with open(path) as f:
-        config = yaml.safe_load(f)
+    config = load_yaml_with_env_vars(path)
     return defaultdict(dict, config)
 
 
