@@ -1,35 +1,34 @@
 logging:
-  output_dir: ../output/results_mix_all_chess
+  output_dir: ../output/results_mix_all_mathquiz
 manager:
   name: rating_games
   game_pool_manager_args:
-    max_matches: 100
+    max_matches: 50
   game_manager_args:
-    max_rounds: 200
-    max_player_attempts: 1
+    max_rounds: 10
+    max_player_attempts: 5
     win_conditions: 
-      - Checkmate
-      - Invalid
+      - StudentCorrect
+      - StudentIncorrect
+      - TeacherIncorrect
     draw_conditions:
-      - Stalemate
-      - Insufficient material
-      - 75-move rule
-      - Fivefold repetition
+      - Placeholder
 game:
-  name: chess
+  name: mathquiz
   players:
-    - name: chess_player
+    - name: mathquiz_teacher
       args:
-        id: white
-        roles:
-          - White
-        max_tries: 5
-    - name: chess_player
+        id: teacher
+        roles: 
+          - TeacherGenerateQuestion
+          - TeacherAnswerQuestion
+        max_tries: 1
+    - name: mathquiz_student
       args:
-        id: black
-        roles:
-          - Black
-        max_tries: 5
+        id: student
+        roles: 
+          - StudentAnswerQuestion
+        max_tries: 1
 llms:
   # - type: GoogleVertexAI
   #   name: gemini-1.5-pro

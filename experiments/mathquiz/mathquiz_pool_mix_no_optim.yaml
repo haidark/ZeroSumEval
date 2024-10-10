@@ -1,0 +1,56 @@
+logging:
+  output_dir: ../output/results_mix_all_mathquiz_no_optim
+manager:
+  name: rating_games
+  game_pool_manager_args:
+    max_matches: 50
+  game_manager_args:
+    max_rounds: 10
+    max_player_attempts: 5
+    win_conditions: 
+      - StudentCorrect
+      - StudentIncorrect
+      - TeacherIncorrect
+    draw_conditions:
+      - Placeholder
+game:
+  name: mathquiz
+  players:
+    - name: mathquiz_teacher
+      args:
+        id: teacher
+        roles: 
+          - TeacherGenerateQuestion
+          - TeacherAnswerQuestion
+        max_tries: 1
+    - name: mathquiz_student
+      args:
+        id: student
+        roles: 
+          - StudentAnswerQuestion
+        max_tries: 1
+llms:
+  - type: OpenAI
+    name: gpt-4o-default
+    args:
+      api_base: https://api.openai.com/v1/
+      model: gpt-4o
+      api_key: ${OPENAI_API_KEY}
+      max_tokens: 1600
+  - type: OpenAI
+    name: llama-3.1-70b-default
+    args:
+      model_type: chat
+      api_base: https://openrouter.ai/api/v1/
+      model: meta-llama/llama-3.1-70b-instruct
+      api_key: ${OPENROUTER_API_KEY}
+      max_tokens: 1600
+  - type: Mistral
+    name: mistral-large-default
+    args:
+      model: mistral-large-latest
+  - type: Claude
+    name: claude-3-5-sonnet-default
+    args:
+      model: claude-3-5-sonnet-20240620
+      max_tokens: 1600
