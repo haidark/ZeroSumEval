@@ -5,7 +5,7 @@ from zero_sum_eval.managers import MatchManager
 from zero_sum_eval.logging_utils import setup_logging, cleanup_logging
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('ZeroSumEval')
 
 
 def read_config(path):

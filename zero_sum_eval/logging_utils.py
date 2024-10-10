@@ -2,9 +2,12 @@ import os
 import logging
 
 def setup_logging(config, log_prefix):
-    logger = logging.getLogger()
+    logger = logging.getLogger('ZeroSumEval')
     logger.setLevel(logging.DEBUG)  # Set to lowest level to capture all logs
-    
+    logging.getLogger('LiteLLM').setLevel(logging.ERROR)
+    logging.getLogger('httpcore').setLevel(logging.ERROR)
+    logging.getLogger('httpx').setLevel(logging.ERROR)
+    logging.getLogger('openai').setLevel(logging.ERROR)
     output_dir = os.path.join(config['logging'].get('output_dir', './'), "logs")
     os.makedirs(output_dir, exist_ok=True)
     

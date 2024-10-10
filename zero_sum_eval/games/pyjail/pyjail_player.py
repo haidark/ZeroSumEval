@@ -7,7 +7,7 @@ import logging
 from zero_sum_eval.player import Player
 from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('ZeroSumEval')
 
 
 

@@ -60,7 +60,6 @@ class GamePoolManager:
 
     def get_next_min_match(self):
         """Gets the match with the least number of games played"""
-        print(self.match_freq)
         return min(self.match_freq.keys(), key=lambda k: self.match_freq[k])
 
     def run_match(self, lms):

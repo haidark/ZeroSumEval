@@ -6,8 +6,7 @@ from zero_sum_eval.dataset import Dataset
 import inspect
 
 from collections import defaultdict
-from dsp.modules.lm import LM
-from dspy import Module
+from dspy import LM
 from dspy.teleprompt import Teleprompter
 
 
@@ -108,11 +107,7 @@ PLAYER_REGISTRY = PlayerRegistry("PLAYER_REGISTRY")
 LM_REGISTRY = Registry("LM_REGISTRY", LM)
 
 def populate_lm_registry():
-    import dspy
-
-    for name, module in inspect.getmembers(dspy, inspect.isclass):
-        if issubclass(module, LM) and module is not LM:
-            LM_REGISTRY.register(name)(module)
+    LM_REGISTRY.register('LM')(LM)
 
 populate_lm_registry()
 

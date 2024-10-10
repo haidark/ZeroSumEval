@@ -8,7 +8,7 @@ import os
 from huggingface_hub import Repository
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('ZeroSumEval')
 HF_TOKEN = os.environ.get("HF_TOKEN")
 HF_USERNAME = os.environ.get("HF_USERNAME", "HishamYahya")
 HF_REPO = os.environ.get("HF_REPO", "HishamYahya/zse-matches")

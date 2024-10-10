@@ -20,7 +20,7 @@ logging.basicConfig(level = logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("docker").setLevel(logging.WARNING)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('ZeroSumEval')
 
 @GAME_REGISTRY.register("pyjail")
 class PyjailGame(GameState):

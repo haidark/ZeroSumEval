@@ -7,7 +7,7 @@ import os
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 import dspy
 
-logger = logging.getLogger()
+logger = logging.getLogger('ZeroSumEval')
 
 # Abstract class for players
 class Player(ABC):
