@@ -1,0 +1,60 @@
+logging:
+  output_dir: ../output/v10/results_mix_unoptimized_pyjail
+manager:
+  name: rating_games
+  game_pool_manager_args:
+    max_matches: 5
+  game_manager_args:
+    max_rounds: 50
+    max_player_attempts: 3
+    win_conditions: 
+      - DefenderWins
+      - AttackerCorrect
+    draw_conditions:
+      - Placeholder
+game:
+  name: pyjail
+  players:
+    - name: pyjail_generator
+      args:
+        id: defender
+        roles:
+          - DefenderGenerateCode
+          - DefenderSolveCode
+        max_tries: 4
+    - name: pyjail_player
+      args:
+        id: attacker
+        roles:
+          - AttackerSolveCode 
+        max_tries: 4
+llms:
+  - type: OpenAI
+    name: gpt-4o-default
+    args:
+      base_url: https://api.openai.com/v1/
+  
+      model: gpt-4o
+      max_tokens: 1600
+ 
+  - type: Mistral
+    name: mistral-large-default
+    args:
+      model: mistral-large-latest
+    
+      max_tokens: 1600
+              
+  - type: Claude
+    name: claude-3-5-sonnet-default
+    args:
+      model: claude-3-5-sonnet-20240620      
+      max_tokens: 1600
+
+  - type: OpenAI
+    name:  llama3.1-70b-default
+    args:
+      model_type: chat
+      api_base: https://openrouter.ai/api/v1/
+      api_key: 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
+      model: meta-llama/llama-3.1-70b-instruct
+      max_tokens: 1600
