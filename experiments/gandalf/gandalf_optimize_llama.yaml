@@ -1,0 +1,66 @@
+logging:
+  output_dir: ../output/gandalf_game
+
+manager:
+  args:
+    max_player_attempts: 5
+    max_rounds: 20
+    win_conditions:
+      - SecretGuessed
+      - MaxTurnsExceeded
+    draw_conditions:
+game:
+  name: gandalf
+  players:
+    - name: sentinel_player
+      args:
+        id: llama_sentinel
+        roles: 
+          - Sentinel
+        optimize: true
+        datasets:
+        - dataset: gandalf_dataset
+          dataset_args:
+            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+            role: Sentinel
+            num_examples: 10
+          metric: sentinel_response_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+          optimizer_args:
+            max_bootstrapped_demos: 3
+            max_labeled_demos: 3
+            num_candidate_programs: 8
+        lm:
+          type: OpenAI
+          args:
+            model_type: chat
+            base_url: http://localhost:8000/v1/
+            model: meta-llama/Meta-Llama-3.1-70B-Instruct
+            max_tokens: 1600
+        max_tries: 5
+    - name: infiltrator_player
+      args:
+        id: llama_infiltrator
+        roles: 
+          - Infiltrator
+        optimize: true
+        datasets:
+        - dataset: gandalf_dataset
+          dataset_args:
+            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+            role: Infiltrator
+            num_examples: 10
+          metric: infiltrator_guess_validation_metric
+          optimizer: BootstrapFewShotWithRandomSearch
+          optimizer_args:
+            max_bootstrapped_demos: 3
+            max_labeled_demos: 3
+            num_candidate_programs: 8
+        lm:
+          type: OpenAI
+          args:
+            model_type: chat
+            base_url: http://localhost:8000/v1/
+            model: meta-llama/Meta-Llama-3.1-70B-Instruct
+            max_tokens: 1600
+        max_tries: 5
