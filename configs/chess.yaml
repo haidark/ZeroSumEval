@@ -36,11 +36,11 @@ game:
             max_bootstrapped_demos: 1
             max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
+          type: LM
           args:
             api_base: https://allam-swn-gpt-01.openai.azure.com/
             api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
+            model: azure/gpt-4o-900ptu
             max_tokens: 800
             temperature: 0.8
             top_p: 0.95
@@ -69,11 +69,11 @@ game:
             max_bootstrapped_demos: 1
             max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
+          type: LM
           args:
             api_base: https://allam-swn-gpt-01.openai.azure.com/
             api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
+            model: azure/gpt-4o-900ptu
             max_tokens: 800
             temperature: 0.8
             top_p: 0.95

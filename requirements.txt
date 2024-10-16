@@ -6,3 +6,4 @@ tabulate
 jsonlines
 docker
 mistralai==0.4.2
+random_word
