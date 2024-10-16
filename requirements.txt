@@ -1,4 +1,4 @@
-dspy-ai==2.4.13
+dspy-ai
 chess
 pyyaml
 anthropic
@@ -6,3 +6,5 @@ tabulate
 jsonlines
 docker
 mistralai==0.4.2
+stockfish
+datasets
