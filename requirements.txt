@@ -1,4 +1,4 @@
-dspy-ai==2.4.13
+dspy-ai
 chess
 pyyaml
 anthropic
@@ -7,3 +7,5 @@ jsonlines
 docker
 mistralai==0.4.2
 random_word
+stockfish
+datasets
