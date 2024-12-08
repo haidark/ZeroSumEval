@@ -1,6 +1,5 @@
 logging:
   output_dir: ../output/gandalf_game
-
 manager:
   args:
     max_player_attempts: 5
@@ -12,69 +11,49 @@ manager:
 game:
   name: gandalf
   players:
-    - name: sentinel_player
+    - name: gandalf_sentinel
       args:
-        id: gpt4 sentinel
-        roles: 
-          - Sentinel
-        optimize: true
-        datasets:
-        - dataset: gandalf_dataset
-          dataset_args:
-            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
-            role: Sentinel
-            num_examples: 10
-          metric: sentinel_response_validation_metric
-          optimizer: BootstrapFewShotWithRandomSearch
-          # optimizer_args:
-          #   num_candidates: 5
-          #   minibatch_size: 20
-          #   minibatch_full_eval_steps: 10
-          # compilation_args:
-          #   max_bootstrapped_demos: 1
-          #   max_labeled_demos: 1
+        id: llama3.3 70b sentinel
+        roles:
+          - name: Sentinel
+            optimize: false
+            metric: sentinel_response_validation_metric
+            dataset: gandalf_dataset
+            dataset_args:
+              filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+              role: Sentinel
+              num_examples: 10
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
-          args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+          model: openrouter/meta-llama/llama-3.3-70b-instruct
         max_tries: 5
-    - name: infiltrator_player
+    - name: gandalf_infiltrator
       args:
-        id: gpt4 infiltrator
-        roles: 
-          - Infiltrator
-        optimize: true
-        datasets:
-        - dataset: gandalf_dataset
-          dataset_args:
-            filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
-            role: Infiltrator
-            num_examples: 10
-          metric: infiltrator_guess_validation_metric
-          optimizer: BootstrapFewShotWithRandomSearch
-          # optimizer_args:
-          #   num_candidates: 5
-          #   minibatch_size: 20
-          #   minibatch_full_eval_steps: 10
-          # compilation_args:
-          #   max_bootstrapped_demos: 1
-          #   max_labeled_demos: 1
+        id: llama3.1 70b infiltrator
+        roles:
+          - name: Infiltrator
+            optimize: false
+            metric: infiltrator_guess_validation_metric
+            dataset: gandalf_dataset
+            dataset_args:
+              filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+              role: Infiltrator
+              num_examples: 10
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
-          args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+          model: openrouter/meta-llama/llama-3.1-70b-instruct
         max_tries: 5

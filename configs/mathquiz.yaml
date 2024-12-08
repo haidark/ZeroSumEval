@@ -40,7 +40,7 @@ game:
           #   max_bootstrapped_demos: 1
           #   max_labeled_demos: 1
         lm:
-          model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+          model: openrouter/meta-llama/llama-3.3-70b-instruct
         max_tries: 5
     - name: mathquiz_student
       args:
@@ -64,5 +64,5 @@ game:
           #   max_bootstrapped_demos: 1
           #   max_labeled_demos: 1
         lm:
-          model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+          model: openrouter/meta-llama/llama-3.1-70b-instruct
         max_tries: 5
