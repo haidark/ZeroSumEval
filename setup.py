@@ -5,13 +5,14 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "dspy-ai==2.4.13",
+        "dspy-ai>=2.5",
         "chess",
         "pyyaml",
         "anthropic",
         "tabulate",
         "jsonlines",
         "docker",
+        "random_word"
     ],
     author="Haidar Khan",
     author_email="haidark@gmail.com",
