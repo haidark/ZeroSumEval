@@ -2,6 +2,7 @@ logging:
   output_dir: ../output/pyjail_game
 manager:
   args:
+    max_player_attempts: 5
     max_rounds: 10
     win_conditions:
       - AttackerCorrect
@@ -12,38 +13,55 @@ game:
   players:
     - name: pyjail_player
       args:
-        id: defender_generate
+        id: llama3.3 70b defender
         roles:
-          - DefenderGenerateCode
-          - DefenderSolveCode
-        optimize: false
+          - name: DefenderGenerateCode
+            optimize: false
+            metric: pyjail_code_validation_metric
+            dataset: pyjail_dataset
+            dataset_args:
+              filename: data/pyjail/pyjail_examples.jsonl
+              role: DefenderGenerateCode
+              num_examples: 10
+          - name: DefenderSolveCode
+            optimize: false
+            metric: pyjail_solution_validation_metric
+            dataset: pyjail_dataset
+            dataset_args:
+              filename: data/pyjail/pyjail_examples.jsonl
+              role: DefenderSolveCode
+              num_examples: 10
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
-          args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+          model: openrouter/meta-llama/llama-3.3-70b-instruct
         max_tries: 5
     - name: pyjail_player
       args:
-        id: attacker_solve
+        id: llama3.1 70b attacker
         roles:
-          - AttackerSolveCode
-        optimize: false
+          - name: AttackerSolveCode
+            optimize: false
+            metric: pyjail_solution_validation_metric
+            dataset: pyjail_dataset
+            dataset_args:
+              filename: data/pyjail/pyjail_examples.jsonl
+              role: AttackerSolveCode
+              num_examples: 10
+        optimizer: MIPROv2
+        optimizer_args:
+          num_candidates: 5
+          minibatch_size: 20
+          minibatch_full_eval_steps: 10
+        compilation_args:
+          max_bootstrapped_demos: 1
+          max_labeled_demos: 1
         lm:
-          type: AzureOpenAI
-          args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
+          model: openrouter/meta-llama/llama-3.1-70b-instruct
         max_tries: 5
