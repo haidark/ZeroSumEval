@@ -16,7 +16,7 @@ from zero_sum_eval.registry import GAME_REGISTRY
 
 #TODO add support for custom imports for pyjail 
 
-logging.basicConfig(level = logging.DEBUG)
+# logging.basicConfig(level = logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("docker").setLevel(logging.WARNING)
 

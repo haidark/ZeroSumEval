@@ -58,6 +58,7 @@ def validate_pyjail_solve(example, prediction, trace=None):
     except Exception:
         return 0
 
+#TDOD fix the structure of this to match the new player.py abstraction
 class GenerateCode(dspy.Signature):
     """Generate PyJail code that makes access harder to the FLAG environment variable"""
     role = dspy.InputField(desc="roles of the player")

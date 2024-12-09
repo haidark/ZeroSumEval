@@ -51,107 +51,92 @@ llms:
   #     model: llama-3.1-70b-versatile
   #     max_tokens: 1600
   #     
-  - type: OpenAI
-    name: gpt-4o-default
-    args:
-      base_url: https://api.openai.com/v1/
-      
-      model: gpt-4o
-      max_tokens: 1600
-  - type: OpenAI
-    name: llama3.1-70b-default
-    args:
-      
-      model_type: chat
-      base_url: http://localhost:8000/v1/
-      model: meta-llama/Meta-Llama-3.1-70B-Instruct
-      max_tokens: 1600
-  - type: Mistral
-    name: mistral-large-default
-    args:
-      model: mistral-large-latest
-      
-  - type: Claude
-    name: claude-3-5-sonnet-default
-    args:
-      model: claude-3-5-sonnet-20240620
-      
-      max_tokens: 1600
+  - name: gpt-4o-default 
+    model: openrouter/openai/chatgpt-4o-latest 
 
-  - type: OpenAI
-    name: gpt-4o-optimized-mipro
-    module_paths:
-      White: compiled_modules/mipro/gpt-4o/white_prompts.json
-      Black: compiled_modules/mipro/gpt-4o/black_prompts.json
-    args:
-      base_url: https://api.openai.com/v1/
-      
-      model: gpt-4o
-      max_tokens: 1600
-  - type: OpenAI
-    name: llama3.1-70b-optimized-mipro
-    module_paths:
-      White: compiled_modules/mipro/llama3.1-70b/white_prompts.json
-      Black: compiled_modules/mipro/llama3.1-70b/black_prompts.json
-    args:
-      
-      model_type: chat
-      base_url: http://localhost:8000/v1/
-      model: meta-llama/Meta-Llama-3.1-70B-Instruct
-  - type: Claude
-    name: claude-3-5-sonnet-optimized-mipro
-    module_paths:
-      White: compiled_modules/mipro/claude-3-5-sonnet/white_prompts.json
-      Black: compiled_modules/mipro/claude-3-5-sonnet/black_prompts.json
-    args:
-      model: claude-3-5-sonnet-20240620
-      
-      max_tokens: 1600
-  - type: Mistral
-    name: mistral-large-optimized-mipro
-    module_paths:
-      White: compiled_modules/mipro/mistral-large/white_prompts.json
-      Black: compiled_modules/mipro/mistral-large/black_prompts.json
-    args:
-      model: mistral-large-latest
-      
-      max_tokens: 1600
+  - name: llama3.1-70b-default
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
 
-  - type: OpenAI
-    name: gpt-4o-optimized-bsfs
-    module_paths:
-      White: compiled_modules/bsfs/gpt-4o/white_prompts.json
-      Black: compiled_modules/bsfs/gpt-4o/black_prompts.json
-    args:
-      base_url: https://api.openai.com/v1/
+  - name: mistral-large-default
+    model: openrouter/mistral-large-latest
       
-      model: gpt-4o
-      max_tokens: 1600
-  - type: OpenAI
-    name: llama3.1-70b-optimized-bsfs
-    module_paths:
-      White: compiled_modules/bsfs/llama3.1-70b/white_prompts.json
-      Black: compiled_modules/bsfs/llama3.1-70b/black_prompts.json
-    args:
+  - name: claude-3-5-sonnet-default
+    model: openrouter/claude-3-5-sonnet-20240620
+    
+  # - type: OpenAI
+  #   name: gpt-4o-optimized-mipro
+  #   module_paths:
+  #     White: compiled_modules/mipro/gpt-4o/white_prompts.json
+  #     Black: compiled_modules/mipro/gpt-4o/black_prompts.json
+  #   args:
+  #     base_url: https://api.openai.com/v1/
       
-      model_type: chat
-      base_url: http://localhost:8000/v1/
-      model: meta-llama/Meta-Llama-3.1-70B-Instruct
-  - type: Claude
-    name: claude-3-5-sonnet-optimized-bsfs
-    module_paths:
-      White: compiled_modules/bsfs/claude-3-5-sonnet/white_prompts.json
-      Black: compiled_modules/bsfs/claude-3-5-sonnet/black_prompts.json
-    args:
-      model: claude-3-5-sonnet-20240620
+  #     model: gpt-4o
+  #     max_tokens: 1600
+  # - type: OpenAI
+  #   name: llama3.1-70b-optimized-mipro
+  #   module_paths:
+  #     White: compiled_modules/mipro/llama3.1-70b/white_prompts.json
+  #     Black: compiled_modules/mipro/llama3.1-70b/black_prompts.json
+  #   args:
       
-      max_tokens: 1600
-  - type: Mistral
-    name: mistral-large-optimized-bsfs
-    module_paths:
-      White: compiled_modules/bsfs/mistral-large/white_prompts.json
-      Black: compiled_modules/bsfs/mistral-large/black_prompts.json
-    args:
-      model: mistral-large-latest
+  #     model_type: chat
+  #     base_url: http://localhost:8000/v1/
+  #     model: meta-llama/Meta-Llama-3.1-70B-Instruct
+  # - type: Claude
+  #   name: claude-3-5-sonnet-optimized-mipro
+  #   module_paths:
+  #     White: compiled_modules/mipro/claude-3-5-sonnet/white_prompts.json
+  #     Black: compiled_modules/mipro/claude-3-5-sonnet/black_prompts.json
+  #   args:
+  #     model: claude-3-5-sonnet-20240620
       
-      max_tokens: 1600
+  #     max_tokens: 1600
+  # - type: Mistral
+  #   name: mistral-large-optimized-mipro
+  #   module_paths:
+  #     White: compiled_modules/mipro/mistral-large/white_prompts.json
+  #     Black: compiled_modules/mipro/mistral-large/black_prompts.json
+  #   args:
+  #     model: mistral-large-latest
+      
+  #     max_tokens: 1600
+
+  # - type: OpenAI
+  #   name: gpt-4o-optimized-bsfs
+  #   module_paths:
+  #     White: compiled_modules/bsfs/gpt-4o/white_prompts.json
+  #     Black: compiled_modules/bsfs/gpt-4o/black_prompts.json
+  #   args:
+  #     base_url: https://api.openai.com/v1/
+      
+  #     model: gpt-4o
+  #     max_tokens: 1600
+  # - type: OpenAI
+  #   name: llama3.1-70b-optimized-bsfs
+  #   module_paths:
+  #     White: compiled_modules/bsfs/llama3.1-70b/white_prompts.json
+  #     Black: compiled_modules/bsfs/llama3.1-70b/black_prompts.json
+  #   args:
+      
+  #     model_type: chat
+  #     base_url: http://localhost:8000/v1/
+  #     model: meta-llama/Meta-Llama-3.1-70B-Instruct
+  # - type: Claude
+  #   name: claude-3-5-sonnet-optimized-bsfs
+  #   module_paths:
+  #     White: compiled_modules/bsfs/claude-3-5-sonnet/white_prompts.json
+  #     Black: compiled_modules/bsfs/claude-3-5-sonnet/black_prompts.json
+  #   args:
+  #     model: claude-3-5-sonnet-20240620
+      
+  #     max_tokens: 1600
+  # - type: Mistral
+  #   name: mistral-large-optimized-bsfs
+  #   module_paths:
+  #     White: compiled_modules/bsfs/mistral-large/white_prompts.json
+  #     Black: compiled_modules/bsfs/mistral-large/black_prompts.json
+  #   args:
+  #     model: mistral-large-latest
+      
+  #     max_tokens: 1600

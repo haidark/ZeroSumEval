@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Tuple
+from typing import Dict, List, Union
 import logging
 import functools
 import os
+import dspy
 
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-import dspy
+from zero_sum_eval.types import Role
+
+# Disable debugging logs of litellm
+import litellm
+litellm._logging._disable_debugging()
 
 logger = logging.getLogger()
 
@@ -14,85 +19,110 @@ class Player(ABC):
     def __init__(
         self,
         id: str,
-        roles: List[str],
+        roles: Union[List[Role], List[str]],
         lm: dict,
-        module_args: dict = {},
-        optimize: bool = False,
         optimizer: str = "MIPROv2",
         optimizer_args: dict = {},
         compilation_args: dict = {},
         metric: str = "exact_match",
-        datasets: Optional[List]= None,
         max_tries: int = 10,
         output_dir: str = "",
     ):
         from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
         self.id = id
-        self.roles = roles
-        self.optimize = optimize
         lm_args = lm["args"] if "args" in lm else {}
-        self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
+        if "type" not in lm:
+            # os.environ["LITELLM_LOG"] = "INFO"
+            self.llm_model = dspy.LM(model=lm["model"], **lm_args)
+        else:
+            self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
         self.max_tries = max_tries
-        self.module = self._build_module(roles, **module_args)
-        if "module_path" in lm:
-            path = lm["module_path"]
-            self.module.load(path)
-            logger.info(f"Loaded module from {path}")
 
-        self.module = assert_transform_module(self.module, functools.partial(backtrack_handler, max_backtracks=max_tries))
-        if optimize:
-            if not datasets:
-                raise ValueError("A list of datasets must be passed for players with 'optimize = True'")
-            for d_conf in datasets:
-                dataset = DATASET_REGISTRY.build(d_conf['dataset'], **d_conf['dataset_args'])
-                metric = METRIC_REGISTRY.build(d_conf.get('metric', metric), output_key=dataset.output_key)
-                optimizer = d_conf.get('optimizer', optimizer)
-                optimizer_args = d_conf.get('optimizer_args', optimizer_args)
-                if optimizer == "MIPROv2":
-                    optimizer_args.update(prompt_model=self.llm_model, task_model=self.llm_model)
+        self.roles: List[str] = [role if isinstance(role, str) else role["name"] for role in roles]
+        self.module_dict = self.init_role_module_dict()
+
+        # Add backtracking to all modules
+        for role in self.module_dict:
+            self.module_dict[role] = assert_transform_module(self.module_dict[role], functools.partial(backtrack_handler, max_backtracks=max_tries))
+
+        # TODO: add support for different optimizers for different roles, right now it's just one optimizer for all roles        
+        if optimizer == "MIPROv2":
+            optimizer_args.update(prompt_model=self.llm_model, task_model=self.llm_model)
+
+        for role in roles:
+            # Option to either only list the role names in the config or provide the full role object with optimization details
+            if isinstance(role, str):
+                role = Role(name=role)
+            else:
+                role = Role(**role)
+            if role.name not in self.module_dict:
+                raise ValueError(f"Role {role.name} not found in module_dict")
+            
+            # Load the module if a path is provided for the role
+            if role.name in lm.get("module_paths", {}):
+                path = lm["module_paths"][role.name]
+                self.module_dict[role.name].load(path)
+                logger.info(f"Loaded module from {path}")
+
+            if role.optimize:
+                if not role.dataset:
+                    raise ValueError("A dataset must be passed for players with 'optimize = True'")
+                
+                # Load the dataset and metric of this particular role
+                dataset = DATASET_REGISTRY.build(role.dataset, **role.dataset_args)
+                metric = METRIC_REGISTRY.build(role.metric, output_key=dataset.output_key)
+
+                # Compile the module
                 optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=metric, **optimizer_args)
-                # Optimize
-                compilation_args = d_conf.get('compilation_args', compilation_args)
                 dspy.configure(trace=[])
-                logger.info(f"Optimizing Player:{self.id} for Role:{dataset.role} with Optimzer:TBD ...")
+                logger.info(f"Optimizing Player:{self.id} for Role:{role.name} with Optimzer: {optimizer}...")
                 with dspy.context(lm=self.llm_model):
-                    self.module.module_dict[dataset.role] = optimizer.compile(self.module.module_dict[dataset.role],
-                                                                            trainset=dataset.get_dataset(), 
-                                                                            **compilation_args)
-            os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
-            self.module.save(os.path.join(output_dir, "compiled_modules", f"{self.id}_prompts.json"))
+                    self.module_dict[role.name] = optimizer.compile(self.module_dict[role.name], trainset=dataset.get_dataset(), **compilation_args)
 
-    @abstractmethod
-    def _build_module(self, roles, **module_args):
+                # Save the optimized module
+                os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
+                self.module_dict[role.name].save(os.path.join(output_dir, "compiled_modules", f"{self.id}_{role.name}_prompts.json"))
+                logger.info(f"Saved compiled module for Role:{role.name} to {os.path.join(output_dir, 'compiled_modules', f'{self.id}_{role.name}_prompts.json')}")
+
+
+    def make_move(self, game_state):
         """
-        Abstract method for building the main dspy module for the Player
+        Make a move based on the game state.
+        
+        Parameters:
+        game_state (GameState): The current game state
+
+        Returns:
+        output: The move to make
+        trace: The trace of the move
+        """
+        inputs = game_state.player_inputs()
+        role = inputs.get("role", None)
+        if role not in self.roles:
+            raise ValueError(f"Role {role} of game state not found in player roles {self.roles}")
+    
+        with dspy.context(lm=self.llm_model):
+            trace = self.module_dict[role](**inputs)
+
+        # the final value in the prediction is assumed to be the output of the module
+        output = trace.items()[-1][1]
+
+        return output, trace
+
+    
+    @abstractmethod
+    def init_role_module_dict(self) -> Dict[str, dspy.Module]:
+        """
+        Abstract method for getting the role-module dictionary for the Player
         
         Parameters:
         None
         
         Returns:
-        dspy.Module: The module
+        dict: The role-module dictionary
         """
         raise NotImplementedError
-
-    @abstractmethod
-    def _make_move(self, game_state) -> Tuple[str, dspy.Prediction]:
-        """
-        Abstract method for making a move based on the current game state.
-        
-        Parameters:
-        game_state (dict): The current state of the game
-        
-        Returns:
-        dict: The move made by the player
-        dspy.Prediction: DSPy trace of the move
-        """
-        raise NotImplementedError
-
-    def make_move(self, game_state):
-        with dspy.context(lm=self.llm_model):
-            return self._make_move(**game_state.player_inputs())
 
 class HumanPlayer(Player):
     def make_move(self, game_state):

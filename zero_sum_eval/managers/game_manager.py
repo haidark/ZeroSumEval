@@ -58,8 +58,9 @@ class GameManager:
                 output_dir=self.config["logging"]["output_dir"],
                 **player_config["args"],
             )
-            if player.roles[0] not in self.games[0].roles: 
-                raise ValueError(f"Role {player.role} is not defined in {self.games[0].__class__.__name__}")
+            for role in player.roles:
+                if role not in self.games[0].roles: 
+                    raise ValueError(f"Role {role} is not defined in {self.games[0].__class__.__name__}")
             for role in player.roles:
                 self.players[role] = player
 

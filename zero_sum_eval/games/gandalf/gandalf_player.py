@@ -28,41 +28,27 @@ class InfiltratorResponse(dspy.Signature):
     response = dspy.OutputField(desc="response to the last message in the conversation")
 
 class SentinelResponseModule(dspy.Module):
-    def __init__(self, roles, **kwargs):
+    def __init__(self):
         super().__init__()
-        self.module_dict = dict()
-        self.module_dict[roles[0]] = self
         self.sentinel_response = dspy.ChainOfThought(SentinelResponse)
 
     def forward(self, **kwargs):
         return self.sentinel_response(**kwargs)
 
 class InfiltratorGuessModule(dspy.Module):
-    def __init__(self, roles, **kwargs):
+    def __init__(self):
         super().__init__()
-        self.module_dict = dict()
-        self.module_dict[roles[0]] = self
         self.infiltrator_response = dspy.ChainOfThought(InfiltratorResponse)
 
     def forward(self, **kwargs):
         return self.infiltrator_response(**kwargs)
 
-@PLAYER_REGISTRY.register("gandalf", "sentinel_player")
+@PLAYER_REGISTRY.register("gandalf", "gandalf_sentinel")
 class SentinelPlayer(Player):
-    def _build_module(self, roles, **module_args):
-        self.sentinel_module = SentinelResponseModule(roles, **module_args)
-        return self.sentinel_module
+    def init_role_module_dict(self):
+        return {"Sentinel": SentinelResponseModule()}
 
-    def _make_move(self, **kwargs):
-        trace = self.sentinel_module(**kwargs)
-        return trace.response, trace
-
-@PLAYER_REGISTRY.register("gandalf", "infiltrator_player")
+@PLAYER_REGISTRY.register("gandalf", "gandalf_infiltrator")
 class InfiltratorPlayer(Player):
-    def _build_module(self, roles, **module_args):
-        self.infiltrator_module = InfiltratorGuessModule(roles, **module_args)
-        return self.infiltrator_module
-
-    def _make_move(self, **kwargs):
-        trace = self.infiltrator_module(**kwargs)
-        return trace.response, trace
+    def init_role_module_dict(self):
+        return {"Infiltrator": InfiltratorGuessModule()}

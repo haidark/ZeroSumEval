@@ -54,10 +54,7 @@ class NextMove(dspy.Signature):
     move = dspy.OutputField(desc="a valid SAN move without move number, elipses, or any extra formatting.")
 
 class ChessCoT(dspy.Module):
-    def __init__(self, roles, **kwargs):
-        super().__init__()
-        self.module_dict = dict()
-        self.module_dict[roles[0]] = self
+    def __init__(self):
         self.cot_move = dspy.ChainOfThought(NextMove)
 
     def forward(self, message, board_state, role, history):
@@ -87,19 +84,8 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def _build_module(self, roles, **module_args):
-        return ChessCoT(roles, **module_args)
-
-    def _make_move(self, **kwargs):
-        """
-        Abstract method for making a move based on the current game state.
-        
-        Parameters:
-        game_state (GameState): The current state of the game
-        
-        Returns:
-        str: The move made by the player
-        dspy.Prediction: DSPy trace of the move
-        """
-        trace = self.module(**kwargs) 
-        return trace.move, trace
+    def init_role_module_dict(self):
+        return {
+            "White": ChessCoT(),
+            "Black": ChessCoT()
+        }

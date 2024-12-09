@@ -14,26 +14,24 @@ game:
       args:
         id: llama3.1 teacher
         roles: 
-          - TeacherGenerateQuestion
-          - TeacherAnswerQuestion
-        optimize: true
-        datasets:
-        - dataset: mathquiz_dataset
-          dataset_args:
-            filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
-            # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-            role: TeacherGenerateQuestion
-            num_examples: 10
-          metric: math_question_validation_metric
-          optimizer: BootstrapFewShotWithRandomSearch
-        - dataset: mathquiz_dataset
-          dataset_args:
-            filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
-            # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-            role: TeacherAnswerQuestion
-            num_examples: 10
-          metric: math_answer_validation_metric
-          optimizer: BootstrapFewShotWithRandomSearch
+          - name: TeacherGenerateQuestion
+            optimize: false
+            metric: math_question_validation_metric
+            dataset: mathquiz_dataset
+            dataset_args:
+              filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
+              role: TeacherGenerateQuestion
+              num_examples: 10
+          - name: TeacherAnswerQuestion
+            metric: math_answer_validation_metric
+            dataset: mathquiz_dataset
+            dataset_args:
+              filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
+              role: TeacherAnswerQuestion
+
+        optimizer: BootstrapFewShotWithRandomSearch
           # optimizer_args:
           #   num_candidates: 5
           #   minibatch_size: 5
@@ -42,26 +40,22 @@ game:
           #   max_bootstrapped_demos: 1
           #   max_labeled_demos: 1
         lm:
-          type: OllamaLocal
-          args:
-            model: llama3.1
-            base_url: http://localhost:11434
+          model: openrouter/meta-llama/llama-3.3-70b-instruct
         max_tries: 5
     - name: mathquiz_student
       args:
         id: llama3.1 student
         roles: 
-          - StudentAnswerQuestion
-        optimize: true
-        datasets:
-        - dataset: mathquiz_dataset
-          dataset_args:
-            filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
-            # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-            role: StudentAnswerQuestion
-            num_examples: 10
-          metric: math_answer_validation_metric
-          optimizer: BootstrapFewShotWithRandomSearch
+          - name: StudentAnswerQuestion
+            optimize: false
+            metric: math_answer_validation_metric
+            dataset: mathquiz_dataset
+            dataset_args:
+              filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
+              role: StudentAnswerQuestion
+              num_examples: 10
+        optimizer: BootstrapFewShotWithRandomSearch
           # optimizer_args:
           #   num_candidates: 5
           #   minibatch_size: 20
@@ -70,8 +64,5 @@ game:
           #   max_bootstrapped_demos: 1
           #   max_labeled_demos: 1
         lm:
-          type: OllamaLocal
-          args:
-            model: llama3.1
-            base_url: http://localhost:11434
+          model: openrouter/meta-llama/llama-3.1-70b-instruct
         max_tries: 5

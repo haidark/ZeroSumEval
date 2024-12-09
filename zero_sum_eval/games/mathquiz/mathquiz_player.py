@@ -44,53 +44,17 @@ class AnswerQuestionCoT(dspy.Module):
         cot_out = self.cot_answer(role=role, message=message, question=question)
         return cot_out
 
-class TeacherModule(dspy.Module):
-    def __init__(self, roles, **kwargs):
-        super().__init__()
-        self.module_dict = dict()
-        for role in roles:
-            if role == "TeacherGenerateQuestion":
-                 self.module_dict[role] = GenerateQuestionCoT()
-            elif role == "TeacherAnswerQuestion":
-                self.module_dict[role] = AnswerQuestionCoT()
-    
-    def forward(self, **kwargs):
-        role = kwargs.get('role', None)
-        return self.module_dict[role](**kwargs)
-
-class StudentModule(dspy.Module):
-    def __init__(self, roles, **kwargs):
-        super().__init__()
-        self.module_dict = {roles[0]: AnswerQuestionCoT()}
-    
-    def forward(self, **kwargs):
-        role = kwargs.get('role', None)
-        return self.module_dict[role](**kwargs)
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
-class MathQuizTeacher(Player):
-    def _build_module(self, roles, **module_args):
-        return TeacherModule(roles, **module_args)
+class MathQuizTeacher(Player):    
+    def init_role_module_dict(self):
+        return {
+            "TeacherGenerateQuestion": GenerateQuestionCoT(),
+            "TeacherAnswerQuestion": AnswerQuestionCoT()
+        }
 
-    def _make_move(self, **kwargs):
-        current_role = kwargs.get('role', None)
-        trace = self.module(**kwargs)
-        if current_role == "TeacherGenerateQuestion":
-            return trace.question, trace
-        elif current_role == "TeacherAnswerQuestion":
-            return trace.answer, trace
-        else:
-            raise ValueError(f"Invalid role for teacher: {current_role}")
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
 class MathQuizStudent(Player):
-    def _build_module(self, roles, **module_args):
-        return StudentModule(roles, **module_args)
-
-    def _make_move(self, **kwargs):
-        current_role = kwargs.get('role', None)
-        if current_role == "StudentAnswerQuestion":
-            trace = self.module(**kwargs)
-            return trace.answer, trace
-        else:
-            raise ValueError(f"Invalid role for student: {current_role}")
+    def init_role_module_dict(self):
+        return {"StudentAnswerQuestion": AnswerQuestionCoT()}

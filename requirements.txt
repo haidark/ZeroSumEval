@@ -8,3 +8,4 @@ docker
 mistralai==0.4.2
 stockfish
 datasets
+random_word

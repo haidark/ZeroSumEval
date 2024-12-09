@@ -30,27 +30,14 @@ game:
           - StudentAnswerQuestion
         max_tries: 1
 llms:
-  - type: OpenAI
-    name: gpt-4o-default
-    args:
-      api_base: https://api.openai.com/v1/
-      model: gpt-4o
-      api_key: ${OPENAI_API_KEY}
-      max_tokens: 1600
-  - type: OpenAI
-    name: llama-3.1-70b-default
-    args:
-      model_type: chat
-      api_base: https://openrouter.ai/api/v1/
-      model: meta-llama/llama-3.1-70b-instruct
-      api_key: ${OPENROUTER_API_KEY}
-      max_tokens: 1600
-  - type: Mistral
-    name: mistral-large-default
-    args:
-      model: mistral-large-latest
-  - type: Claude
-    name: claude-3-5-sonnet-default
-    args:
-      model: claude-3-5-sonnet-20240620
-      max_tokens: 1600
+  - name: gpt-4o-default 
+    model: openrouter/openai/chatgpt-4o-latest 
+
+  - name: llama3.1-70b-default
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+
+  - name: mistral-large-default
+    model: openrouter/mistral-large-latest
+      
+  - name: claude-3-5-sonnet-default
+    model: openrouter/claude-3-5-sonnet-20240620
