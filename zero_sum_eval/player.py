@@ -6,7 +6,7 @@ import os
 import dspy
 
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
-from zero_sum_eval.caching import cache_module, load_cached_module
+from zero_sum_eval.checkpointing import save_module, load_module
 from zero_sum_eval.types import Role
 
 # Disable debugging logs of litellm
@@ -72,17 +72,21 @@ class Player(ABC):
                 if not role.dataset:
                     raise ValueError("A dataset must be passed for players with 'optimize = True'")
                 
-                if use_cache and (cached_module := load_cached_module(
-                    module=self.module_dict[role.name],
-                    model=lm["model"],
-                    role=role.name,
-                    optimizer=optimizer,
-                    dataset=role.dataset,
-                    cache_dir=cache_dir
-                )):
-                    self.module_dict[role.name] = cached_module
-                    logger.info(f"Loaded cached module for Role: {role.name}")
-                    continue
+                if use_cache:
+                    try:
+                        cached_module = load_module(
+                            module=self.module_dict[role.name],
+                            model=lm["model"],
+                            role=role.name,
+                            optimizer=optimizer,
+                            dataset=role.dataset,
+                            module_path=cache_dir
+                        )
+                        self.module_dict[role.name] = cached_module
+                        logger.info(f"Loaded cached module for Role: {role.name}")
+                        continue
+                    except FileNotFoundError:
+                        logger.info(f"No cached module found for Role: {role.name}")
                 
                 # Load the dataset and metric of this particular role
                 dataset = DATASET_REGISTRY.build(role.dataset, **role.dataset_args)
