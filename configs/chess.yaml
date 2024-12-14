@@ -25,7 +25,7 @@ game:
             dataset_args:
               filename: ./data/chess/stockfish_examples.jsonl
               role: White
-              num_samples: 10
+              num_examples: 10
         optimizer: MIPROv2
         optimizer_args:
           num_candidates: 5
@@ -48,7 +48,7 @@ game:
             dataset_args:
               filename: ./data/chess/stockfish_examples.jsonl
               role: Black
-              num_samples: 10
+              num_examples: 10
         optimizer: MIPROv2
         optimizer_args:
           num_candidates: 5
