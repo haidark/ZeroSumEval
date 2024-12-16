@@ -13,9 +13,11 @@ def get_cached_module_path(model: str, role: str, optimizer: str, dataset: str, 
 
 
 def save_checkpoint(module: dspy.Module, module_path:str) -> None:
+    os.makedirs(os.path.dirname(module_path), exist_ok=True)
     module.save(module_path)
 
 def load_checkpoint(module: dspy.Module, module_path:str) -> dspy.Module:
     if not os.path.exists(module_path):
         raise FileNotFoundError(f"Module not found at {module_path}")
-    return module.load(module_path)
+    module.load(module_path)
+    return module
