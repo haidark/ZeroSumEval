@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 import logging
 import functools
 import os
 import dspy
 
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
+from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
 from zero_sum_eval.types import Role
 
 # Disable debugging logs of litellm
@@ -27,13 +28,14 @@ class Player(ABC):
         metric: str = "exact_match",
         max_tries: int = 10,
         output_dir: str = "",
+        use_cache: bool = True,
+        cache_dir: Optional[str] = None,
     ):
         from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
         self.id = id
         lm_args = lm["args"] if "args" in lm else {}
         if "type" not in lm:
-            # os.environ["LITELLM_LOG"] = "INFO"
             self.llm_model = dspy.LM(model=lm["model"], **lm_args)
         else:
             self.llm_model = LM_REGISTRY.build(lm["type"], **lm_args)
@@ -59,31 +61,63 @@ class Player(ABC):
             if role.name not in self.module_dict:
                 raise ValueError(f"Role {role.name} not found in module_dict")
             
-            # Load the module if a path is provided for the role
+            # Load the module from checkpoint if provided for the role (does not preclude further optimization)
             if role.name in lm.get("module_paths", {}):
                 path = lm["module_paths"][role.name]
-                self.module_dict[role.name].load(path)
+                self.module_dict[role.name] = load_checkpoint(
+                    module=self.module_dict[role.name],
+                    module_path=path
+                )
                 logger.info(f"Loaded module from {path}")
 
             if role.optimize:
                 if not role.dataset:
                     raise ValueError("A dataset must be passed for players with 'optimize = True'")
                 
+                if use_cache:
+                    try:
+                        cached_module_path = get_cached_module_path(
+                            model=lm["model"],
+                            role=role.name,
+                            optimizer=optimizer,
+                            dataset=role.dataset,
+                            cache_dir=cache_dir
+                        )
+                        cached_module = load_checkpoint(
+                            module=self.module_dict[role.name],
+                            module_path=cached_module_path
+                        )
+                        self.module_dict[role.name] = cached_module
+                        logger.info(f"Loaded cached module for Role: {role.name}")
+                        continue
+                    except FileNotFoundError:
+                        logger.info(f"No cached module found for Role: {role.name}")
+                
                 # Load the dataset and metric of this particular role
                 dataset = DATASET_REGISTRY.build(role.dataset, **role.dataset_args)
                 metric = METRIC_REGISTRY.build(role.metric, output_key=dataset.output_key)
 
                 # Compile the module
-                optimizer = OPTIMIZER_REGISTRY.build(optimizer, metric=metric, **optimizer_args)
+                opt = OPTIMIZER_REGISTRY.build(optimizer, metric=metric, **optimizer_args)
                 dspy.configure(trace=[])
-                logger.info(f"Optimizing Player:{self.id} for Role:{role.name} with Optimzer: {optimizer}...")
+                logger.info(f"Optimizing Player: {self.id} for Role: {role.name} with Optimzer: {opt}...")
                 with dspy.context(lm=self.llm_model):
-                    self.module_dict[role.name] = optimizer.compile(self.module_dict[role.name], trainset=dataset.get_dataset(), **compilation_args)
+                    self.module_dict[role.name] = opt.compile(self.module_dict[role.name], trainset=dataset.get_dataset(), **compilation_args)
 
-                # Save the optimized module
-                os.makedirs(os.path.join(output_dir, "compiled_modules"), exist_ok=True)
-                self.module_dict[role.name].save(os.path.join(output_dir, "compiled_modules", f"{self.id}_{role.name}_prompts.json"))
-                logger.info(f"Saved compiled module for Role:{role.name} to {os.path.join(output_dir, 'compiled_modules', f'{self.id}_{role.name}_prompts.json')}")
+                if use_cache:
+                    save_checkpoint(
+                        module=self.module_dict[role.name],
+                        module_path=get_cached_module_path(
+                            model=lm["model"],
+                            role=role.name, 
+                            optimizer=optimizer, 
+                            dataset=role.dataset, 
+                            cache_dir=cache_dir
+                        )
+                    )
+                    logger.info(f"Cached compiled module for Role: {role.name}")
+
+                
 
 
     def make_move(self, game_state):

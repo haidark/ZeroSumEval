@@ -19,7 +19,7 @@ game:
         id: llama3.3 70b white
         roles:
           - name: White
-            optimize: false
+            optimize: true
             metric: chess_move_validation_metric
             dataset: chess_dataset
             dataset_args:
@@ -28,12 +28,10 @@ game:
               num_examples: 10
         optimizer: MIPROv2
         optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
           max_bootstrapped_demos: 1
           max_labeled_demos: 1
+        compilation_args:
+          minibatch_size: 2
         lm:
           model: openrouter/meta-llama/llama-3.3-70b-instruct
         max_tries: 5
@@ -51,12 +49,10 @@ game:
               num_examples: 10
         optimizer: MIPROv2
         optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
           max_bootstrapped_demos: 1
           max_labeled_demos: 1
+        compilation_args:
+          minibatch_size: 2
         lm:
           model: openrouter/meta-llama/llama-3.1-70b-instruct
         max_tries: 5
