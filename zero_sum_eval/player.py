@@ -47,8 +47,13 @@ class Player(ABC):
         # Add backtracking to all modules
         for role in self.module_dict:
             self.module_dict[role] = assert_transform_module(self.module_dict[role], functools.partial(backtrack_handler, max_backtracks=max_tries))
-
-        # TODO: add support for different optimizers for different roles, right now it's just one optimizer for all roles        
+        
+        # Prioritize the optimizer set in the llm config over the one set in the player config
+        if "optimizer" in lm_args:
+            optimizer = lm_args["optimizer"]
+            optimizer_args = lm_args.get("optimizer_args", {})
+        
+        # TODO: add support for different optimizers for different roles, right now it's just one optimizer for all roles   
         if optimizer == "MIPROv2":
             optimizer_args.update(prompt_model=self.llm_model, task_model=self.llm_model)
 
@@ -70,19 +75,23 @@ class Player(ABC):
                 )
                 logger.info(f"Loaded module from {path}")
 
-            if role.optimize:
+            # prioritize the optimize flag in the lm config over the one in the role config
+            if lm_args.get("optimize", role.optimize):
                 if not role.dataset:
                     raise ValueError("A dataset must be passed for players with 'optimize = True'")
                 
                 if use_cache:
+                    cached_module_path = get_cached_module_path(
+                        model=lm["model"],
+                        role=role.name, 
+                        optimizer=optimizer, 
+                        dataset=role.dataset, 
+                        cache_dir=cache_dir,
+                        optimizer_args=optimizer_args,
+                        compilation_args=compilation_args
+                    )
+
                     try:
-                        cached_module_path = get_cached_module_path(
-                            model=lm["model"],
-                            role=role.name,
-                            optimizer=optimizer,
-                            dataset=role.dataset,
-                            cache_dir=cache_dir
-                        )
                         cached_module = load_checkpoint(
                             module=self.module_dict[role.name],
                             module_path=cached_module_path
@@ -107,17 +116,9 @@ class Player(ABC):
                 if use_cache:
                     save_checkpoint(
                         module=self.module_dict[role.name],
-                        module_path=get_cached_module_path(
-                            model=lm["model"],
-                            role=role.name, 
-                            optimizer=optimizer, 
-                            dataset=role.dataset, 
-                            cache_dir=cache_dir
-                        )
+                        module_path=cached_module_path
                     )
                     logger.info(f"Cached compiled module for Role: {role.name}")
-
-                
 
 
     def make_move(self, game_state):
