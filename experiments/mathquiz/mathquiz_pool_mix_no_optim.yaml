@@ -12,32 +12,52 @@ manager:
       - StudentIncorrect
       - TeacherIncorrect
     draw_conditions:
-      - Placeholder
 game:
   name: mathquiz
   players:
     - name: mathquiz_teacher
       args:
         id: teacher
-        roles: 
-          - TeacherGenerateQuestion
-          - TeacherAnswerQuestion
-        max_tries: 1
+        roles:
+          - name: TeacherGenerateQuestion
+            optimize: false
+            metric: math_question_validation_metric
+            dataset: mathquiz_dataset
+            dataset_args:
+              filename: ./data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              role: TeacherGenerateQuestion
+              num_examples: 10
+          - name: TeacherAnswerQuestion
+            optimize: false
+            metric: math_answer_validation_metric
+            dataset: mathquiz_dataset
+            dataset_args:
+              filename: ./data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              role: TeacherAnswerQuestion
+              num_examples: 10
+        max_tries: 5
     - name: mathquiz_student
       args:
         id: student
-        roles: 
-          - StudentAnswerQuestion
-        max_tries: 1
+        roles:
+          - name: StudentAnswerQuestion
+            optimize: false
+            metric: math_answer_validation_metric
+            dataset: mathquiz_dataset
+            dataset_args:
+              filename: ./data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              role: StudentAnswerQuestion
+              num_examples: 10
+        max_tries: 5
 llms:
-  - name: gpt-4o-default 
-    model: openrouter/openai/chatgpt-4o-latest 
+  - name: gpt-4o-default
+    model: openrouter/openai/chatgpt-4o-latest
 
   - name: llama3.1-70b-default
     model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
 
   - name: mistral-large-default
     model: openrouter/mistral-large-latest
-      
+
   - name: claude-3-5-sonnet-default
     model: openrouter/claude-3-5-sonnet-20240620

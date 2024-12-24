@@ -1,9 +1,9 @@
 logging:
-  output_dir: ../output/v10/results_mix_unoptimized_pyjail
+  output_dir: ../output/results_mix_all_pyjail
 manager:
   name: rating_games
   game_pool_manager_args:
-    max_matches: 5
+    max_matches: 100
   game_manager_args:
     max_rounds: 50
     max_player_attempts: 3
@@ -11,7 +11,6 @@ manager:
       - DefenderWins
       - AttackerCorrect
     draw_conditions:
-      - Placeholder
 game:
   name: pyjail
   players:
@@ -19,42 +18,145 @@ game:
       args:
         id: defender
         roles:
-          - DefenderGenerateCode
-          - DefenderSolveCode
+          - name: DefenderGenerateCode
+            optimize: true
+            metric: pyjail_validation_metric
+            dataset: pyjail_dataset
+            dataset_args:
+              filename: ./data/pyjail/pyjail_examples.jsonl
+              role: DefenderGenerateCode
+              num_examples: 10
+          - name: DefenderSolveCode
+            optimize: false
+            metric: pyjail_validation_metric
+            dataset: pyjail_dataset
+            dataset_args:
+              filename: ./data/pyjail/pyjail_examples.jsonl
+              role: DefenderSolveCode
+              num_examples: 10
         max_tries: 4
     - name: pyjail_player
       args:
         id: attacker
         roles:
-          - AttackerSolveCode 
+          - name: AttackerSolveCode
+            optimize: false
+            metric: pyjail_validation_metric
+            dataset: pyjail_dataset
+            dataset_args:
+              filename: ./data/pyjail/pyjail_examples.jsonl
+              role: AttackerSolveCode
+              num_examples: 10
         max_tries: 4
 llms:
-  - type: OpenAI
-    name: gpt-4o-default
-    args:
-      base_url: https://api.openai.com/v1/
-  
-      model: gpt-4o
-      max_tokens: 1600
- 
-  - type: Mistral
-    name: mistral-large-default
-    args:
-      model: mistral-large-latest
-    
-      max_tokens: 1600
-              
-  - type: Claude
-    name: claude-3-5-sonnet-default
-    args:
-      model: claude-3-5-sonnet-20240620      
-      max_tokens: 1600
+  - name: gpt-4o-optimized-mipro
+    model: openrouter/openai/chatgpt-4o-latest
+    optimize: true
+    optimizer: MIPROv2
+    compilation_args:
+      requires_permission_to_run: false
+      num_trials: 10
+      minibatch_size: 10
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
 
-  - type: OpenAI
-    name:  llama3.1-70b-default
-    args:
-      model_type: chat
-      api_base: https://openrouter.ai/api/v1/
-      api_key: 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
-      model: meta-llama/llama-3.1-70b-instruct
-      max_tokens: 1600
+  - name: llama3.1-70b-optimized-mipro
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    optimize: true
+    optimizer: MIPROv2
+    compilation_args:
+      requires_permission_to_run: false
+      num_trials: 10
+      minibatch_size: 10
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
+
+  - name: mistral-large-optimized-mipro
+    model: openrouter/mistral-large-latest
+    optimize: true
+    optimizer: MIPROv2
+    compilation_args:
+      requires_permission_to_run: false
+      num_trials: 10
+      minibatch_size: 10
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
+
+  - name: claude-3-5-sonnet-optimized-mipro
+    model: openrouter/claude-3-5-sonnet-20240620
+    optimize: true
+    optimizer: MIPROv2
+    compilation_args:
+      requires_permission_to_run: false
+      num_trials: 10
+      minibatch_size: 10
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
+
+  - name: gpt-4o-optimized-bsfsrs
+    model: openrouter/openai/chatgpt-4o-latest
+    optimize: true
+    optimizer: BootstrapFewshotWithRandomSearch
+    optimizer_args:
+      max_bootstrapped_demos: 1
+      max_labeled_demos: 1
+      num_candidate_programs: 2
+
+  - name: llama3.1-70b-optimized-bsfsrs
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    optimize: true
+    optimizer: BootstrapFewshotWithRandomSearch
+    optimizer_args:
+      max_bootstrapped_demos: 1
+      max_labeled_demos: 1
+      num_candidate_programs: 2
+
+  - name: mistral-large-optimized-bsfsrs
+    model: openrouter/mistral-large-latest
+    optimize: true
+    optimizer: BootstrapFewshotWithRandomSearch
+    optimizer_args:
+      max_bootstrapped_demos: 1
+      max_labeled_demos: 1
+      num_candidate_programs: 2
+
+  - name: claude-3-5-sonnet-optimized-bsfsrs
+    model: openrouter/claude-3-5-sonnet-20240620
+    optimize: true
+    optimizer: BootstrapFewshotWithRandomSearch
+    optimizer_args:
+      max_bootstrapped_demos: 1
+      max_labeled_demos: 1
+      num_candidate_programs: 2
+
+  - name: gpt-4o-optimized-bsfs
+    model: openrouter/openai/chatgpt-4o-latest
+    optimize: true
+    optimizer: BootstrapFewshot
+
+  - name: llama3.1-70b-optimized-bsfs
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    optimize: true
+    optimizer: BootstrapFewshot
+
+  - name: mistral-large-optimized-bsfs
+    model: openrouter/mistral-large-latest
+    optimize: true
+    optimizer: BootstrapFewshot
+
+  - name: claude-3-5-sonnet-optimized-bsfs
+    model: openrouter/claude-3-5-sonnet-20240620
+    optimize: true
+    optimizer: BootstrapFewshot
+
+  - name: gpt-4o-default
+    model: openrouter/openai/chatgpt-4o-latest
+
+  - name: llama3.1-70b-default
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+
+  - name: mistral-large-default
+    model: openrouter/mistral-large-latest
+
+  - name: claude-3-5-sonnet-default
+    model: openrouter/claude-3-5-sonnet-20240620
