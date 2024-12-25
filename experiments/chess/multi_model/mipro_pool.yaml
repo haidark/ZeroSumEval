@@ -76,7 +76,7 @@ llms:
       max_bootstrapped_demos: 3
       max_labeled_demos: 3
 
-  - name: mistral-large-default
+  - name: mistral-large-mipro
     model: openrouter/mistral-large-latest
     optimize: true
     optimizer: MIPROv2

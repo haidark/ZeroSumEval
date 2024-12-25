@@ -43,7 +43,7 @@ game:
               num_samples: 10
         max_tries: 5
 llms:
-  - name: gpt-4o-optimized-mipro
+  - name: gpt-4o-optimized-bsfsrs
     model: openrouter/openai/chatgpt-4o-latest
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
@@ -51,7 +51,7 @@ llms:
       max_bootstrapped_demos: 3
       max_labeled_demos: 3
   
-  - name: claude-3-5-sonnet-optimized-mipro
+  - name: claude-3-5-sonnet-optimized-bsfsrs
     model: openrouter/claude-3-5-sonnet-20240620
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
@@ -59,7 +59,7 @@ llms:
       max_bootstrapped_demos: 3
       max_labeled_demos: 3
 
-  - name: llama3.1-70b-optimized-mipro
+  - name: llama3.1-70b-optimized-bsfsrs
     model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
@@ -67,7 +67,7 @@ llms:
       max_bootstrapped_demos: 3
       max_labeled_demos: 3
 
-  - name: mistral-large-default
+  - name: mistral-large-bsfsrs
     model: openrouter/mistral-large-latest
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
