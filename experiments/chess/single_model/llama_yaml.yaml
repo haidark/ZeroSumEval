@@ -1,0 +1,74 @@
+logging:
+  output_dir: outputs/results_llama_pool
+manager:
+  name: rating_games
+  game_pool_manager_args:
+    max_matches: 100
+  game_manager_args:
+    max_rounds: 200
+    max_player_attempts: 1
+    win_conditions:
+      - Checkmate
+      - Invalid
+    draw_conditions:
+      - Stalemate
+      - Insufficient material
+      - 75-move rule
+      - Fivefold repetition
+game:
+  name: chess
+  players:
+    - name: chess_player
+      args:
+        id: white
+        roles:
+          - name: White
+            optimize: true
+            metric: chess_move_validation_metric
+            dataset: chess_puzzle_dataset
+            dataset_args:
+              role: White
+              num_examples: 10
+        max_tries: 5
+    - name: chess_player
+      args:
+        id: black
+        roles:
+          - name: Black
+            optimize: true
+            dataset: chess_puzzle_dataset
+            metric: chess_move_validation_metric
+            dataset_args:
+              role: Black
+              num_samples: 10
+        max_tries: 5
+llms:
+  - name: llama3.1-70b-optimized-mipro
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    optimize: true
+    optimizer: MIPROv2
+    compilation_args:
+      requires_permission_to_run: false
+      num_trials: 10
+      minibatch_size: 10
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
+
+  - name: llama3.1-70b-optimized-bsfsrs
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    optimize: true
+    optimizer: BootstrapFewshotWithRandomSearch
+    optimizer_args:
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
+  
+  - name: llama3.1-70b-optimized-bsfs
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    optimize: true
+    optimizer: BootstrapFewshot
+    optimizer_args:
+      max_bootstrapped_demos: 3
+      max_labeled_demos: 3
+
+  - name: llama3.1-70b-default
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
