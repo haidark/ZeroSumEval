@@ -73,7 +73,7 @@ llms:
       max_labeled_demos: 3
 
   - name: mistral-large-optimized-mipro
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: MIPROv2
     compilation_args:
@@ -113,7 +113,7 @@ llms:
       num_candidate_programs: 2
 
   - name: mistral-large-optimized-bsfsrs
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
     optimizer_args:
@@ -141,7 +141,7 @@ llms:
     optimizer: BootstrapFewshot
 
   - name: mistral-large-optimized-bsfs
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: BootstrapFewshot
 
@@ -157,7 +157,7 @@ llms:
     model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
 
   - name: mistral-large-default
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
 
   - name: claude-3-5-sonnet-default
     model: openrouter/claude-3-5-sonnet-20240620

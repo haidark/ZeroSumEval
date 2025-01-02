@@ -25,23 +25,22 @@ game:
           - name: White
             optimize: true
             metric: chess_move_validation_metric
-            dataset: chess_dataset
+            dataset: chess_puzzle_dataset
             dataset_args:
-              filename: ./data/chess/stockfish_examples.jsonl
               role: White
-              num_examples: 10
+              num_examples: 100
         max_tries: 5
     - name: chess_player
       args:
         id: black
         roles:
           - name: Black
-            optimize: false
-            dataset: chess_puzzle_dataset
+            optimize: true
             metric: chess_move_validation_metric
+            dataset: chess_puzzle_dataset
             dataset_args:
               role: Black
-              num_samples: 10
+              num_examples: 100
         max_tries: 5
 llms:
   - name: gpt-4o-optimized-mipro
@@ -67,7 +66,7 @@ llms:
       max_labeled_demos: 3
 
   - name: mistral-large-optimized-mipro
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: MIPROv2
     compilation_args:
@@ -107,7 +106,7 @@ llms:
       num_candidate_programs: 2
 
   - name: mistral-large-optimized-bsfsrs
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
     optimizer_args:
@@ -135,7 +134,7 @@ llms:
     optimizer: BootstrapFewshot
 
   - name: mistral-large-optimized-bsfs
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: BootstrapFewshot
 
@@ -151,7 +150,7 @@ llms:
     model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
 
   - name: mistral-large-default
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
 
   - name: claude-3-5-sonnet-default
     model: openrouter/claude-3-5-sonnet-20240620

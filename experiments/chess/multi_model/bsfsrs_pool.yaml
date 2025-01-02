@@ -28,7 +28,7 @@ game:
             dataset: chess_puzzle_dataset
             dataset_args:
               role: White
-              num_examples: 10
+              num_examples: 100
         max_tries: 5
     - name: chess_player
       args:
@@ -36,11 +36,11 @@ game:
         roles:
           - name: Black
             optimize: true
-            dataset: chess_puzzle_dataset
             metric: chess_move_validation_metric
+            dataset: chess_puzzle_dataset
             dataset_args:
               role: Black
-              num_samples: 10
+              num_examples: 100
         max_tries: 5
 llms:
   - name: gpt-4o-optimized-bsfsrs
@@ -68,7 +68,7 @@ llms:
       max_labeled_demos: 3
 
   - name: mistral-large-bsfsrs
-    model: openrouter/mistral-large-latest
+    model: openrouter/mistralai/mistral-large-2411
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
     optimizer_args:
