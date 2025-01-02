@@ -50,8 +50,8 @@ class GamePoolManager:
         self.roles = dict()
         for lm_name, player_config in zip(lms, config["game"]["players"]):
             for role in player_config["args"]["roles"]:
-                self.roles[role] = lm_name
-            player_config["args"]["lm"] = self.llm_configs[lm_name]
+                self.roles[role["name"]] = lm_name
+            player_config["args"]["lm"] = self.llm_configs[lm_name] 
         
         config["manager"]["args"] = self.config["manager"]["game_manager_args"]
         config["logging"]["output_dir"] = turn_dir
@@ -128,7 +128,12 @@ class GamePoolManager:
                 future_to_match[future] = lms
 
             for future in as_completed(future_to_match):
-                lms, result_a = future.result()
+                try:
+                    lms, result_a = future.result()
+                except Exception as e:
+                    for f in future_to_match:
+                        f.cancel()
+                    raise e
 
                 if result_a == 1:
                     self.llm_wdl[lms[0]]["wins"] += 1
