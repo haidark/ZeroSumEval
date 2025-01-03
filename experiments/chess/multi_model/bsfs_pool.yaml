@@ -23,7 +23,6 @@ game:
         id: white
         roles:
           - name: White
-            optimize: true
             metric: chess_move_validation_metric
             dataset: chess_puzzle_dataset
             dataset_args:
@@ -35,7 +34,6 @@ game:
         id: black
         roles:
           - name: Black
-            optimize: true
             metric: chess_move_validation_metric
             dataset: chess_puzzle_dataset
             dataset_args:
