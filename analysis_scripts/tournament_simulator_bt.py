@@ -98,6 +98,12 @@ def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
         1.0: 'model_a',
     }
 
+    def standardize_model_names(model: str) -> str:
+        for opt in ['default', 'bsfs', 'bsfsrs', 'mipro']:
+            model = model.replace(f'optimized-{opt}', opt)
+            
+        return model
+    
     matches = []
     for match_results_path in glob(f'{args.logs_path}/**/matches/*/results.json', recursive=True):
         with open(match_results_path) as f:
@@ -105,8 +111,8 @@ def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
         models = list(result.keys())
         assert len(models) == 2
         matches.append([
-            models[0],
-            models[1],
+            standardize_model_names(models[0]),
+            standardize_model_names(models[1]),
             score_to_result[round(result[models[0]]['result'], 1)],
         ])
 
