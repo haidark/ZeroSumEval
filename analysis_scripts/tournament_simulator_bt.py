@@ -80,8 +80,12 @@ def compute_mle_elo(
 # Function from https://lmsys.org/blog/2023-12-07-leaderboard/
 def get_bootstrap_result(battles, func_compute_elo, num_round):
     rows = []
-    for i in tqdm(range(num_round), desc="bootstrap"):
-        rows.append(func_compute_elo(battles.sample(frac=1.0, replace=True)))
+    for _ in tqdm(range(num_round), desc="bootstrap"):
+        try:
+            rows.append(func_compute_elo(battles.sample(frac=1.0, replace=True)))
+        except ValueError:
+            pass
+    print(f"Only used {len(rows)}/{num_round} bootstrap rounds due to samples that have zero matches for some models")
     df = pd.DataFrame(rows)
     return df[df.median().sort_values(ascending=False).index]
 
