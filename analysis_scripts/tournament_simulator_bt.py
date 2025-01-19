@@ -20,18 +20,13 @@ def compute_mle_elo(
         aggfunc="size",
         fill_value=0,
     )
-    # if no tie, create a zero matrix
-    if sum(df["winner"].isin(["tie", "tie (bothbad)"])) == 0:
-        ptbl_tie = pd.DataFrame(0, index=ptbl_a_win.index, columns=ptbl_a_win.columns)
-    else:
-        ptbl_tie = pd.pivot_table(
-            df[df["winner"].isin(["tie", "tie (bothbad)"])],
-            index="model_a",
-            columns="model_b",
-            aggfunc="size",
-            fill_value=0,
-        )
-        ptbl_tie = ptbl_tie + ptbl_tie.T
+
+    # TODO: patch to fix sets with ties when not all models have ties
+    # but currently not optimal due to the iterrows().
+    ptbl_tie = pd.DataFrame(0, index=ptbl_a_win.index, columns=ptbl_a_win.columns)
+    for _, row in df[df["winner"].isin(["tie", "tie (bothbad)"])].iterrows():
+        ptbl_tie.loc[row['model_a'],row['model_b']] += 1
+        ptbl_tie.loc[row['model_b'],row['model_a']] += 1
 
     ptbl_b_win = pd.pivot_table(
         df[df["winner"] == "model_b"],
@@ -83,9 +78,12 @@ def get_bootstrap_result(battles, func_compute_elo, num_round):
     for _ in tqdm(range(num_round), desc="bootstrap"):
         try:
             rows.append(func_compute_elo(battles.sample(frac=1.0, replace=True)))
-        except ValueError:
+        except KeyError:
             pass
-    print(f"Only used {len(rows)}/{num_round} bootstrap rounds due to samples that have zero matches for some models")
+    
+    if len(rows) != num_round:
+        print(f"Only used {len(rows)}/{num_round} bootstrap rounds due to samples that have zero matches for some models")
+
     df = pd.DataFrame(rows)
     return df[df.median().sort_values(ascending=False).index]
 
