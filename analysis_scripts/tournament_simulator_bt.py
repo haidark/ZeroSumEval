@@ -99,7 +99,7 @@ def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
     }
 
     matches = []
-    for match_results_path in glob(f'{args.logs_path}/matches/*/results.json'):
+    for match_results_path in glob(f'{args.logs_path}/**/matches/*/results.json', recursive=True):
         with open(match_results_path) as f:
             result = json.load(f)
         models = list(result.keys())
