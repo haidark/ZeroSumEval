@@ -53,6 +53,8 @@ class MathQuizGame(GameState):
             if not self.verify_answer(move):
                 new_state.context['message'] = f"TeacherIncorrect"
                 new_state.environment['teacher_answer'] = None
+                new_state.environment['question'] = None
+                new_state.target = str(randint(1, 1000))
         elif current_role == "StudentAnswerQuestion":
             new_state.environment['student_answer'] = move
             if not self.verify_answer(move):

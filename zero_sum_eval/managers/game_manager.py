@@ -24,6 +24,7 @@ class GameManager:
         self.config: Dict = config
         self.games: List[GameState] = []
         self.players: Dict[str, Player] = {}
+        self.player_attempts: Dict[Player, int] = {}
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
         self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
@@ -63,7 +64,8 @@ class GameManager:
                     raise ValueError(f"Role {role} is not defined in {self.games[0].__class__.__name__}")
             for role in player.roles:
                 self.players[role] = player
-
+            self.player_attempts[player] = 0
+    
     def _process_turn(self, game_state: GameState, player: Player) -> GameState:
         """
         Process a single turn for a player.
@@ -80,23 +82,23 @@ class GameManager:
         """
         logger = getLogger()
         
-        player_attempts = 0
-        for _ in range(self.max_player_attempts):
+        while self.player_attempts[player] < self.max_player_attempts:
             new_state: GameState = game_state.query_game()
             move, trace = player.make_move(new_state)
-            player_attempts+=1
-            logger.info(f"\t\t--- {player.id} (attempt # {player_attempts}) ---")
+            
+            logger.info(f"\t\t--- {player.id} (attempt # {self.player_attempts[player]}) ---")
             logger.info(f"{game_state.display()}Move:\n{move}\n\n")
             game_state: GameState = game_state.update_game(move, trace)
             val: Optional[str] = game_state.validate_game()
             if val is None:
-                return game_state, player_attempts
+                return game_state
             if val in self.win_conditions:
                 #
                 # Here maybe call the scoring function?
                 #
-                return game_state, player_attempts
-        return game_state, player_attempts  # Return the original state if all tries fail
+                return game_state
+            self.player_attempts[player]+=1
+        return game_state
 
 
     def _run_game_loop(self, game_state: GameState) -> GameState:
@@ -113,19 +115,23 @@ class GameManager:
         It processes turns for each player and logs the game state after each turn.
         """
         logger = getLogger()
-        turn_count: int = 1
-        attempts: int = 0
         round_count: int = 0
         turns: List[Dict] = []
+        prev_player: Player = None
         while round_count < self.max_rounds:
-            turn_count: int = round_count // len(self.players) + 1
-            player: Player = self.players[game_state.roles[0]]
             if game_state.validate_game():
                 break
-            logger.info(f"\t\t--- Start Turn {turn_count} ---")
-            game_state, attempts = self._process_turn(game_state, player)
+            player: Player = self.players[game_state.roles[0]]
+            if prev_player != player:
+                self.player_attempts[player] = 0
+                round_count+=1
+            logger.info(f"\t\t--- Start Turn {round_count} ---")
+            game_state = self._process_turn(game_state, player)
             turns.append(game_state.export())
-            round_count += 1
+            prev_player = player
+            if self.player_attempts[player] >= self.max_player_attempts:
+                logger.info(f"Player {player.id} has reached the maximum number of attempts. Ending game.")
+                break
             
         with jsonlines.open(self.turns_log_file, "w") as f:
             for turn in turns:
