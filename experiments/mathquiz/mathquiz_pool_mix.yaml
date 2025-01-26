@@ -1,16 +1,14 @@
 logging:
-  output_dir: ../output/results_mix_all_mathquiz
+  output_dir: outputs_mathquiz/default_pool
 manager:
   name: rating_games
   game_pool_manager_args:
     max_matches: 100
   game_manager_args:
-    max_rounds: 10
     max_player_attempts: 5
-    win_conditions: 
+    max_rounds: 100
+    win_conditions:
       - StudentCorrect
-      - StudentIncorrect
-      - TeacherIncorrect
     draw_conditions:
 game:
   name: mathquiz
@@ -18,34 +16,36 @@ game:
     - name: mathquiz_teacher
       args:
         id: teacher
-        roles:
+        roles: 
           - name: TeacherGenerateQuestion
-            optimize: true
+            optimize: false
             metric: math_question_validation_metric
             dataset: mathquiz_dataset
             dataset_args:
-              filename: ./data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
               role: TeacherGenerateQuestion
               num_examples: 10
           - name: TeacherAnswerQuestion
-            optimize: false
             metric: math_answer_validation_metric
             dataset: mathquiz_dataset
             dataset_args:
-              filename: ./data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
               role: TeacherAnswerQuestion
-              num_examples: 10
+
         max_tries: 5
     - name: mathquiz_student
       args:
         id: student
-        roles:
+        roles: 
           - name: StudentAnswerQuestion
             optimize: false
             metric: math_answer_validation_metric
             dataset: mathquiz_dataset
             dataset_args:
-              filename: ./data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+              # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
               role: StudentAnswerQuestion
               num_examples: 10
         max_tries: 5
@@ -62,7 +62,7 @@ llms:
       max_labeled_demos: 3
 
   - name: llama3.1-70b-optimized-mipro
-    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    model: openrouter/meta-llama/llama-3.1-70b-instruct
     optimize: true
     optimizer: MIPROv2
     compilation_args:
@@ -84,7 +84,7 @@ llms:
       max_labeled_demos: 3
 
   - name: claude-3-5-sonnet-optimized-mipro
-    model: openrouter/claude-3-5-sonnet-20240620
+    model: openrouter/anthropic/claude-3.5-sonnet-20240620
     optimize: true
     optimizer: MIPROv2
     compilation_args:
@@ -104,7 +104,7 @@ llms:
       num_candidate_programs: 2
 
   - name: llama3.1-70b-optimized-bsfsrs
-    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    model: openrouter/meta-llama/llama-3.1-70b-instruct
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
     optimizer_args:
@@ -122,7 +122,7 @@ llms:
       num_candidate_programs: 2
 
   - name: claude-3-5-sonnet-optimized-bsfsrs
-    model: openrouter/claude-3-5-sonnet-20240620
+    model: openrouter/anthropic/claude-3.5-sonnet-20240620
     optimize: true
     optimizer: BootstrapFewshotWithRandomSearch
     optimizer_args:
@@ -136,7 +136,7 @@ llms:
     optimizer: BootstrapFewshot
 
   - name: llama3.1-70b-optimized-bsfs
-    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    model: openrouter/meta-llama/llama-3.1-70b-instruct
     optimize: true
     optimizer: BootstrapFewshot
 
@@ -146,7 +146,7 @@ llms:
     optimizer: BootstrapFewshot
 
   - name: claude-3-5-sonnet-optimized-bsfs
-    model: openrouter/claude-3-5-sonnet-20240620
+    model: openrouter/anthropic/claude-3.5-sonnet-20240620
     optimize: true
     optimizer: BootstrapFewshot
 
@@ -154,10 +154,10 @@ llms:
     model: openrouter/openai/chatgpt-4o-latest
 
   - name: llama3.1-70b-default
-    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+    model: openrouter/meta-llama/llama-3.1-70b-instruct
 
   - name: mistral-large-default
     model: openrouter/mistralai/mistral-large-2411
 
   - name: claude-3-5-sonnet-default
-    model: openrouter/claude-3-5-sonnet-20240620
+    model: openrouter/anthropic/claude-3.5-sonnet-20240620
