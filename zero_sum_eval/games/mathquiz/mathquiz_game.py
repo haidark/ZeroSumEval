@@ -113,7 +113,11 @@ class MathQuizGame(GameState):
             raise ValueError("Invalid role")
 
     def verify_answer(self, answer: str) -> bool:
-        return str(answer) == str(self.target)
+        try:
+            return int(answer) == int(self.target)
+        except:
+            return False
+
 
     def display(self) -> str:
         display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"

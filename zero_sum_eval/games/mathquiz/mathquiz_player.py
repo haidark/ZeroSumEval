@@ -14,17 +14,17 @@ def validate_math_answer(example, prediction, trace=None):
 
 class GenerateQuestion(dspy.Signature):
     """Given a target number, create a challenging math question with the target number as the answer. Make sure not to include the answer in the question."""
-    role = dspy.InputField(desc="role")
-    message = dspy.InputField(desc="message")
-    target = dspy.InputField(desc="target number")
-    question = dspy.OutputField(desc="math question with the target number as the answer")
+    role: str = dspy.InputField(desc="role")
+    message: str = dspy.InputField(desc="message")
+    target: int = dspy.InputField(desc="target number")
+    question: str = dspy.OutputField(desc="math question with the target number as the answer")
 
 class AnswerQuestion(dspy.Signature):
     """Given a challenging math question, give the answer to the question as a number only"""
-    role = dspy.InputField(desc="role")
-    message = dspy.InputField(desc="message")
-    question = dspy.InputField(desc="math question")
-    answer = dspy.OutputField(desc="answer to the math question with number only")
+    role: str = dspy.InputField(desc="role")
+    message: str = dspy.InputField(desc="message")
+    question: str = dspy.InputField(desc="math question")
+    answer: int = dspy.OutputField(desc="answer to the math question with number only")
 
 class GenerateQuestionCoT(dspy.Module):
     def __init__(self):
