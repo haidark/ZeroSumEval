@@ -9,7 +9,6 @@ manager:
     max_rounds: 100
     win_conditions:
       - StudentCorrect
-    draw_conditions:
 game:
   name: mathquiz
   players:

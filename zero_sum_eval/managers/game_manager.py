@@ -28,7 +28,7 @@ class GameManager:
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
         self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
-        self.draw_conditions: List[str] = self.config["manager"]["args"]["draw_conditions"]
+        self.draw_conditions: List[str] = self.config["manager"]["args"].get("draw_conditions", [])
         self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
         self._init_game()
         self._init_players()
