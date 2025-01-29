@@ -5,7 +5,7 @@ manager:
     max_player_attempts: 5
     max_rounds: 20
     win_conditions:
-      - SecretGuessed
+      - SecretRevealed
       - MaxTurnsExceeded
     draw_conditions:
 game:
