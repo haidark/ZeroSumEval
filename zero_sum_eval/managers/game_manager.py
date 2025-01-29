@@ -29,6 +29,7 @@ class GameManager:
         self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
         self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
         self.draw_conditions: List[str] = self.config["manager"]["args"].get("draw_conditions", [])
+        self.loss_conditions: List[str] = self.config["manager"]["args"].get("loss_conditions", [])
         self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
         self._init_game()
         self._init_players()
@@ -92,7 +93,7 @@ class GameManager:
             val: Optional[str] = game_state.validate_game()
             if val is None:
                 return game_state
-            if val in self.win_conditions:
+            if val in set(self.win_conditions + self.draw_conditions + self.loss_conditions):
                 #
                 # Here maybe call the scoring function?
                 #

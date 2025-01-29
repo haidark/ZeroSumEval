@@ -1,0 +1,60 @@
+logging:
+  output_dir: outputs_debate
+manager:
+  name: rating_games
+  game_pool_manager_args:
+    max_matches: 1
+  game_manager_args:
+    max_player_attempts: 3
+    max_rounds: 20
+    win_conditions:
+      - AgainstWin
+    loss_conditions:
+      - ForWin
+    draw_conditions:
+      - Tie
+game:
+  name: debate
+  players:
+    - name: debate_player
+      args:
+        id: for_debater
+        roles: 
+          - name: OpeningStatementFor
+          - name: RebuttalFor
+          - name: ClosingStatementFor
+        max_tries: 5
+    - name: debate_player
+      args:
+        id: against_debater
+        roles: 
+          - name: OpeningStatementAgainst
+          - name: RebuttalAgainst
+          - name: ClosingStatementAgainst
+        max_tries: 5
+  args:
+    # path to the file containing the topics
+    topics: experiments/debate/topics.txt
+    # could also be a list of topics
+    # topics:
+    #   - Is learning through games an effective teaching method?
+    #   - Should people reduce their coffee consumption for better health?
+    #   - ...
+    judges:
+      - name: gpt-4o-default
+        model: openrouter/openai/gpt-4o-2024-11-20
+      - name: llama3.1-70b-default
+        model: openrouter/meta-llama/llama-3.1-70b-instruct
+
+llms:
+  - name: gpt-4o-default
+    model: openrouter/openai/gpt-4o-2024-11-20
+
+  - name: llama3.1-70b-default
+    model: openrouter/meta-llama/llama-3.1-70b-instruct
+
+  - name: mistral-large-default
+    model: openrouter/mistralai/mistral-large-2411
+
+  - name: claude-3-5-sonnet-default
+    model: openrouter/anthropic/claude-3.5-sonnet-20240620
