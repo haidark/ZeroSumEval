@@ -1,0 +1,42 @@
+logging:
+  output_dir: ../output/debate_game
+manager:
+  args:
+    max_player_attempts: 3
+    max_rounds: 20
+    win_conditions:
+      - AgainstWin
+    loss_conditions:
+      - ForWin
+    draw_conditions:
+      - Tie
+game:
+  name: debate
+  players:
+    - name: debate_player
+      args:
+        id: llama3.3 70b for
+        roles:
+          - name: OpeningStatementFor
+          - name: RebuttalFor
+          - name: ClosingStatementFor
+        lm:
+          model: openrouter/meta-llama/llama-3.3-70b-instruct
+        max_tries: 5
+    - name: debate_player
+      args:
+        id: llama3.1 70b against
+        roles:
+          - name: OpeningStatementAgainst
+          - name: RebuttalAgainst
+          - name: ClosingStatementAgainst
+        lm:
+          model: openrouter/meta-llama/llama-3.1-70b-instruct
+        max_tries: 5
+  args:
+    topics: experiments/debate/topics.txt
+    judges:
+      - name: gpt-4o-default
+        model: openrouter/openai/gpt-4o-2024-11-20
+      - name: llama3.1-70b-default
+        model: openrouter/meta-llama/llama-3.1-70b-instruct
