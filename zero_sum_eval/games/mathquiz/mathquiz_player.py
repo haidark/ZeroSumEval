@@ -14,25 +14,21 @@ def validate_math_answer(example, prediction, trace=None):
 
 class GenerateQuestion(dspy.Signature):
     """Given a target number, create a challenging math question with the target number as the answer. Make sure not to include the answer in the question."""
-    role: str = dspy.InputField(desc="role")
-    message: str = dspy.InputField(desc="message")
     target: int = dspy.InputField(desc="target number")
     question: str = dspy.OutputField(desc="math question with the target number as the answer")
 
 class AnswerQuestion(dspy.Signature):
     """Given a challenging math question, give the answer to the question as a number only"""
-    role: str = dspy.InputField(desc="role")
-    message: str = dspy.InputField(desc="message")
     question: str = dspy.InputField(desc="math question")
-    answer: int = dspy.OutputField(desc="answer to the math question with number only")
+    answer: int = dspy.OutputField(desc="answer to the math question (integer)")
 
 class GenerateQuestionCoT(dspy.Module):
     def __init__(self):
         super().__init__()
         self.cot_question = dspy.ChainOfThought(GenerateQuestion)
 
-    def forward(self, role, message, target):
-        cot_out = self.cot_question(role=role, message=message, target=target)
+    def forward(self, target):
+        cot_out = self.cot_question(target=target)
         return cot_out
 
 class AnswerQuestionCoT(dspy.Module):
@@ -40,14 +36,14 @@ class AnswerQuestionCoT(dspy.Module):
         super().__init__()
         self.cot_answer = dspy.ChainOfThought(AnswerQuestion)
 
-    def forward(self, role, message, question):
-        cot_out = self.cot_answer(role=role, message=message, question=question)
+    def forward(self, question):
+        cot_out = self.cot_answer(question=question)
         return cot_out
 
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_teacher")
 class MathQuizTeacher(Player):    
-    def init_role_module_dict(self):
+    def init_action_module_dict(self):
         return {
             "TeacherGenerateQuestion": GenerateQuestionCoT(),
             "TeacherAnswerQuestion": AnswerQuestionCoT()
@@ -56,5 +52,5 @@ class MathQuizTeacher(Player):
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
 class MathQuizStudent(Player):
-    def init_role_module_dict(self):
+    def init_action_module_dict(self):
         return {"StudentAnswerQuestion": AnswerQuestionCoT()}
