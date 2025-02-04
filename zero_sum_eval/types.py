@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Optional
-from pydantic import BaseModel
+from dspy import Prediction
     
 @dataclass
-class Role:
+class Action:
     name: str
     module_path: Optional[str] = None
     optimize: Optional[bool] = False
@@ -12,3 +12,8 @@ class Role:
     optimizer: Optional[str] = None
     optimizer_args: Optional[dict] = None
     metric: Optional[str] = None
+
+@dataclass
+class Move:
+    value: str
+    trace: Optional[Prediction] = None
