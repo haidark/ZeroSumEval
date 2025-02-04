@@ -6,7 +6,7 @@ import dspy
 
 _DEFAULT_CACHE_DIR = os.path.join(Path().home(), ".zse_cache")
 
-def get_cached_module_path(model: str, role: str, optimizer: str, dataset: str, optimizer_args: dict = {}, compilation_args: dict = {}, cache_dir: Optional[str] = None) -> str:
+def get_cached_module_path(model: str, action: str, optimizer: str, dataset: str, optimizer_args: dict = {}, compilation_args: dict = {}, cache_dir: Optional[str] = None) -> str:
     if cache_dir is None:
         cache_dir = _DEFAULT_CACHE_DIR
         
@@ -31,7 +31,7 @@ def get_cached_module_path(model: str, role: str, optimizer: str, dataset: str, 
 
     filename += "].json"
 
-    return os.path.join(cache_dir, model, role, optimizer, dataset, filename)
+    return os.path.join(cache_dir, model, action, optimizer, dataset, filename)
 
 def save_checkpoint(module: dspy.Module, module_path:str) -> None:
     os.makedirs(os.path.dirname(module_path), exist_ok=True)
