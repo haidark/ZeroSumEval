@@ -1,7 +1,9 @@
-from dataclasses import dataclass
 import random
-from litellm import deepcopy
-from zero_sum_eval.game_state import GameState
+import json
+
+from zero_sum_eval.types import Move
+from zero_sum_eval.games.debate.debate_player import DebatePlayer
+from zero_sum_eval.game_state import GameState, PlayerDescription
 from zero_sum_eval.registry import GAME_REGISTRY, LM_REGISTRY
 from typing import Dict, List, Optional, Union
 import dspy
@@ -10,43 +12,48 @@ from .debate_judge import DebateJudge, RubricWeights
 
 @GAME_REGISTRY.register("debate")
 class DebateGame(GameState):
-    def instantiate(
+    def __init__(
         self,
-        environment: dict,
-        context: dict,
-        roles: list[str],
         rebuttal_rounds: int = 1,
-        judges: list[Dict] = [],
+        judges: list[Dict] = [
+            {
+                "name": "gpt-4o",
+                "model": "openrouter/openai/gpt-4o",
+            },
+            {
+                "name": "claude-3.5-sonnet",
+                "model": "openrouter/anthropic/claude-3.5-sonnet-20240620",
+            },
+        ],
         rubric_weights: Dict = None,
-        topics: Union[str, List[str]] = [],
+        topics: Union[str, List[str]] = "topics.txt",
+        topic: Optional[str] = None,
+        **kwargs,
     ) -> None:
-        if roles:
-            self.roles = roles
+        super().__init__(**kwargs)
+        # If a topic is provided, use it. Otherwise, choose a random topic from the topics file/list
+        if topic:
+            self.topic = topic
         else:
-            self.roles = ["OpeningStatementFor", "OpeningStatementAgainst"]
-            for _ in range(rebuttal_rounds):
-                self.roles.extend(["RebuttalFor", "RebuttalAgainst"])
-            self.roles.extend(["ClosingStatementFor", "ClosingStatementAgainst"])
+            # path to the topic file
+            if isinstance(topics, str):
+                with open(topics, "r") as f:
+                    self.topics = [line.strip() for line in f]
+            else:
+                self.topics = topics
 
-         # path to the topic file
-        if isinstance(topics, str):
-            with open(topics, "r") as f:
-                self.topics = [line.strip() for line in f]
-        else:
-            self.topics = topics
+            self.topic = random.choice(self.topics)
 
-        self.environment = (
-            environment
-            if environment
-            else {"topic": random.choice(self.topics), "side": "for", "history": [], "verdict": None}
-        )
-        self.context = context if context else {"message": None}
+        self.history = []
         self.rebuttal_rounds = rebuttal_rounds
-        self.rubric_weights = (
-            RubricWeights(**rubric_weights) if rubric_weights else RubricWeights()
-        )
+        self.rubric_weights = RubricWeights(**rubric_weights) if rubric_weights else RubricWeights()
         self.judge_module = DebateJudge(weights=self.rubric_weights)
+
         self._init_judges(judges)
+
+        self.evaluations = None
+        self.scores = {"for": 0, "against": 0}
+        self.verdict = None
 
     def _init_judges(self, judges: List[Dict]) -> None:
         self.llm_judges = []
@@ -59,68 +66,40 @@ class DebateGame(GameState):
 
             self.llm_judges.append(llm_model)
 
-    def update_game(self, move: str, trace: Optional[Prediction] = None) -> GameState:
-        new_state = DebateGame(topics=self.topics)
-        new_state.instantiate(
-            self.environment.copy(),
-            self.context.copy(),
-            self.roles.copy(),
-            rebuttal_rounds=self.rebuttal_rounds,
-            topics=self.topics,
-        )
-        new_state.llm_judges = self.llm_judges
-        new_state.rubric_weights = self.rubric_weights
-
-        current_role = new_state.roles[0]
-        new_state.environment["history"].append(
+    def update_game(self, move: Move) -> GameState:
+        self.history.append(
             {
-                "role": current_role,
-                "move": move,
-                "last_trace": trace.toDict() if trace else None,
+                "action": self.get_next_action(),
+                "move": move.value,
             }
         )
-        new_state.environment["side"] = (
-            "for" if current_role.endswith("For") else "against"
-        )
+        # If the next action is the last, then the judges will decide the verdict
+        if self.get_next_action() == "ClosingStatementAgainst":
+            self.verdict = self.judge()
 
-        if len(new_state.roles) > 1:
-            new_state.roles = new_state.get_next_roles()
+    def is_over(self):
+        return self.verdict is not None
 
-        # If the current role is the last role, then the judges will decide the verdict
-        if current_role == "ClosingStatementAgainst":
-            new_state.environment["verdict"] = new_state.judge()
-
-        return new_state
-
-    def query_game(self) -> GameState:
-        new_state = DebateGame(topics=self.topics)
-        new_state.instantiate(
-            self.environment.copy(),
-            self.context.copy(),
-            self.roles.copy(),
-            rebuttal_rounds=self.rebuttal_rounds,
-        )
-        new_state.llm_judges = self.llm_judges
-        new_state.rubric_weights = self.rubric_weights
-
-        return new_state
+    def get_scores(self):
+        if self.is_over():
+            return {"for": 1, "against": 0} if self.verdict == "ForWin" else {"for": 0, "against": 1}
+        return {"for": 0, "against": 0}
 
     def judge(self):
         for_score, against_score = 0, 0
         evaluations = {}
         for llm_judge in self.llm_judges:
             with dspy.context(lm=llm_judge):
-
                 for_evaluation = self.judge_module(
-                    topic=self.environment["topic"],
-                    history=self.environment["history"],
+                    topic=self.topic,
+                    history=self.history,
                     side="for",
                 )
                 for_score += for_evaluation.weighted_score
 
                 against_evaluation = self.judge_module(
-                    topic=self.environment["topic"],
-                    history=self.environment["history"],
+                    topic=self.topic,
+                    history=self.history,
                     side="against",
                 )
                 against_score += against_evaluation.weighted_score
@@ -130,8 +109,9 @@ class DebateGame(GameState):
                     "against": against_evaluation.toDict(),
                 }
 
-        self.environment["evaluations"] = evaluations
-
+        self.evaluations = evaluations
+        self.scores = {"for": for_score, "against": against_score}
+        
         if for_score > against_score:
             return "ForWin"
         elif for_score < against_score:
@@ -139,53 +119,64 @@ class DebateGame(GameState):
         else:
             return "Tie"
 
-    def validate_game(self) -> Optional[str]:
-        if self.environment["verdict"] is not None:
-            return self.environment["verdict"]
-        return None
 
-    def get_next_roles(self) -> List[str]:
-        return self.roles[1:]
+    def get_next_action(self):
+        if len(self.history) == 0:
+            return "OpeningStatementFor"
+        elif len(self.history) == 1:
+            return "OpeningStatementAgainst"
+        elif len(self.history) >= 2 and len(self.history) < 2 + (self.rebuttal_rounds * 2):
+            return "RebuttalFor" if len(self.history) % 2 == 0 else "RebuttalAgainst"
+        else:
+            return "ClosingStatementFor" if len(self.history) % 2 == 0 else "ClosingStatementAgainst"
+        
 
     def formatted_move_history(self) -> str:
-        history = self.environment["history"]
+        history = self.history
         formatted_history = ""
         for entry in history:
-            formatted_history += f"==== {entry['role']} ===\n{entry['move']}\n\n"
+            formatted_history += f"==== {entry['action']} ===\n{entry['move']}\n\n"
         return formatted_history
 
     def player_inputs(self) -> Dict[str, str]:
-        current_role = self.roles[0]
-        if current_role.startswith("OpeningStatement"):
-            return {"topic": self.environment["topic"], "role": current_role}
-        elif current_role.startswith("Rebuttal") or current_role.startswith(
-            "ClosingStatement"
-        ):
-            return {
-                "topic": self.environment["topic"],
-                "history": self.formatted_move_history(),
-                "role": current_role,
-            }
-        elif current_role == "Judge":
-            return {
-                "topic": self.environment["topic"],
-                "history": self.formatted_move_history(),
-                "role": current_role,
-            }
-        else:
-            raise ValueError(f"Role {current_role} not recognized")
+        inputs = {
+            "topic": self.topic,
+        }
+        # history is passed to the player only if the next action is not an opening statement
+        if not self.get_next_action().startswith("OpeningStatement"):
+            inputs["history"] = self.formatted_move_history()
+        
+        return inputs
+
+    def player_descriptions(self):
+        return [
+            PlayerDescription(name="for", actions=["OpeningStatementFor", "RebuttalFor", "ClosingStatementFor"], default_player_class=DebatePlayer),
+            PlayerDescription(name="against", actions=["OpeningStatementAgainst", "RebuttalAgainst", "ClosingStatementAgainst"], default_player_class=DebatePlayer),
+        ]
 
     def display(self) -> None:
-        display_str = f"Role to Act: {self.roles[0]}"
-        display_str += f"\nTopic: {self.environment['topic']}"
-        display_str += f"\nSide: {self.environment['side']}"
+        display_str = f"Action: {self.get_next_action()}"
+        display_str += f"\nTopic: {self.topic}"
         display_str += f"\nHistory:\n{self.formatted_move_history()}"
+        if self.verdict:
+            display_str += f"\n\nJudge Evaluations:"
+            for judge, evaluation in self.evaluations.items():
+                display_str += f"\n\nJudge: {judge}"
+                display_str += f"\nFor: {json.dumps(evaluation['for'], indent=4)}"
+                display_str += f"\n\nAgainst: {json.dumps(evaluation['against'], indent=4)}"
+                display_str += f"\n\n===================="
+            display_str += f"\nAggregated Scores:"
+            display_str += f"\nFor: {self.scores['for']}"
+            display_str += f"\nAgainst: {self.scores['against']}"
+            display_str += f"\nFinal Verdict: {self.verdict}"
         return display_str
 
     def export(self) -> str:
         return {
-            "environment": deepcopy(self.environment),
-            "roles": self.roles.copy(),
             "formatted_history": self.formatted_move_history(),
-            "validate_game": self.validate_game(),
+            "topic": self.topic,
+            "verdict": self.verdict,
+            "evaluations": self.evaluations,
+            "next_action": self.get_next_action(),
+            "scores": self.get_scores(),
         }

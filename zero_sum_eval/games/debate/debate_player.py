@@ -54,7 +54,7 @@ class OpeningStatement(dspy.Module):
         self.side = side
         self.make_opening_statement = dspy.ChainOfThought(OpeningStatementSignature)
 
-    def forward(self, topic, role):
+    def forward(self, topic):
         return self.make_opening_statement(topic=topic, side=self.side)
 
 class Rebuttal(dspy.Module):
@@ -62,7 +62,7 @@ class Rebuttal(dspy.Module):
         self.side = side
         self.make_rebuttal = dspy.ChainOfThought(RebuttalSignature)
 
-    def forward(self, topic, history, role):
+    def forward(self, topic, history):
         return self.make_rebuttal(topic=topic, side=self.side, history=history)
 
 class ClosingStatement(dspy.Module):
@@ -70,13 +70,13 @@ class ClosingStatement(dspy.Module):
         self.side = side
         self.make_closing_statement = dspy.ChainOfThought(ClosingStatementSignature)
 
-    def forward(self, topic, history, role):
+    def forward(self, topic, history):
         return self.make_closing_statement(topic=topic, side=self.side, history=history)
 
 
 @PLAYER_REGISTRY.register("debate", "debate_player")
 class DebatePlayer(Player):
-    def init_role_module_dict(self):
+    def init_action_module_dict(self):
         return {
             "OpeningStatementFor": OpeningStatement("for"),
             "OpeningStatementAgainst": OpeningStatement("against"),
