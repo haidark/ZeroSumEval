@@ -1,5 +1,6 @@
 import argparse
 from collections import defaultdict
+from zero_sum_eval.registry import GAME_REGISTRY
 from zero_sum_eval.config_utils import load_yaml_with_env_vars
 from zero_sum_eval.managers.game_manager import GameManager
 from zero_sum_eval.logging_utils import setup_logging, cleanup_logging
@@ -26,11 +27,12 @@ def main():
     handlers = setup_logging(config, 'game')
 
     try:
+        game = GAME_REGISTRY.build(config["game"]["name"], **config["game"]["args"])
         game_manager = GameManager(config)
         logger.info("Starting a new game")
-        final_state = game_manager.start()
+        final_state = game_manager.start(game)
         logger.info(
-            f"\nGame over. Final state: {final_state.validate_game()}\n{final_state.display()}"
+            f"\nGame over. Final state:\n{final_state.display()}"
         )
     finally:
         # Clean up logging
