@@ -1,12 +1,12 @@
 # file: game_manager.py
 # TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
+from collections import defaultdict
 from typing import List, Dict, Optional
 
 from logging import getLogger
 from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
-from zero_sum_eval.game_state import GameState
+from zero_sum_eval.game_state import GameState, InvalidMoveError
 from zero_sum_eval.player import Player
-from collections import defaultdict
 
 import jsonlines
 
@@ -22,50 +22,10 @@ class GameManager:
             config (Dict): Configuration dictionary containing game and player settings.
         """
         self.config: Dict = config
-        self.games: List[GameState] = []
-        self.players: Dict[str, Player] = {}
-        self.player_attempts: Dict[Player, int] = {}
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
         self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
-        self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
-        self.draw_conditions: List[str] = self.config["manager"]["args"].get("draw_conditions", [])
-        self.loss_conditions: List[str] = self.config["manager"]["args"].get("loss_conditions", [])
         self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
-        self._init_game()
-        self._init_players()
-
-    def _init_game(self) -> None:
-        """
-        Initialize the game based on the configuration.
-
-        Creates a game instance using the GAME_REGISTRY and appends it to the games list.
-        """
-        game_config: Dict = (
-            self.config["game"]["args"] if "args" in self.config["game"] else {}
-        )
-        game: GameState = GAME_REGISTRY.build(self.config["game"]["name"], **game_config)
-        self.games.append(game)
-
-    def _init_players(self) -> None:
-        """
-        Initialize players based on the configuration.
-
-        Creates player instances using the PLAYER_REGISTRY and adds them to the players dictionary.
-        Raises a ValueError if a player's role is not defined in the game.
-        """
-        for player_config in self.config["game"]["players"]:
-            player: Player = PLAYER_REGISTRY.build(
-                self.config["game"]["name"],
-                player_config["name"],
-                output_dir=self.config["logging"]["output_dir"],
-                **player_config["args"],
-            )
-            for role in player.roles:
-                if role not in self.games[0].roles: 
-                    raise ValueError(f"Role {role} is not defined in {self.games[0].__class__.__name__}")
-            for role in player.roles:
-                self.players[role] = player
-            self.player_attempts[player] = 0
+        self.player_attempts = defaultdict(int)
     
     def _process_turn(self, game_state: GameState, player: Player) -> GameState:
         """
@@ -84,20 +44,18 @@ class GameManager:
         logger = getLogger()
         
         while self.player_attempts[player] < self.max_player_attempts:
-            new_state: GameState = game_state.query_game()
-            move, trace = player.make_move(new_state)
+            move = player.make_move(game_state)
             
             logger.info(f"\t\t--- {player.id} (attempt # {self.player_attempts[player]}) ---")
-            logger.info(f"{game_state.display()}Move:\n{move}\n\n")
-            game_state: GameState = game_state.update_game(move, trace)
-            val: Optional[str] = game_state.validate_game()
-            if val is None:
-                return game_state
-            if val in set(self.win_conditions + self.draw_conditions + self.loss_conditions):
-                #
-                # Here maybe call the scoring function?
-                #
-                return game_state
+            logger.info(f"{game_state.display()}Move:\n{move.value}\n\n")
+            try:
+                game_state.update_game(move)
+                # If the game state was updated successfully, break the loop
+                break
+            except InvalidMoveError as e:
+                # If the move was invalid, log the error and increment the player's attempts
+                logger.error(f"Invalid move: {e}")
+                self.player_attempts[player]+=1
             self.player_attempts[player]+=1
         return game_state
 
@@ -118,11 +76,11 @@ class GameManager:
         logger = getLogger()
         round_count: int = 0
         turns: List[Dict] = []
-        prev_player: Player = None
+        prev_player = None
         while round_count < self.max_rounds:
-            if game_state.validate_game():
+            if game_state.is_over():
                 break
-            player: Player = self.players[game_state.roles[0]]
+            player: Player = game_state.players[game_state.get_next_action()]
             if prev_player != player:
                 self.player_attempts[player] = 0
                 round_count+=1
@@ -140,14 +98,16 @@ class GameManager:
         
         return game_state
 
-    def start(self) -> GameState:
+    def start(self, game: GameState) -> GameState:
         """
-        Start the game.
+        Start the game with the given state.
+
+        Args:
+            game (GameState): The initial state of the game.
 
         Returns:
-            GameState: The final state of the game after it has ended.
-
-        This method initiates the game by calling the _run_game_loop method with the initial game state.
+            GameState: The final state of the game after the game loop ends.
         """
-        return self._run_game_loop(self.games[0])
+
+        return self._run_game_loop(game)
 
