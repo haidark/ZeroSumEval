@@ -4,55 +4,33 @@ manager:
   args:
     max_player_attempts: 5
     max_rounds: 200
-    win_conditions: 
-      - Checkmate
-    draw_conditions:
-      - Stalemate
-      - ThreefoldRepetition
-      - FiftyMoveRule
-      - InsufficientMaterial
 game:
   name: chess
-  players:
-    - name: chess_player
-      args:
-        id: llama3.3 70b white
-        roles:
-          - name: White
-            optimize: true
-            metric: chess_move_validation_metric
-            dataset: chess_dataset
-            dataset_args:
-              filename: ./data/chess/stockfish_examples.jsonl
-              role: White
-              num_examples: 10
-        optimizer: MIPROv2
-        optimizer_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        compilation_args:
-          minibatch_size: 2
-        lm:
-          model: openrouter/meta-llama/llama-3.3-70b-instruct
-        max_tries: 5
-    - name: chess_player
-      args:
-        id: llama3.1 70b black
-        roles:
-          - name: Black
-            optimize: false
-            metric: chess_move_validation_metric
-            dataset: chess_dataset
-            dataset_args:
-              filename: ./data/chess/stockfish_examples.jsonl
-              role: Black
-              num_examples: 10
-        optimizer: MIPROv2
-        optimizer_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        compilation_args:
-          minibatch_size: 2
-        lm:
-          model: openrouter/meta-llama/llama-3.1-70b-instruct
-        max_tries: 5
+  args:
+    players:
+      white:
+        class: chess_player
+        args:
+          id: llama3.1 70b white
+          actions:
+            - name: WhiteMove
+              optimize: true
+              metric: chess_move_validation_metric
+              dataset: chess_dataset
+              dataset_args:
+                filename: ./data/chess/stockfish_examples.jsonl
+                role: White
+                num_examples: 10
+          lm:
+            model: openrouter/meta-llama/llama-3.3-70b-instruct
+          optimizer: BootstrapFewshot
+          optimizer_args:
+            max_bootstrapped_demos: 1
+          max_tries: 5
+      black:
+        class: chess_player
+        args:
+          id: llama3.3 70b black
+          lm:
+            model: openrouter/meta-llama/llama-3.3-70b-instruct
+          max_tries: 5
