@@ -3,7 +3,7 @@ from typing import Optional
 from dspy import Prediction
     
 @dataclass
-class Action:
+class ActionConfig:
     name: str
     module_path: Optional[str] = None
     optimize: Optional[bool] = False

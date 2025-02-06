@@ -7,7 +7,7 @@ import dspy
 
 from dspy.primitives.assertions import assert_transform_module, backtrack_handler
 from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
-from zero_sum_eval.types import Action, Move
+from zero_sum_eval.types import ActionConfig, Move
 
 # Disable debugging logs of litellm
 import litellm
@@ -25,8 +25,9 @@ class Player(ABC):
     def __init__(
         self,
         id: str,
-        actions: Union[List[Action], List[str]],
+        actions: Union[List[ActionConfig], List[str]],
         lm: dict,
+        role: str,
         optimizer: str = "MIPROv2",
         optimizer_args: dict = {},
         compilation_args: dict = {},
@@ -37,6 +38,8 @@ class Player(ABC):
     ):
         from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
+        self.role = role
+
         self.id = id
         lm_args = lm["args"] if "args" in lm else {}
         if "type" not in lm:
@@ -46,12 +49,12 @@ class Player(ABC):
         self.max_tries = max_tries
 
         # initialize the actions
-        self.actions: List[Action] = []
+        self.actions: List[ActionConfig] = []
         for action in actions:
             if isinstance(action, str):
-                self.actions.append(Action(name=action))
+                self.actions.append(ActionConfig(name=action))
             elif isinstance(action, dict):
-                self.actions.append(Action(**action))
+                self.actions.append(ActionConfig(**action))
             else:
                 self.actions.append(action)
         
@@ -130,31 +133,6 @@ class Player(ABC):
                         module_path=cached_module_path
                     )
                     logger.info(f"Cached compiled module for Action: {action.name}")
-
-
-    def make_move(self, game_state) -> Move:
-        """
-        Make a move based on the game state.
-        
-        Parameters:
-        game_state (GameState): The current game state
-
-        Returns:
-        output: The move to make
-        trace: The trace of the move
-        """
-        inputs = game_state.player_inputs()
-        action = game_state.get_next_action()
-        if action not in self.action_names:
-            raise ValueError(f"Next action {action} of game state not found in player actions {self.action_names}")
-    
-        with dspy.context(lm=self.llm_model):
-            trace = self.module_dict[action](**inputs)
-
-        # the final value in the prediction is assumed to be the output of the module
-        output = trace.items()[-1][1]
-
-        return Move(value=output, trace=trace)
 
     
     @abstractmethod

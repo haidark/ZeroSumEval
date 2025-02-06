@@ -8,11 +8,18 @@ from copy import copy
 from dataclasses import dataclass
 from typing import Dict, List, Type
 
-from zero_sum_eval.types import Action
+import dspy
+
+from zero_sum_eval.types import ActionConfig
 from zero_sum_eval.player import Move, Player
 
 class InvalidMoveError(Exception):
     pass
+
+@dataclass
+class Action:
+    name: str
+    player: Player
 
 @dataclass
 class PlayerDescription:
@@ -47,18 +54,20 @@ class GameState(ABC):
             names = [action["name"] for action in config["args"].get("actions", [])]
             for action in description.actions:
                 if action not in names:
-                    config["args"]["actions"].append(Action(name=action))
+                    config["args"]["actions"].append(ActionConfig(name=action))
 
             # create the player instance for the role
             # if a class is specified in the config, use it, otherwise use the default player class
             if "class" in config:
-                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=config["class"], **config["args"])
+                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=config["class"], role=role, **config["args"])
             else:
-                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=description.default_player_class.__name__, **config["args"])
+                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=description.default_player_class.__name__, role=role, **config["args"])
 
-            # assign the player to the actions
-            for action in description.actions:
-                self.players[action] = player 
+
+            if set(player.module_dict.keys()) != set(description.actions):
+                raise ValueError(f"Player {role} does not support all actions {description.actions}. Missing actions: {set(description.actions) - set(player.module_dict.keys())}")
+
+            self.players[role] = player
 
             loaded_roles.append(role)           
 
@@ -67,9 +76,8 @@ class GameState(ABC):
                 continue
 
             logging.warning(f"Player for role {role.name} not specified. Using default player with GPT-4o.")
-            player = role.default_player_class(id=role.name, actions=role.actions, lm={"model": "openai/gpt-4o"}, max_tries=5)
-            for action in role.actions:
-                self.players[action] = player
+            player = role.default_player_class(id=f"GPT-4o_{role.name}", role=role.name, actions=role.actions, lm={"model": "openai/gpt-4o"}, max_tries=5)
+            self.players[role.name] = player
 
     @abstractmethod
     def get_scores(self):
@@ -109,12 +117,12 @@ class GameState(ABC):
         return NotImplementedError
     
     @abstractmethod
-    def get_next_action(self) -> str:
+    def get_next_action(self) -> Action:
         """
         Get the next action to be taken in the game.
 
         Returns:
-            str: The next action to be taken.
+            Action: The next action to be taken.
         """
         raise NotImplementedError
     
@@ -149,6 +157,34 @@ class GameState(ABC):
         """
         raise NotImplementedError
 
+    def step(self) -> Move:
+        """
+        Perform a single step in the game. Updates the game state and returns the move made by the player.
+
+        Returns:
+            Move: The move made by the player.
+
+        Raises:
+            InvalidMoveError: If the move is not compatible with the current game state.
+        """
+        if self.is_over():
+            raise InvalidMoveError("Game is already over")
+
+        inputs = self.player_inputs()
+        action: Action = self.get_next_action()
+        
+        with dspy.context(lm=action.player.llm_model):
+            trace = action.player.module_dict[action.name](**inputs)
+
+        # the final value in the prediction is assumed to be the output of the module
+        output = trace.items()[-1][1]
+
+        move = Move(value=output, trace=trace)
+
+        self.update_game(move)
+
+        return move
+
 
     def __init_subclass__(cls):
         """
@@ -161,7 +197,7 @@ class GameState(ABC):
                 new_state = fn(self, move)
                 if not self.log_moves:
                     return new_state
-                self._log = {"last_move": move.value, "last_trace": move.trace}
+                self._log = {"last_move": move.value, "last_trace": move.trace.toDict()}
 
                 return new_state
             return wrapped
