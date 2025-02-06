@@ -3,7 +3,7 @@ import json
 
 from zero_sum_eval.types import Move
 from zero_sum_eval.games.debate.debate_player import DebatePlayer
-from zero_sum_eval.game_state import GameState, PlayerDescription
+from zero_sum_eval.game_state import Action, GameState, PlayerDescription
 from zero_sum_eval.registry import GAME_REGISTRY, LM_REGISTRY
 from typing import Dict, List, Optional, Union
 import dspy
@@ -69,12 +69,12 @@ class DebateGame(GameState):
     def update_game(self, move: Move) -> GameState:
         self.history.append(
             {
-                "action": self.get_next_action(),
+                "action": self.get_next_action().name + " | " + self.get_next_action().player.role,
                 "move": move.value,
             }
         )
         # If the next action is the last, then the judges will decide the verdict
-        if self.get_next_action() == "ClosingStatementAgainst":
+        if self.get_next_action().name == "ClosingStatement" and len(self.history) == 2 + (self.rebuttal_rounds * 2) + 2:
             self.verdict = self.judge()
 
     def is_over(self):
@@ -121,14 +121,20 @@ class DebateGame(GameState):
 
 
     def get_next_action(self):
-        if len(self.history) == 0:
-            return "OpeningStatementFor"
-        elif len(self.history) == 1:
-            return "OpeningStatementAgainst"
+        # The first side to make a move is the "for" side
+        side = "for" if len(self.history) % 2 == 0 else "against"
+
+        # The first 2 moves are opening statements
+        if len(self.history) < 2:
+            return Action("OpeningStatement", self.players[side])
+        
+        # The next 2 * rebuttal_rounds moves are rebuttals
         elif len(self.history) >= 2 and len(self.history) < 2 + (self.rebuttal_rounds * 2):
-            return "RebuttalFor" if len(self.history) % 2 == 0 else "RebuttalAgainst"
+            return Action("Rebuttal", self.players[side])
+        
+        # The last 2 moves are closing statements
         else:
-            return "ClosingStatementFor" if len(self.history) % 2 == 0 else "ClosingStatementAgainst"
+            return Action("ClosingStatement", self.players[side])
         
 
     def formatted_move_history(self) -> str:
@@ -141,21 +147,22 @@ class DebateGame(GameState):
     def player_inputs(self) -> Dict[str, str]:
         inputs = {
             "topic": self.topic,
+            "side": self.get_next_action().player.role,
         }
         # history is passed to the player only if the next action is not an opening statement
-        if not self.get_next_action().startswith("OpeningStatement"):
+        if not self.get_next_action().name == "OpeningStatement":
             inputs["history"] = self.formatted_move_history()
         
         return inputs
 
     def player_descriptions(self):
         return [
-            PlayerDescription(name="for", actions=["OpeningStatementFor", "RebuttalFor", "ClosingStatementFor"], default_player_class=DebatePlayer),
-            PlayerDescription(name="against", actions=["OpeningStatementAgainst", "RebuttalAgainst", "ClosingStatementAgainst"], default_player_class=DebatePlayer),
+            PlayerDescription(name="for", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDescription(name="against", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
         ]
 
     def display(self) -> None:
-        display_str = f"Action: {self.get_next_action()}"
+        display_str = f"Action: {self.get_next_action().name}, Side: {self.get_next_action().player.role}"
         display_str += f"\nTopic: {self.topic}"
         display_str += f"\nHistory:\n{self.formatted_move_history()}"
         if self.verdict:
@@ -177,6 +184,6 @@ class DebateGame(GameState):
             "topic": self.topic,
             "verdict": self.verdict,
             "evaluations": self.evaluations,
-            "next_action": self.get_next_action(),
+            "next_action": self.get_next_action().name + " " + self.get_next_action().player.role,
             "scores": self.get_scores(),
         }

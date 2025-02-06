@@ -1,10 +1,14 @@
 import dis
 from zero_sum_eval.types import Move
 from zero_sum_eval.games.mathquiz.mathquiz_player import MathQuizStudent, MathQuizTeacher
-from zero_sum_eval.game_state import GameState, InvalidMoveError, PlayerDescription
+from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDescription
 from random import randint
 from zero_sum_eval.registry import GAME_REGISTRY
 from typing import Dict
+
+from logging import getLogger
+
+logger = getLogger()
 
 @GAME_REGISTRY.register("mathquiz")
 class MathQuizGame(GameState):
@@ -18,9 +22,8 @@ class MathQuizGame(GameState):
         4. The game continues for a fixed number of rounds.
 
     The actions for this game are:
-        TeacherGenerateQuestion
-        TeacherAnswerQuestion
-        StudentAnswerQuestion
+        GenerateQuestion
+        AnswerQuestion
 
     The environment for this game is:
         question: a math question
@@ -35,15 +38,15 @@ class MathQuizGame(GameState):
         self.student_answer = None
         self.scores = {"teacher": 0, "student": 0}
         self.target = kwargs.get('target', str(randint(1, 1000)))
-        self.message = "TeacherGenerateQuestion"
+        self.message = "Teacher to generate a question"
 
     def update_game(self, move: Move) -> GameState:
         next_action = self.get_next_action()
         move = move.value
-        if next_action == "TeacherGenerateQuestion":
+        if next_action.name == "GenerateQuestion":
             self.question = move
-            self.message = self.get_next_action()
-        elif next_action == "TeacherAnswerQuestion":
+            self.message = "Teacher to answer the question"
+        elif next_action.name == "AnswerQuestion" and next_action.player.role == "teacher":
             if not self.verify_answer(move):
                 # If the teacher's answer is incorrect, generate a new target number and raise an error to be caught by the game manager
                 self.target = str(randint(1, 1000))
@@ -51,13 +54,15 @@ class MathQuizGame(GameState):
                 self.scores = {"teacher": 0, "student": 1}
                 self.message = "Teacher did not answer the question correctly"
                 raise InvalidMoveError("TeacherIncorrect")
+            self.message = "Student to answer the question"
             self.teacher_answer = move
-        elif next_action == "StudentAnswerQuestion":
+        elif next_action.name == "AnswerQuestion" and next_action.player.role == "student":
             if not self.verify_answer(move):
                 # If the student's answer is incorrect, raise an error to be caught by the game manager
                 self.scores = {"teacher": 1, "student": 0}
                 self.message = "Student did not answer the question correctly"
                 raise InvalidMoveError("StudentIncorrect")
+
             self.scores = {"teacher": 0, "student": 1}
             self.message = "Student correctly answered the question"
             self.student_answer = move
@@ -66,26 +71,26 @@ class MathQuizGame(GameState):
         return self.student_answer is not None
 
     def get_scores(self):
-        return super().get_scores()
+        return self.scores
 
-    def get_next_action(self):
+    def get_next_action(self) -> Action:
         if self.question is None:
-            return "TeacherGenerateQuestion"
+            return Action("GenerateQuestion", self.players["teacher"])
         elif self.teacher_answer is None:
-            return "TeacherAnswerQuestion"
+            return Action("AnswerQuestion", self.players["teacher"])
         else:
-            return "StudentAnswerQuestion"
+            return Action("AnswerQuestion", self.players["student"])
 
     def player_inputs(self) -> Dict[str, str]:
-        next_action = self.get_next_action()
-        if next_action == "TeacherGenerateQuestion":
+        next_action = self.get_next_action().name
+        if next_action == "GenerateQuestion":
             return {'target': self.target}
-        elif next_action in ("TeacherAnswerQuestion", "StudentAnswerQuestion"):
+        elif next_action == "AnswerQuestion":
             return {'question': self.question}
         else:
             raise ValueError("Invalid action")
 
-    def verify_answer(self, answer: str) -> bool:
+    def     verify_answer(self, answer: str) -> bool:
         try:
             return int(answer) == int(self.target)
         except:
@@ -93,12 +98,12 @@ class MathQuizGame(GameState):
         
     def player_descriptions(self):
         return [
-            PlayerDescription(name="teacher", actions=["TeacherGenerateQuestion", "TeacherAnswerQuestion"], default_player_class=MathQuizTeacher),
-            PlayerDescription(name="student", actions=["StudentAnswerQuestion"], default_player_class=MathQuizStudent),
+            PlayerDescription(name="teacher", actions=["GenerateQuestion", "AnswerQuestion"], default_player_class=MathQuizTeacher),
+            PlayerDescription(name="student", actions=["AnswerQuestion"], default_player_class=MathQuizStudent),
         ]
 
     def display(self) -> str:
-        display_str = f"Role to Act: {self.get_next_action()}\nMessage: {self.message}\n"
+        display_str = f"Role to Act: {self.get_next_action().player.role}\nMessage: {self.message}\n"
         display_str += f"Target: {self.target}\n"
         display_str += f"Question: {self.question}\n"
         display_str += f"Teacher Answer: {self.teacher_answer}\n"

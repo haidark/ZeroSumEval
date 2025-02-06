@@ -84,6 +84,5 @@ class ChessCoT(dspy.Module):
 class ChessPlayer(Player):
     def init_action_module_dict(self):
         return {
-            "WhiteMove": ChessCoT(),
-            "BlackMove": ChessCoT()
+            "MakeMove": ChessCoT()
         }

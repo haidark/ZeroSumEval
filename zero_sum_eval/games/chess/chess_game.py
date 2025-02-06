@@ -1,10 +1,10 @@
-from copy import deepcopy
 import chess
+
 from zero_sum_eval.games.chess.chess_player import ChessPlayer
-from zero_sum_eval.player import Move, Player
-from zero_sum_eval.game_state import GameState, InvalidMoveError, PlayerDescription
+from zero_sum_eval.player import Move
+from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDescription
 from zero_sum_eval.registry import GAME_REGISTRY
-from typing import Dict, Literal, Union
+from typing import Dict
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
@@ -13,7 +13,7 @@ class ChessGame(GameState):
         self.board = chess.Board()
         self.history = []
         self.scores = {"white": 0, "black": 0}
-        self.message = self.get_next_action()
+        self.message = "White to move."
 
     def update_game(self, move: Move):
         try:
@@ -21,7 +21,7 @@ class ChessGame(GameState):
             san = self.board.san(chess_move)
             self.board.push(chess_move)
             self.history.append(san)
-            self.message = self.get_next_action()
+            self.message = "White to move." if self.board.turn else "Black to move."
 
             if self.board.is_checkmate():
                 self.message = f"Checkmate"
@@ -59,9 +59,8 @@ class ChessGame(GameState):
     def is_over(self):
         return self.board.is_game_over() or not self.board.is_valid()
 
-    def get_next_action(self) -> str:
-        turn = self.board.turn
-        return "WhiteMove" if turn else "BlackMove"
+    def get_next_action(self) -> Action:
+        return Action("MakeMove", self.players["white"]) if self.board.turn else Action("MakeMove", self.players["black"])
 
     def formatted_move_history(self) -> str:
         history = self.history
@@ -78,19 +77,19 @@ class ChessGame(GameState):
 
     def player_descriptions(self):
         return [
-            PlayerDescription(name="white", actions=["WhiteMove"], default_player_class=ChessPlayer),
-            PlayerDescription(name="black", actions=["BlackMove"], default_player_class=ChessPlayer)
+            PlayerDescription(name="white", actions=["MakeMove"], default_player_class=ChessPlayer),
+            PlayerDescription(name="black", actions=["MakeMove"], default_player_class=ChessPlayer)
         ]
 
     def player_inputs(self) -> Dict[str, str]:
         return {
             'board_state': self.board.fen(),
-            'role': self.get_next_action(),
+            'role': self.message,
             'history': self.formatted_move_history()
         }
     
     def display(self) -> None:
-        display_str = f"Next action: {self.get_next_action()}\nGM Message: {self.message}\n"
+        display_str = f"{self.message}\n"
         display_str += f"{self.formatted_move_history()}\n"
         display_str += f"{self.board}\n"
         return display_str
@@ -99,11 +98,10 @@ class ChessGame(GameState):
         return {
             'message': self.message,
             'board_state': self.board.fen(),
-            'next_action': self.get_next_action(),
+            'next_action': self.get_next_action().name,
             'history': self.history,
             'scores': self.get_scores()
         }
-
 
 if __name__ == "__main__":
     chess_game = ChessGame()

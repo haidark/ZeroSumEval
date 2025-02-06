@@ -45,12 +45,12 @@ class AnswerQuestionCoT(dspy.Module):
 class MathQuizTeacher(Player):    
     def init_action_module_dict(self):
         return {
-            "TeacherGenerateQuestion": GenerateQuestionCoT(),
-            "TeacherAnswerQuestion": AnswerQuestionCoT()
+            "GenerateQuestion": GenerateQuestionCoT(),
+            "AnswerQuestion": AnswerQuestionCoT()
         }
 
 
 @PLAYER_REGISTRY.register("mathquiz", "mathquiz_student")
 class MathQuizStudent(Player):
     def init_action_module_dict(self):
-        return {"StudentAnswerQuestion": AnswerQuestionCoT()}
+        return {"AnswerQuestion": AnswerQuestionCoT()}
