@@ -1,17 +1,15 @@
-# file: game_manager.py
-# TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
-from typing import List, Dict, Optional
+"""Game manager module for handling game execution and state management."""
 
-from logging import getLogger
-from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
-from zero_sum_eval.game_state import GameState
-from zero_sum_eval.player import Player
+import os
+import dspy
 from collections import defaultdict
+from logging import getLogger
+from typing import Dict, List
 
 import jsonlines
 
-import os
-
+from zero_sum_eval.game_state import GameState, InvalidMoveError
+from zero_sum_eval.player import Player, Move
 
 class GameManager:
     def __init__(self, config: Dict):
@@ -22,132 +20,61 @@ class GameManager:
             config (Dict): Configuration dictionary containing game and player settings.
         """
         self.config: Dict = config
-        self.games: List[GameState] = []
-        self.players: Dict[str, Player] = {}
-        self.player_attempts: Dict[Player, int] = {}
         self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
         self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
-        self.win_conditions: List[str] = self.config["manager"]["args"]["win_conditions"]
-        self.draw_conditions: List[str] = self.config["manager"]["args"].get("draw_conditions", [])
-        self.loss_conditions: List[str] = self.config["manager"]["args"].get("loss_conditions", [])
         self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
-        self._init_game()
-        self._init_players()
+        self.player_attempts = defaultdict(int)
 
-    def _init_game(self) -> None:
+    def start(self, game_state: GameState) -> GameState:
         """
-        Initialize the game based on the configuration.
-
-        Creates a game instance using the GAME_REGISTRY and appends it to the games list.
-        """
-        game_config: Dict = (
-            self.config["game"]["args"] if "args" in self.config["game"] else {}
-        )
-        game: GameState = GAME_REGISTRY.build(self.config["game"]["name"], **game_config)
-        self.games.append(game)
-
-    def _init_players(self) -> None:
-        """
-        Initialize players based on the configuration.
-
-        Creates player instances using the PLAYER_REGISTRY and adds them to the players dictionary.
-        Raises a ValueError if a player's role is not defined in the game.
-        """
-        for player_config in self.config["game"]["players"]:
-            player: Player = PLAYER_REGISTRY.build(
-                self.config["game"]["name"],
-                player_config["name"],
-                output_dir=self.config["logging"]["output_dir"],
-                **player_config["args"],
-            )
-            for role in player.roles:
-                if role not in self.games[0].roles: 
-                    raise ValueError(f"Role {role} is not defined in {self.games[0].__class__.__name__}")
-            for role in player.roles:
-                self.players[role] = player
-            self.player_attempts[player] = 0
-    
-    def _process_turn(self, game_state: GameState, player: Player) -> GameState:
-        """
-        Process a single turn for a player.
-
-        Args:
-            game_state (GameState): The current state of the game.
-            player (Player): The player whose turn it is.
-
-        Returns:
-            GameState: The updated game state after the player's move.
-
-        This method attempts to make a valid move for the player, handling invalid moves
-        and win conditions. It returns the original state if all attempts fail.
-        """
-        logger = getLogger()
-        
-        while self.player_attempts[player] < self.max_player_attempts:
-            new_state: GameState = game_state.query_game()
-            move, trace = player.make_move(new_state)
-            
-            logger.info(f"\t\t--- {player.id} (attempt # {self.player_attempts[player]}) ---")
-            logger.info(f"{game_state.display()}Move:\n{move}\n\n")
-            game_state: GameState = game_state.update_game(move, trace)
-            val: Optional[str] = game_state.validate_game()
-            if val is None:
-                return game_state
-            if val in set(self.win_conditions + self.draw_conditions + self.loss_conditions):
-                #
-                # Here maybe call the scoring function?
-                #
-                return game_state
-            self.player_attempts[player]+=1
-        return game_state
-
-
-    def _run_game_loop(self, game_state: GameState) -> GameState:
-        """
-        Run the main game loop.
+        Start the game with the given state.
 
         Args:
             game_state (GameState): The initial state of the game.
 
         Returns:
-            GameState: The final state of the game after the loop ends.
-
-        This method runs the game for a maximum number of rounds or until a win condition is met.
-        It processes turns for each player and logs the game state after each turn.
+            GameState: The final state of the game after the game loop ends.
         """
         logger = getLogger()
-        round_count: int = 0
         turns: List[Dict] = []
-        prev_player: Player = None
-        while round_count < self.max_rounds:
-            if game_state.validate_game():
+        round_count = 0
+        prev_player = None # to detect when the player to act has changed (end of round)
+        while round_count <= self.max_rounds:
+            if game_state.is_over():
                 break
-            player: Player = self.players[game_state.roles[0]]
+            action = game_state.get_next_action()
+            inputs = game_state.player_inputs()
+            player: Player = action.player
             if prev_player != player:
-                self.player_attempts[player] = 0
-                round_count+=1
+                prev_player = player
+                round_count +=1
             logger.info(f"\t\t--- Start Turn {round_count} ---")
-            game_state = self._process_turn(game_state, player)
-            turns.append(game_state.export())
+            logger.info(f"\t\t--- {player.id} (attempt # {self.player_attempts[player]}) ---")
+            logger.info(f"Game State:\n{game_state.display()}\n")
+            with dspy.context(lm=action.player.llm_model):
+                trace = player.module_dict[action.name](**inputs)
+            # the final value in the prediction is assumed to be the output of the module
+            output = trace.items()[-1][1]
+            move = Move(value=output, trace=trace)
+            try:
+                game_state.update_game(move)
+                logger.info(f"\nPlayer {player.id} made move:\n{move.value}\n\n")
+            except InvalidMoveError as e:
+                # If the move was invalid, log the error and increment the player's attempts
+                logger.error(f"Invalid move: {e}")
+                if self.player_attempts[player] >= self.max_player_attempts:
+                    logger.info(f"Player {player.id} has reached the maximum number of attempts. Ending game.")
+                    break
+                self.player_attempts[player] += 1
             prev_player = player
-            if self.player_attempts[player] >= self.max_player_attempts:
-                logger.info(f"Player {player.id} has reached the maximum number of attempts. Ending game.")
-                break
+            turns.append(game_state.export())
             
-        with jsonlines.open(self.turns_log_file, "w") as f:
-            for turn in turns:
-                f.write(turn)
+        self._log_game_turns(turns)
         
         return game_state
 
-    def start(self) -> GameState:
-        """
-        Start the game.
-
-        Returns:
-            GameState: The final state of the game after it has ended.
-
-        This method initiates the game by calling the _run_game_loop method with the initial game state.
-        """
-        return self._run_game_loop(self.games[0])
+    def _log_game_turns(self, turns):
+        with jsonlines.open(self.turns_log_file, "w") as f:
+            for turn in turns:
+                f.write(turn)
 

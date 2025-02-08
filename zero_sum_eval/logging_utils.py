@@ -27,13 +27,12 @@ def setup_logging(config, log_prefix):
         logger.addHandler(file_handler)
         handlers[f'file_{level_name}'] = file_handler
 
-        # Stream handler for info, warning, and error levels
-        if level_name in ['info', 'warning', 'error']:
-            stream_handler = logging.StreamHandler()
-            stream_handler.setLevel(level)
-            stream_handler.setFormatter(formatter)
-            logger.addHandler(stream_handler)
-            handlers[f'stream_{level_name}'] = stream_handler
+    # A single stream handler to capture and display important logs
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)  # Display info and above on console
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    handlers['stream'] = stream_handler
 
     return handlers
 

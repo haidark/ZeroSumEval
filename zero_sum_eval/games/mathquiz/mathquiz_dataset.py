@@ -3,16 +3,16 @@ import json
 from dspy import Example
 from zero_sum_eval.dataset import Dataset
 from zero_sum_eval.registry import DATASET_REGISTRY
-
+from zero_sum_eval.games.mathquiz.mathquiz_player import TEACHER_KEY, STUDENT_KEY
 
 @DATASET_REGISTRY.register("mathquiz_dataset")
 class MathQuizDataset(Dataset):
     def __init__(self, 
-                role: Union[Literal["TeacherGenerateQuestion"], Literal["TeacherAnswerQuestion"], Literal["StudentAnswerQuestion"]], 
+                player_key: Union[Literal[TEACHER_KEY], Literal[STUDENT_KEY]], 
                 filename: str,
                 num_examples: int) -> None:
-        super().__init__(output_key="math_question" if role == "TeacherGenerateQuestion" else "answer")
-        self.role = role
+        super().__init__(output_key="math_question" if player_key == TEACHER_KEY else "answer")
+        self.player_key = player_key
         self.filename = filename
         self.num_examples = num_examples
 
@@ -33,17 +33,13 @@ class MathQuizDataset(Dataset):
         examples = self._load_examples()
         dataset = []
         for example in examples:
-            if self.role == "TeacherGenerateQuestion":
-                example = Example(role=self.role,
-                                  message=f"You will move as {self.role}",
-                                  target=example['answer'],
+            if self.player_key == TEACHER_KEY:
+                example = Example(target=example['answer'],
                                   question=example['question']
-                                  ).with_inputs("role", "message", "target")
+                                  ).with_inputs("target")
             else: 
-                example = Example(role=self.role,
-                                  message=f"You will move as {self.role}",
-                                  question=example['question'],
+                example = Example(question=example['question'],
                                   answer=example['answer']
-                                  ).with_inputs("role", "message", "question")
+                                  ).with_inputs("question")
             dataset.append(example)
         return dataset

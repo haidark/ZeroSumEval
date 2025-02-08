@@ -10,6 +10,11 @@ from stockfish import Stockfish
 
 # TODO: add support for resigning
 
+# Player keys
+WHITE_KEY = "white"
+BLACK_KEY = "black"
+
+
 @METRIC_REGISTRY.register("chess_move_validation_metric")
 def validate_move(example, prediction, trace=None):
     pred_move = prediction.move
@@ -47,7 +52,6 @@ def stockfish_metric(example: dspy.Example, prediction: dspy.Example, trace=None
 
 class NextMove(dspy.Signature):
     """Given a board state, role, and move history, produce the next best valid move"""
-    message = dspy.InputField(desc="Message from the game manager")
     board_state = dspy.InputField(desc="FEN formatted current board state")
     role = dspy.InputField(desc="role of the player making the next move")
     history = dspy.InputField(desc="move history")
@@ -57,9 +61,8 @@ class ChessCoT(dspy.Module):
     def __init__(self):
         self.cot_move = dspy.ChainOfThought(NextMove)
 
-    def forward(self, message, board_state, role, history):
+    def forward(self, board_state, role, history):
         cot_out = self.cot_move(
-            message=message,
             board_state=board_state,
             role=role,
             history=history
@@ -67,7 +70,7 @@ class ChessCoT(dspy.Module):
         cot_out.move = cot_out.move.replace(".", "")
         try:
             board = chess.Board(board_state)
-            move = board.parse_san(cot_out.move)
+            board.parse_san(cot_out.move)
         except (IllegalMoveError, InvalidMoveError, AmbiguousMoveError) as e:
             error_messages = {
                 IllegalMoveError: "illegal",
@@ -84,8 +87,7 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def init_role_module_dict(self):
+    def init_action_module_dict(self):
         return {
-            "White": ChessCoT(),
-            "Black": ChessCoT()
+            "MakeMove": ChessCoT()
         }

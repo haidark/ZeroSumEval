@@ -28,6 +28,8 @@ class Registry:
                 key = cls.__name__
             key = key.lower()
             self._classes_dict[key] = cls
+            # register the class under its own name as well
+            self._classes_dict[cls.__name__.lower()] = cls
             return cls
 
         return _register
@@ -71,7 +73,11 @@ class PlayerRegistry:
             if player_name is None:
                 player_name = cls.__name__
             player_name = player_name.lower()
+
+            # register the class under the game name and the player name 
             self._classes_dict[game_name][player_name] = cls
+            self._classes_dict[game_name][cls.__name__.lower()] = cls
+
             return cls
 
         return _register
@@ -79,6 +85,14 @@ class PlayerRegistry:
     def build(self, game_name, player_name, *args, **kwargs):
         game_name = game_name.lower()
         player_name = player_name.lower()
+
+        if game_name in GAME_REGISTRY._classes_dict and game_name not in self._classes_dict:
+            game_state = GAME_REGISTRY[game_name]
+            class_name = game_state.__name__.lower()
+            for name, state in GAME_REGISTRY._classes_dict.items():
+                if state == game_state and name != class_name:
+                    game_name = name
+                    break
 
         assert (
             game_name in GAME_REGISTRY

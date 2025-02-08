@@ -1,8 +1,13 @@
-from zero_sum_eval.game_state import GameState
 from random import randint
+from zero_sum_eval.games.mathquiz.mathquiz_player import MathQuizStudent, MathQuizTeacher, STUDENT_KEY, TEACHER_KEY
+from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
 from zero_sum_eval.registry import GAME_REGISTRY
-from typing import Dict, List, Optional
-from dspy import Prediction
+from zero_sum_eval.player import Move
+from typing import Dict, List
+
+from logging import getLogger
+
+logger = getLogger()
 
 @GAME_REGISTRY.register("mathquiz")
 class MathQuizGame(GameState):
@@ -15,10 +20,9 @@ class MathQuizGame(GameState):
         3. If the first player succeeds, the second player is given a chance to answer the question.
         4. The game continues for a fixed number of rounds.
 
-    The roles for this game are:
-        TeacherGenerateQuestion
-        TeacherAnswerQuestion
-        StudentAnswerQuestion
+    The actions for this game are:
+        GenerateQuestion
+        AnswerQuestion
 
     The environment for this game is:
         question: a math question
@@ -26,126 +30,92 @@ class MathQuizGame(GameState):
         student_answer: the student's answer to the math question
     """
 
-    def instantiate(self, environment: Dict, context: Dict, roles: List[str], **kwargs) -> None:
-        self.environment = environment if environment else {
-            "question": None,
-            "teacher_answer": None,
-            "student_answer": None
-        }
-        self.context = context if context else {"history": [], "message": None}
-        self.roles = roles if roles else self.get_next_roles()
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.question = None
+        self.teacher_answer = None
+        self.student_answer = None
+        self.scores = {TEACHER_KEY: 0, STUDENT_KEY: 0}
         self.target = kwargs.get('target', str(randint(1, 1000)))
+        self.message = f"{TEACHER_KEY} to generate a question"
 
-    def update_game(self, move: str, trace: Optional[Prediction] = None) -> GameState:
-        new_state = MathQuizGame()
-        new_state.instantiate(
-            self.environment.copy(),
-            self.context.copy(),
-            self.roles.copy(),
-            target=self.target
-        )
-        current_role = new_state.roles[0]
-        new_state.context['message'] = None
-        if current_role == "TeacherGenerateQuestion":
-            new_state.environment['question'] = move
-        elif current_role == "TeacherAnswerQuestion":
-            new_state.environment['teacher_answer'] = move
+    def update_game(self, move: Move):
+        next_action = self.get_next_action()
+        move = move.value
+        if next_action.name == "GenerateQuestion":
+            self.question = move
+            self.message = f"{TEACHER_KEY} to answer the question"
+        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == TEACHER_KEY:
             if not self.verify_answer(move):
-                new_state.context['message'] = f"TeacherIncorrect"
-                new_state.environment['teacher_answer'] = None
-                new_state.environment['question'] = None
-                new_state.target = str(randint(1, 1000))
-        elif current_role == "StudentAnswerQuestion":
-            new_state.environment['student_answer'] = move
+                # If the teacher's answer is incorrect, generate a new target number and raise an error to be caught by the game manager
+                self.target = str(randint(1, 1000))
+                self.question = None
+                self.scores = {TEACHER_KEY: 0, STUDENT_KEY: 1}
+                self.message = f"{TEACHER_KEY} did not answer the question correctly"
+                raise InvalidMoveError("TeacherIncorrect")
+            self.message = f"{STUDENT_KEY} to answer the question"
+            self.teacher_answer = move
+        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == STUDENT_KEY:
             if not self.verify_answer(move):
-                new_state.context['message'] = f"StudentIncorrect"
-                new_state.environment['student_answer'] = None
-        new_state.roles = new_state.get_next_roles()      
-        return new_state
+                # If the student's answer is incorrect, raise an error to be caught by the game manager
+                self.scores = {TEACHER_KEY: 1, STUDENT_KEY: 0}
+                self.message = f"{STUDENT_KEY} did not answer the question correctly"
+                raise InvalidMoveError("StudentIncorrect")
 
-    def query_game(self) -> GameState:
-        new_state = MathQuizGame()
-        new_state.instantiate(
-            self.environment.copy(),
-            self.context.copy(),
-            self.roles.copy(),
-            target=self.target
-        )
-        
-        msg = new_state.validate_game()
-        new_state.context['message'] = msg if msg else f"You will move as {new_state.roles[0]}"
-        return new_state
+            self.scores = {TEACHER_KEY: 0, STUDENT_KEY: 1}
+            self.message = f"{STUDENT_KEY} correctly answered the question"
+            self.student_answer = move
+    
+    def is_over(self) -> bool:
+        return self.student_answer is not None
 
-    def validate_game(self) -> Optional[str]:
-        if self.environment['student_answer'] is not None:
-            if self.verify_answer(self.environment['student_answer']):
-                return "StudentCorrect"
-            else:
-                return "StudentIncorrect"
-        if self.environment['teacher_answer'] is not None:
-            if not self.verify_answer(self.environment['teacher_answer']):
-                return "TeacherIncorrect"
-        return self.context['message']
+    def get_scores(self):
+        return self.scores
 
-    def get_next_roles(self) -> List[str]:
-        if self.environment['question'] is None:
-            return ['TeacherGenerateQuestion', 'TeacherAnswerQuestion', 'StudentAnswerQuestion']
-        elif self.environment['teacher_answer'] is None:
-            return ['TeacherAnswerQuestion', 'StudentAnswerQuestion']
+    def get_next_action(self) -> Action:
+        if self.question is None:
+            return Action("GenerateQuestion", self.players[TEACHER_KEY])
+        elif self.teacher_answer is None:
+            return Action("AnswerQuestion", self.players[TEACHER_KEY])
         else:
-            return ['StudentAnswerQuestion']
+            return Action("AnswerQuestion", self.players[STUDENT_KEY])
 
     def player_inputs(self) -> Dict[str, str]:
-        current_role = self.roles[0]
-        if current_role == "TeacherGenerateQuestion":
-            return {
-                'role': self.roles[0],
-                'target': self.target,
-                'message': self.context['message']
-            }
-        elif current_role in ("TeacherAnswerQuestion", "StudentAnswerQuestion"):
-            return {
-                'role': self.roles[0],
-                'question': self.environment['question'],
-                'message': self.context['message']
-            }
+        next_action = self.get_next_action().name
+        if next_action == "GenerateQuestion":
+            return {'target': self.target}
+        elif next_action == "AnswerQuestion":
+            return {'question': self.question}
         else:
-            raise ValueError("Invalid role")
+            raise ValueError("Invalid action")
 
     def verify_answer(self, answer: str) -> bool:
         try:
             return int(answer) == int(self.target)
         except:
             return False
-
+        
+    def player_definitions(self) -> List[PlayerDefinition]:
+        return [
+            PlayerDefinition(player_key=TEACHER_KEY, actions=["GenerateQuestion", "AnswerQuestion"], default_player_class=MathQuizTeacher),
+            PlayerDefinition(player_key=STUDENT_KEY, actions=["AnswerQuestion"], default_player_class=MathQuizStudent),
+        ]
 
     def display(self) -> str:
-        display_str = f"Role to Act: {self.roles[0]}\nMessage: {self.context['message']}\n"
-        display_str += f"Environment: {self.environment}\n"
+        display_str = f"Next to Act: {self.get_next_action().player.player_key}\nMessage: {self.message}\n"
         display_str += f"Target: {self.target}\n"
-        return display_str
+        display_str += f"Question: {self.question}\n"
+        display_str += f"Teacher Answer: {self.teacher_answer}\n"
+        display_str += f"Student Answer: {self.student_answer}\n"
+        display_str += f"Scores: {self.scores}\n"
+        return display_str    
+    def export(self):
+        return {
+            "target": self.target,
+            "question": self.question,
+            "teacher_answer": self.teacher_answer,
+            "student_answer": self.student_answer,
+            "message": self.message,
+            "scores": self.scores,
+        }
 
-
-if __name__ == "__main__":
-    math_quiz = MathQuizGame()
-    math_quiz.instantiate(None, None, None)
-    print(math_quiz.export())
-
-    # Teacher generates question
-    math_quiz = math_quiz.update_game("What is 5 + 7?")
-    print(math_quiz.export())
-
-    print(math_quiz.query_game().export())
-    # Teacher answers question
-    math_quiz = math_quiz.update_game("12")
-    print(math_quiz.export())
-
-    # Student answers question
-    math_quiz = math_quiz.update_game("12")
-    print(math_quiz.export())
-
-    validation_result = math_quiz.validate_game()
-    if validation_result:
-        print(f"Game validation result: {validation_result}")
-    else:
-        print("Game is valid.")

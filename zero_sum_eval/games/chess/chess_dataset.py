@@ -10,10 +10,10 @@ from zero_sum_eval.registry import DATASET_REGISTRY
 
 @DATASET_REGISTRY.register("chess_dataset")
 class ChessDataset(Dataset):
-    def __init__(self, filename: str, role: Union[Literal["White"], Literal["Black"]], num_examples: Optional[int] = None) -> None:
+    def __init__(self, filename: str, player_key: str, num_examples: Optional[int] = None) -> None:
         super().__init__(output_key="move")
         self.filename = filename
-        self.role = role
+        self.player_key = player_key
         self.num_examples = num_examples
 
     def _load_examples(self):
@@ -28,26 +28,25 @@ class ChessDataset(Dataset):
         dataset = []
         num_examples = self.num_examples if self.num_examples else len(examples)
         for example in [examples[i] for i in range(0, num_examples, num_examples//10)]:
-            if self.role == "White": # white to move
+            if self.player_key == "White": # white to move
                 if not example['turn']:
                     continue
             else:                   # black to move
                 if example['turn']:
                     continue
-            example = Example(message=f"You will move as {self.role}",
-                                    board_state=example['board_state'],
-                                    role=f"{self.role}",
+            example = Example(board_state=example['board_state'],
+                                    role=f"{self.player_key}",
                                     history=example['history'],
                                     move=example['move']
-                                    ).with_inputs("message", "board_state", "role", "history")
+                                    ).with_inputs("board_state", "role", "history")
             dataset.append(example)
         return dataset
     
 @DATASET_REGISTRY.register("chess_puzzle_dataset")
 class ChessPuzzleDataset(Dataset):
-    def __init__(self, role: Union[Literal["White"], Literal["Black"]], num_examples: int = 20) -> None:
+    def __init__(self, player_key: str, num_examples: int = 20) -> None:
         super().__init__(output_key="move")
-        self.role = role
+        self.player_key = player_key
         self.num_examples = num_examples
 
     def _get_board(self, ex: dict) -> chess.Board:
@@ -62,12 +61,11 @@ class ChessPuzzleDataset(Dataset):
         examples = []
         for ex in ds["train"].take(self.num_examples):
             board = self._get_board(ex)
-            if board.turn == (self.role == "White"):
-                example = Example(  message=f"You will move as {self.role}",
-                                    board_state=board.fen(),
-                                    role=f"{self.role}",
+            if board.turn == (self.player_key == "white"):
+                example = Example(board_state=board.fen(),
+                                    role=f"{self.player_key}",
                                     history=ex["ctx"],
                                     move=ex["target"]
-                                    ).with_inputs("message", "board_state", "role", "history")
+                                    ).with_inputs("board_state", "role", "history")
                 examples.append(example)
         return examples
