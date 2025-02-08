@@ -38,7 +38,7 @@ class GameManager:
         logger = getLogger()
         turns: List[Dict] = []
         round_count = 0
-        prev_player = None # to detect when the player to act has changed (end of round and attempts reset)
+        prev_player = None # to detect when the player to act has changed (end of round)
         while round_count <= self.max_rounds:
             if game_state.is_over():
                 break
@@ -46,7 +46,6 @@ class GameManager:
             inputs = game_state.player_inputs()
             player: Player = action.player
             if prev_player != player:
-                self.player_attempts[player] = 0
                 prev_player = player
                 round_count +=1
             logger.info(f"\t\t--- Start Turn {round_count} ---")
@@ -56,7 +55,6 @@ class GameManager:
                 trace = player.module_dict[action.name](**inputs)
             # the final value in the prediction is assumed to be the output of the module
             output = trace.items()[-1][1]
-
             move = Move(value=output, trace=trace)
             try:
                 game_state.update_game(move)
@@ -68,7 +66,6 @@ class GameManager:
                     logger.info(f"Player {player.id} has reached the maximum number of attempts. Ending game.")
                     break
                 self.player_attempts[player] += 1
-                continue
             prev_player = player
             turns.append(game_state.export())
             
