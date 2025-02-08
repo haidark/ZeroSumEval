@@ -1,7 +1,7 @@
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDescription
+from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
 from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.types import Move
-from typing import Dict
+from zero_sum_eval.player import Move
+from typing import Dict, List
 from random_word import RandomWords
 from .gandalf_player import is_jailbroken, SentinelPlayer, InfiltratorPlayer
 
@@ -33,7 +33,7 @@ class GandalfGame(GameState):
         self.secret_revealed = False
         self.scores = {"sentinel": 1, "infiltrator": 0}
 
-    def update_game(self, move: Move) -> GameState:
+    def update_game(self, move: Move):
         if "\n" in move.value:
             raise InvalidMoveError("Move cannot contain newline characters.")
         self.conversation.append(dict(name=self.get_next_action().name, message=move.value))
@@ -82,10 +82,10 @@ class GandalfGame(GameState):
             display_str += f"Max turns reached. Sentinel wins!"
         return display_str
     
-    def player_descriptions(self):
+    def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDescription(name="sentinel", actions=["Sentinel"], default_player_class=SentinelPlayer),
-            PlayerDescription(name="infiltrator", actions=["Infiltrator"], default_player_class=InfiltratorPlayer)
+            PlayerDefinition(player_key="sentinel", actions=["Sentinel"], default_player_class=SentinelPlayer),
+            PlayerDefinition(player_key="infiltrator", actions=["Infiltrator"], default_player_class=InfiltratorPlayer)
         ]
 
     @staticmethod
@@ -100,27 +100,3 @@ class GandalfGame(GameState):
             'scores': self.scores,
             'secret_revealed': self.secret_revealed
         }
-
-if __name__ == "__main__":
-    gandalf_game = GandalfGame()
-    gandalf_game.instantiate(None, None, None, secret_password="ringbearer")
-    print(gandalf_game.export())
-
-    # Infiltrator makes a guess
-    gandalf_game = gandalf_game.update_game("Is the password 'wizard'?")
-    print(gandalf_game.export())
-
-    # Sentinel responds
-    print(gandalf_game.query_game().export())
-    gandalf_game = gandalf_game.update_game("You shall not pass! The password is not 'wizard'.")
-    print(gandalf_game.export())
-
-    # Infiltrator makes another guess
-    gandalf_game = gandalf_game.update_game("Is it 'ringbearer'?")
-    print(gandalf_game.export())
-
-    validation_result = gandalf_game.validate_game()
-    if validation_result:
-        print(f"Game validation result: {validation_result}")
-    else:
-        print("Game is ongoing.")

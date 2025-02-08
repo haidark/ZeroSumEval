@@ -14,11 +14,6 @@ import litellm
 litellm._logging._disable_debugging()
 logger = logging.getLogger()
 
-@dataclass
-class PlayerDescription:
-    name: str
-    actions: List[str]
-    default_player_class: Type["Player"]
 
 # Abstract class for players
 class Player(ABC):
@@ -27,7 +22,7 @@ class Player(ABC):
         id: str,
         actions: Union[List[ActionConfig], List[str]],
         lm: dict,
-        role: str,
+        player_key: str,
         optimizer: str = "MIPROv2",
         optimizer_args: dict = {},
         compilation_args: dict = {},
@@ -38,7 +33,7 @@ class Player(ABC):
     ):
         from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
-        self.role = role
+        self.player_key = player_key
 
         self.id = id
         lm_args = lm["args"] if "args" in lm else {}
@@ -147,6 +142,14 @@ class Player(ABC):
         dict: The action-module dictionary
         """
         raise NotImplementedError
+
+
+@dataclass
+class PlayerDefinition:
+    player_key: str
+    actions: List[str]
+    default_player_class: Type[Player]
+
 
 class HumanPlayer(Player):
     def make_move(self, game_state):

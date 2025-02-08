@@ -2,9 +2,9 @@ import chess
 
 from zero_sum_eval.games.chess.chess_player import ChessPlayer
 from zero_sum_eval.player import Move
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDescription
+from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
 from zero_sum_eval.registry import GAME_REGISTRY
-from typing import Dict
+from typing import Dict, List
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
@@ -75,10 +75,10 @@ class ChessGame(GameState):
                 formatted_history += f"{history[j+1]} "
         return formatted_history.strip()
 
-    def player_descriptions(self):
+    def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDescription(name="white", actions=["MakeMove"], default_player_class=ChessPlayer),
-            PlayerDescription(name="black", actions=["MakeMove"], default_player_class=ChessPlayer)
+            PlayerDefinition(player_key="white", actions=["MakeMove"], default_player_class=ChessPlayer),
+            PlayerDefinition(player_key="black", actions=["MakeMove"], default_player_class=ChessPlayer)
         ]
 
     def player_inputs(self) -> Dict[str, str]:
@@ -103,31 +103,3 @@ class ChessGame(GameState):
             'scores': self.get_scores()
         }
 
-if __name__ == "__main__":
-    chess_game = ChessGame()
-    chess_game.instantiate({"fen": chess.Board().fen()}, None, None)
-    print(chess_game.export())
-
-    # 1. e4 e5
-    chess_game = chess_game.update_game("e4")
-    print(chess_game.export())
-
-    print(chess_game.query_game().export())
-    chess_game = chess_game.update_game("e5")
-    print(chess_game.export())
-
-    # 2. Nf3 Nc6
-    chess_game = chess_game.update_game("Nf3")
-    print(chess_game.query_game().export())
-    chess_game = chess_game.update_game("Nc6")
-    print(chess_game.export())
-
-    # 3. Nxe5
-    chess_game = chess_game.update_game("Nxe5")
-    print(chess_game.export())
-
-    validation_result = chess_game.validate_game()
-    if validation_result:
-        print(f"Game validation result: {validation_result}")
-    else:
-        print("Game is valid.")

@@ -1,5 +1,5 @@
 '''
-Abstract class to define minimum API to represent a game
+Abstract class API to represent a game
 '''
 import logging
 
@@ -11,21 +11,16 @@ from typing import Dict, List, Type
 import dspy
 
 from zero_sum_eval.types import ActionConfig
-from zero_sum_eval.player import Move, Player
+from zero_sum_eval.player import Move, Player, PlayerDefinition
 
 class InvalidMoveError(Exception):
     pass
+
 
 @dataclass
 class Action:
     name: str
     player: Player
-
-@dataclass
-class PlayerDescription:
-    name: str
-    actions: List[str]
-    default_player_class: Type[Player]
 
 
 class GameState(ABC):
@@ -44,40 +39,39 @@ class GameState(ABC):
         """
         from zero_sum_eval.registry import PLAYER_REGISTRY
         self.players = {}
-        loaded_roles = []
-        for role, config in players_config.items():
-            # get the player description for the specified role
-            description = [desc for desc in self.player_descriptions() if desc.name == role][0]
+        loaded_player_keys = []
+        for player_key, config in players_config.items():
+            # get the player definition for the specified player key
+            definition = [desc for desc in self.player_definitions() if desc.player_key == player_key][0]
             
             # fill in the non-specified actions with the default actions
             config["args"]["actions"] = config["args"].get("actions", [])
             names = [action["name"] for action in config["args"].get("actions", [])]
-            for action in description.actions:
+            for action in definition.actions:
                 if action not in names:
                     config["args"]["actions"].append(ActionConfig(name=action))
 
-            # create the player instance for the role
+            # create the player instance for the player key
             # if a class is specified in the config, use it, otherwise use the default player class
             if "class" in config:
-                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=config["class"], role=role, **config["args"])
+                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=config["class"], player_key=player_key, **config["args"])
             else:
-                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=description.default_player_class.__name__, role=role, **config["args"])
+                player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=definition.default_player_class.__name__, player_key=player_key, **config["args"])
 
+            if set(player.module_dict.keys()) != set(definition.actions):
+                raise ValueError(f"Player {player_key} does not support all actions {definition.actions}. Missing actions: {set(definition.actions) - set(player.module_dict.keys())}")
 
-            if set(player.module_dict.keys()) != set(description.actions):
-                raise ValueError(f"Player {role} does not support all actions {description.actions}. Missing actions: {set(description.actions) - set(player.module_dict.keys())}")
+            self.players[player_key] = player
 
-            self.players[role] = player
+            loaded_player_keys.append(player_key)           
 
-            loaded_roles.append(role)           
-
-        for role in self.player_descriptions():
-            if role.name in loaded_roles:
+        for definition in self.player_definitions():
+            if definition.player_key in loaded_player_keys:
                 continue
 
-            logging.warning(f"Player for role {role.name} not specified. Using default player with GPT-4o.")
-            player = role.default_player_class(id=f"GPT-4o_{role.name}", role=role.name, actions=role.actions, lm={"model": "openai/gpt-4o"}, max_tries=5)
-            self.players[role.name] = player
+            logging.warning(f"Player for player key {definition.player_key} not specified. Using default player with GPT-4o.")
+            player = definition.default_player_class(id=f"GPT-4o_{definition.player_key}", player_key=definition.player_key, actions=definition.actions, lm={"model": "openai/gpt-4o"}, max_tries=5)
+            self.players[definition.player_key] = player
 
     @abstractmethod
     def get_scores(self):
@@ -129,7 +123,7 @@ class GameState(ABC):
     @abstractmethod
     def player_inputs(self) -> Dict[str, str]:
         """
-        Provides a representation of the game state according to the current role
+        Provides a representation of the game state according to the current player_key
 
         Returns:
             dict
@@ -148,12 +142,12 @@ class GameState(ABC):
         return self.__dict__
     
     @abstractmethod
-    def player_descriptions(self) -> List[PlayerDescription]:
+    def player_definitions(self) -> List[PlayerDefinition]:
         """
-        Get the descriptions of the players in the game.
+        Get the definitions of all players in the game.
 
         Returns:
-            List[PlayerDescription]: A list of player descriptions.
+            List[PlayerDefinition]: A list of player definitions.
         """
         raise NotImplementedError
 

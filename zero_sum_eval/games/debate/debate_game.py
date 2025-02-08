@@ -3,7 +3,7 @@ import json
 
 from zero_sum_eval.types import Move
 from zero_sum_eval.games.debate.debate_player import DebatePlayer
-from zero_sum_eval.game_state import Action, GameState, PlayerDescription
+from zero_sum_eval.game_state import Action, GameState, PlayerDefinition, InvalidMoveError
 from zero_sum_eval.registry import GAME_REGISTRY, LM_REGISTRY
 from typing import Dict, List, Optional, Union
 import dspy
@@ -66,7 +66,7 @@ class DebateGame(GameState):
 
             self.llm_judges.append(llm_model)
 
-    def update_game(self, move: Move) -> GameState:
+    def update_game(self, move: Move):
         self.history.append(
             {
                 "action": self.get_next_action().name + " | " + self.get_next_action().player.role,
@@ -77,7 +77,7 @@ class DebateGame(GameState):
         if self.get_next_action().name == "ClosingStatement" and len(self.history) == 2 + (self.rebuttal_rounds * 2) + 2:
             self.verdict = self.judge()
 
-    def is_over(self):
+    def is_over(self) -> bool:
         return self.verdict is not None
 
     def get_scores(self):
@@ -119,8 +119,7 @@ class DebateGame(GameState):
         else:
             return "Tie"
 
-
-    def get_next_action(self):
+    def get_next_action(self) -> Action:
         # The first side to make a move is the "for" side
         side = "for" if len(self.history) % 2 == 0 else "against"
 
@@ -135,7 +134,6 @@ class DebateGame(GameState):
         # The last 2 moves are closing statements
         else:
             return Action("ClosingStatement", self.players[side])
-        
 
     def formatted_move_history(self) -> str:
         history = self.history
@@ -155,13 +153,13 @@ class DebateGame(GameState):
         
         return inputs
 
-    def player_descriptions(self):
+    def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDescription(name="for", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
-            PlayerDescription(name="against", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDefinition(player_key="for", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDefinition(player_key="against", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
         ]
 
-    def display(self) -> None:
+    def display(self) -> str:
         display_str = f"Action: {self.get_next_action().name}, Side: {self.get_next_action().player.role}"
         display_str += f"\nTopic: {self.topic}"
         display_str += f"\nHistory:\n{self.formatted_move_history()}"
@@ -178,7 +176,7 @@ class DebateGame(GameState):
             display_str += f"\nFinal Verdict: {self.verdict}"
         return display_str
 
-    def export(self) -> str:
+    def export(self):
         return {
             "formatted_history": self.formatted_move_history(),
             "topic": self.topic,
