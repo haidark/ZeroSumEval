@@ -3,6 +3,9 @@ import dspy
 from zero_sum_eval.player import Player
 from zero_sum_eval.registry import PLAYER_REGISTRY
 
+# Player keys
+FOR_KEY = "for"
+AGAINST_KEY = "against"
 
 class OpeningStatementSignature(dspy.Signature):
     """You are an expert debater crafting a compelling opening statement for a debate. 

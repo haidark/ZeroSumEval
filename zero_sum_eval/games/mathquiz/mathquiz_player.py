@@ -2,6 +2,10 @@ import dspy
 from zero_sum_eval.player import Player
 from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 
+# Player keys
+TEACHER_KEY = "teacher"
+STUDENT_KEY = "student"
+
 @METRIC_REGISTRY.register("math_question_validation_metric")
 def validate_math_question(example, prediction, trace=None):
     # TODO: Implement proper validation logic

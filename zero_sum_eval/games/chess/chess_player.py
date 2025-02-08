@@ -10,6 +10,11 @@ from stockfish import Stockfish
 
 # TODO: add support for resigning
 
+# Player keys
+WHITE_KEY = "white"
+BLACK_KEY = "black"
+
+
 @METRIC_REGISTRY.register("chess_move_validation_metric")
 def validate_move(example, prediction, trace=None):
     pred_move = prediction.move

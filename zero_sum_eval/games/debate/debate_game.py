@@ -2,7 +2,7 @@ import random
 import json
 
 from zero_sum_eval.types import Move
-from zero_sum_eval.games.debate.debate_player import DebatePlayer
+from zero_sum_eval.games.debate.debate_player import DebatePlayer, FOR_KEY, AGAINST_KEY
 from zero_sum_eval.game_state import Action, GameState, PlayerDefinition, InvalidMoveError
 from zero_sum_eval.registry import GAME_REGISTRY, LM_REGISTRY
 from typing import Dict, List, Optional, Union
@@ -15,9 +15,6 @@ class DebateGame(GameState):
     """
     This is a two-player game where the players take turns to make moves in a debate.
     """ 
-    # Player keys
-    FOR_KEY = "for"
-    AGAINST_KEY = "against"
     
     def __init__(
         self,
@@ -59,7 +56,7 @@ class DebateGame(GameState):
         self._init_judges(judges)
 
         self.evaluations = None
-        self.scores = {self.FOR_KEY: 0, self.AGAINST_KEY: 0}
+        self.scores = {FOR_KEY: 0, AGAINST_KEY: 0}
         self.verdict = None
 
     def _init_judges(self, judges: List[Dict]) -> None:
@@ -89,8 +86,8 @@ class DebateGame(GameState):
 
     def get_scores(self):
         if self.is_over():
-            return {self.FOR_KEY: 1, self.AGAINST_KEY: 0} if self.verdict == "ForWin" else {self.FOR_KEY: 0, self.AGAINST_KEY: 1}
-        return {self.FOR_KEY: 0, self.AGAINST_KEY: 0}
+            return {FOR_KEY: 1, AGAINST_KEY: 0} if self.verdict == "ForWin" else {FOR_KEY: 0, AGAINST_KEY: 1}
+        return {FOR_KEY: 0, AGAINST_KEY: 0}
 
     def judge(self):
         for_score, against_score = 0, 0
@@ -100,24 +97,24 @@ class DebateGame(GameState):
                 for_evaluation = self.judge_module(
                     topic=self.topic,
                     history=self.history,
-                    side=self.FOR_KEY,
+                    side=FOR_KEY,
                 )
                 for_score += for_evaluation.weighted_score
 
                 against_evaluation = self.judge_module(
                     topic=self.topic,
                     history=self.history,
-                    side=self.AGAINST_KEY,
+                    side=AGAINST_KEY,
                 )
                 against_score += against_evaluation.weighted_score
 
                 evaluations[llm_judge.model] = {
-                    self.FOR_KEY: for_evaluation.toDict(),
-                    self.AGAINST_KEY: against_evaluation.toDict(),
+                    FOR_KEY: for_evaluation.toDict(),
+                    AGAINST_KEY: against_evaluation.toDict(),
                 }
 
         self.evaluations = evaluations
-        self.scores = {self.FOR_KEY: for_score, self.AGAINST_KEY: against_score}
+        self.scores = {FOR_KEY: for_score, AGAINST_KEY: against_score}
         
         if for_score > against_score:
             return "ForWin"
@@ -128,7 +125,7 @@ class DebateGame(GameState):
 
     def get_next_action(self) -> Action:
         # The first side to make a move is the "for" side
-        side = self.FOR_KEY if len(self.history) % 2 == 0 else self.AGAINST_KEY
+        side = FOR_KEY if len(self.history) % 2 == 0 else AGAINST_KEY
 
         # The first 2 moves are opening statements
         if len(self.history) < 2:
@@ -162,8 +159,8 @@ class DebateGame(GameState):
 
     def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDefinition(player_key=self.FOR_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
-            PlayerDefinition(player_key=self.AGAINST_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDefinition(player_key=FOR_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDefinition(player_key=AGAINST_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
         ]
 
     def display(self) -> str:
@@ -174,12 +171,12 @@ class DebateGame(GameState):
             display_str += f"\n\nJudge Evaluations:"
             for judge, evaluation in self.evaluations.items():
                 display_str += f"\n\nJudge: {judge}"
-                display_str += f"\nFor: {json.dumps(evaluation[self.FOR_KEY], indent=4)}"
-                display_str += f"\n\nAgainst: {json.dumps(evaluation[self.AGAINST_KEY], indent=4)}"
+                display_str += f"\nFor: {json.dumps(evaluation[FOR_KEY], indent=4)}"
+                display_str += f"\n\nAgainst: {json.dumps(evaluation[AGAINST_KEY], indent=4)}"
                 display_str += f"\n\n===================="
             display_str += f"\nAggregated Scores:"
-            display_str += f"\nFor: {self.scores[self.FOR_KEY]}"
-            display_str += f"\nAgainst: {self.scores[self.AGAINST_KEY]}"
+            display_str += f"\nFor: {self.scores[FOR_KEY]}"
+            display_str += f"\nAgainst: {self.scores[AGAINST_KEY]}"
             display_str += f"\nFinal Verdict: {self.verdict}"
         return display_str
 

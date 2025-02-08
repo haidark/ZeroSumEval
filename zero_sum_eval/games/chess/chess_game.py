@@ -1,6 +1,6 @@
 import chess
 
-from zero_sum_eval.games.chess.chess_player import ChessPlayer
+from zero_sum_eval.games.chess.chess_player import ChessPlayer, WHITE_KEY, BLACK_KEY
 from zero_sum_eval.player import Move
 from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
 from zero_sum_eval.registry import GAME_REGISTRY
@@ -11,16 +11,13 @@ class ChessGame(GameState):
     """
     This is a two-player game where the players take turns to make moves in a chess game.
     """
-    # Player keys
-    WHITE_KEY = "white"
-    BLACK_KEY = "black"
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.board = chess.Board()
         self.history = []
-        self.scores = {self.WHITE_KEY: 0, self.BLACK_KEY: 0}
-        self.message = f"{self.WHITE_KEY} to move."
+        self.scores = {WHITE_KEY: 0, BLACK_KEY: 0}
+        self.message = f"{WHITE_KEY} to move."
 
     def update_game(self, move: Move):
         try:
@@ -28,30 +25,30 @@ class ChessGame(GameState):
             san = self.board.san(chess_move)
             self.board.push(chess_move)
             self.history.append(san)
-            self.message = f"{self.WHITE_KEY} to move." if self.board.turn else f"{self.BLACK_KEY} to move."
+            self.message = f"{WHITE_KEY} to move." if self.board.turn else f"{BLACK_KEY} to move."
 
             if self.board.is_checkmate():
                 self.message = f"Checkmate"
-                winner = self.WHITE_KEY if self.board.turn else self.BLACK_KEY
-                loser = self.BLACK_KEY if self.board.turn else self.WHITE_KEY
+                winner = WHITE_KEY if self.board.turn else BLACK_KEY
+                loser = BLACK_KEY if self.board.turn else WHITE_KEY
                 self.scores = {winner: 1, loser: 0}
             elif not self.board.is_valid():
                 self.message = f"Invalid move"
-                winner = self.BLACK_KEY if self.board.turn else self.WHITE_KEY
-                loser = self.WHITE_KEY if self.board.turn else self.BLACK_KEY
+                winner = BLACK_KEY if self.board.turn else WHITE_KEY
+                loser = WHITE_KEY if self.board.turn else BLACK_KEY
                 self.scores = {winner: 1, loser: 0}
             elif self.board.is_stalemate():
                 self.message = f"Stalemate"
-                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
+                self.scores = {WHITE_KEY: 0.5, BLACK_KEY: 0.5}
             elif self.board.is_insufficient_material():
                 self.message = f"Insufficient material"
-                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
+                self.scores = {WHITE_KEY: 0.5, BLACK_KEY: 0.5}
             elif self.board.is_seventyfive_moves():
                 self.message = f"Seventy-five moves"
-                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
+                self.scores = {WHITE_KEY: 0.5, BLACK_KEY: 0.5}
             elif self.board.is_fivefold_repetition():
                 self.message = f"Fivefold repetition"
-                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
+                self.scores = {WHITE_KEY: 0.5, BLACK_KEY: 0.5}
 
         except chess.IllegalMoveError as e:
             raise InvalidMoveError(f"Move {move} is Illegal: {e}")
@@ -67,7 +64,7 @@ class ChessGame(GameState):
         return self.board.is_game_over() or not self.board.is_valid()
 
     def get_next_action(self) -> Action:
-        return Action("MakeMove", self.players[self.WHITE_KEY]) if self.board.turn else Action("MakeMove", self.players[self.BLACK_KEY])
+        return Action("MakeMove", self.players[WHITE_KEY]) if self.board.turn else Action("MakeMove", self.players[BLACK_KEY])
 
     def formatted_move_history(self) -> str:
         history = self.history
@@ -84,8 +81,8 @@ class ChessGame(GameState):
 
     def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDefinition(player_key=self.WHITE_KEY, actions=["MakeMove"], default_player_class=ChessPlayer),
-            PlayerDefinition(player_key=self.BLACK_KEY, actions=["MakeMove"], default_player_class=ChessPlayer)
+            PlayerDefinition(player_key=WHITE_KEY, actions=["MakeMove"], default_player_class=ChessPlayer),
+            PlayerDefinition(player_key=BLACK_KEY, actions=["MakeMove"], default_player_class=ChessPlayer)
         ]
 
     def player_inputs(self) -> Dict[str, str]:
