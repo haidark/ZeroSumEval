@@ -36,16 +36,19 @@ class GameManager:
             GameState: The final state of the game after the game loop ends.
         """
         logger = getLogger()
-
         turns: List[Dict] = []
-
-        for round_count in range(1, self.max_rounds + 1):
+        round_count = 0
+        prev_player = None # to detect when the player to act has changed (end of round and attempts reset)
+        while round_count <= self.max_rounds:
             if game_state.is_over():
                 break
             action = game_state.get_next_action()
             inputs = game_state.player_inputs()
             player: Player = action.player
-
+            if prev_player != player:
+                self.player_attempts[player] = 0
+                prev_player = player
+                round_count +=1
             logger.info(f"\t\t--- Start Turn {round_count} ---")
             logger.info(f"\t\t--- {player.id} (attempt # {self.player_attempts[player]}) ---")
             logger.info(f"Game State:\n{game_state.display()}\n")
@@ -55,19 +58,18 @@ class GameManager:
             output = trace.items()[-1][1]
 
             move = Move(value=output, trace=trace)
-            logger.info(f"\nPlayer {player.id} made move:\n{move.value}\n\n")
             try:
                 game_state.update_game(move)
+                logger.info(f"\nPlayer {player.id} made move:\n{move.value}\n\n")
             except InvalidMoveError as e:
                 # If the move was invalid, log the error and increment the player's attempts
                 logger.error(f"Invalid move: {e}")
-                
                 if self.player_attempts[player] >= self.max_player_attempts:
                     logger.info(f"Player {player.id} has reached the maximum number of attempts. Ending game.")
                     break
-                
                 self.player_attempts[player] += 1
-
+                continue
+            prev_player = player
             turns.append(game_state.export())
             
         self._log_game_turns(turns)
