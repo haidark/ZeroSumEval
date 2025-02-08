@@ -13,13 +13,13 @@ game:
         args:
           id: llama3.3 70b sentinel
           actions:
-            - name: Sentinel
+            - name: sentinel
               optimize: true
               metric: sentinel_response_validation_metric
               dataset: gandalf_dataset
               dataset_args:
                 filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
-                player_key: Sentinel
+                player_key: sentinel
                 num_examples: 10
           optimizer: MIPROv2
           optimizer_args:
@@ -35,13 +35,13 @@ game:
         args:
           id: llama3.1 70b infiltrator
           actions:
-            - name: Infiltrator
+            - name: infiltrator
               optimize: false
               metric: infiltrator_guess_validation_metric
               dataset: gandalf_dataset
               dataset_args:
                 filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
-                player_key: Infiltrator
+                player_key: infiltrator
                 num_examples: 10
           optimizer: MIPROv2
           optimizer_args:

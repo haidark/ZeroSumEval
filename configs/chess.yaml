@@ -13,13 +13,13 @@ game:
         args:
           id: llama3.1 70b white
           actions:
-            - name: WhiteMove
+            - name: MakeMove
               optimize: true
               metric: chess_move_validation_metric
               dataset: chess_dataset
               dataset_args:
                 filename: ./data/chess/stockfish_examples.jsonl
-                player_key: White
+                player_key: white
                 num_examples: 10
           lm:
             model: openrouter/meta-llama/llama-3.3-70b-instruct

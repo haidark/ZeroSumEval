@@ -8,12 +8,19 @@ from typing import Dict, List
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):
+    """
+    This is a two-player game where the players take turns to make moves in a chess game.
+    """
+    # Player keys
+    WHITE_KEY = "white"
+    BLACK_KEY = "black"
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.board = chess.Board()
         self.history = []
-        self.scores = {"white": 0, "black": 0}
-        self.message = "White to move."
+        self.scores = {self.WHITE_KEY: 0, self.BLACK_KEY: 0}
+        self.message = f"{self.WHITE_KEY} to move."
 
     def update_game(self, move: Move):
         try:
@@ -21,30 +28,30 @@ class ChessGame(GameState):
             san = self.board.san(chess_move)
             self.board.push(chess_move)
             self.history.append(san)
-            self.message = "White to move." if self.board.turn else "Black to move."
+            self.message = f"{self.WHITE_KEY} to move." if self.board.turn else f"{self.BLACK_KEY} to move."
 
             if self.board.is_checkmate():
                 self.message = f"Checkmate"
-                winner = "white" if self.board.turn else "black"
-                loser = "black" if self.board.turn else "white"
+                winner = self.WHITE_KEY if self.board.turn else self.BLACK_KEY
+                loser = self.BLACK_KEY if self.board.turn else self.WHITE_KEY
                 self.scores = {winner: 1, loser: 0}
             elif not self.board.is_valid():
                 self.message = f"Invalid move"
-                winner = "black" if self.board.turn else "white"
-                loser = "white" if self.board.turn else "black"
+                winner = self.BLACK_KEY if self.board.turn else self.WHITE_KEY
+                loser = self.WHITE_KEY if self.board.turn else self.BLACK_KEY
                 self.scores = {winner: 1, loser: 0}
             elif self.board.is_stalemate():
                 self.message = f"Stalemate"
-                self.scores = {"white": 0.5, "black": 0.5}
+                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
             elif self.board.is_insufficient_material():
                 self.message = f"Insufficient material"
-                self.scores = {"white": 0.5, "black": 0.5}
+                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
             elif self.board.is_seventyfive_moves():
                 self.message = f"Seventy-five moves"
-                self.scores = {"white": 0.5, "black": 0.5}
+                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
             elif self.board.is_fivefold_repetition():
                 self.message = f"Fivefold repetition"
-                self.scores = {"white": 0.5, "black": 0.5}
+                self.scores = {self.WHITE_KEY: 0.5, self.BLACK_KEY: 0.5}
 
         except chess.IllegalMoveError as e:
             raise InvalidMoveError(f"Move {move} is Illegal: {e}")
@@ -60,7 +67,7 @@ class ChessGame(GameState):
         return self.board.is_game_over() or not self.board.is_valid()
 
     def get_next_action(self) -> Action:
-        return Action("MakeMove", self.players["white"]) if self.board.turn else Action("MakeMove", self.players["black"])
+        return Action("MakeMove", self.players[self.WHITE_KEY]) if self.board.turn else Action("MakeMove", self.players[self.BLACK_KEY])
 
     def formatted_move_history(self) -> str:
         history = self.history
@@ -77,8 +84,8 @@ class ChessGame(GameState):
 
     def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDefinition(player_key="white", actions=["MakeMove"], default_player_class=ChessPlayer),
-            PlayerDefinition(player_key="black", actions=["MakeMove"], default_player_class=ChessPlayer)
+            PlayerDefinition(player_key=self.WHITE_KEY, actions=["MakeMove"], default_player_class=ChessPlayer),
+            PlayerDefinition(player_key=self.BLACK_KEY, actions=["MakeMove"], default_player_class=ChessPlayer)
         ]
 
     def player_inputs(self) -> Dict[str, str]:

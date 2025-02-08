@@ -13,22 +13,22 @@ game:
         args:
           id: llama3.1 teacher
           actions: 
-            - name: TeacherGenerateQuestion
+            - name: GenerateQuestion
               optimize: true
               metric: math_question_validation_metric
               dataset: mathquiz_dataset
               dataset_args:
                 filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
                 # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-                player_key: Teacher
+                player_key: teacher
                 num_examples: 10
-            - name: TeacherAnswerQuestion
+            - name: AnswerQuestion
               metric: math_answer_validation_metric
               dataset: mathquiz_dataset
               dataset_args:
                 filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
                 # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-                player_key: Teacher
+                player_key: teacher
                 num_examples: 10
           optimizer: BootstrapFewShotWithRandomSearch
           lm:
@@ -39,14 +39,14 @@ game:
         args:
           id: llama3.1 student
           actions: 
-            - name: StudentAnswerQuestion
+            - name: AnswerQuestion
               optimize: false
               metric: math_answer_validation_metric
               dataset: mathquiz_dataset
               dataset_args:
                 filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
                 # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-                player_key: Student
+                player_key: student
                 num_examples: 10
           optimizer: BootstrapFewShotWithRandomSearch
           lm:

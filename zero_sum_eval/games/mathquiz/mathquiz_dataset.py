@@ -3,15 +3,15 @@ import json
 from dspy import Example
 from zero_sum_eval.dataset import Dataset
 from zero_sum_eval.registry import DATASET_REGISTRY
-
+from zero_sum_eval.games.mathquiz.mathquiz_game import MathQuizGame
 
 @DATASET_REGISTRY.register("mathquiz_dataset")
 class MathQuizDataset(Dataset):
     def __init__(self, 
-                player_key: Union[Literal["Teacher"], Literal["Student"]], 
+                player_key: Union[Literal[MathQuizGame.TEACHER_KEY], Literal[MathQuizGame.STUDENT_KEY]], 
                 filename: str,
                 num_examples: int) -> None:
-        super().__init__(output_key="math_question" if player_key == "Teacher" else "answer")
+        super().__init__(output_key="math_question" if player_key == MathQuizGame.TEACHER_KEY else "answer")
         self.player_key = player_key
         self.filename = filename
         self.num_examples = num_examples
@@ -33,17 +33,13 @@ class MathQuizDataset(Dataset):
         examples = self._load_examples()
         dataset = []
         for example in examples:
-            if self.player_key == "Teacher":
-                example = Example(player_key=self.player_key,
-                                  message=f"You will move as {self.player_key}",
-                                  target=example['answer'],
+            if self.player_key == MathQuizGame.TEACHER_KEY:
+                example = Example(target=example['answer'],
                                   question=example['question']
-                                  ).with_inputs("player_key", "message", "target")
+                                  ).with_inputs("target")
             else: 
-                example = Example(player_key=self.player_key,
-                                  message=f"You will move as {self.player_key}",
-                                  question=example['question'],
+                example = Example(question=example['question'],
                                   answer=example['answer']
-                                  ).with_inputs("player_key", "message", "question")
+                                  ).with_inputs("question")
             dataset.append(example)
         return dataset

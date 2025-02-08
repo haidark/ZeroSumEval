@@ -34,12 +34,11 @@ class ChessDataset(Dataset):
             else:                   # black to move
                 if example['turn']:
                     continue
-            example = Example(message=f"You will move as {self.player_key}",
-                                    board_state=example['board_state'],
-                                    player_key=f"{self.player_key}",
+            example = Example(board_state=example['board_state'],
+                                    role=f"{self.player_key}",
                                     history=example['history'],
                                     move=example['move']
-                                    ).with_inputs("message", "board_state", "player_key", "history")
+                                    ).with_inputs("board_state", "role", "history")
             dataset.append(example)
         return dataset
     
@@ -62,12 +61,11 @@ class ChessPuzzleDataset(Dataset):
         examples = []
         for ex in ds["train"].take(self.num_examples):
             board = self._get_board(ex)
-            if board.turn == (self.player_key == "White"):
-                example = Example(  message=f"You will move as {self.player_key}",
-                                    board_state=board.fen(),
-                                    player_key=f"{self.player_key}",
+            if board.turn == (self.player_key == "white"):
+                example = Example(board_state=board.fen(),
+                                    role=f"{self.player_key}",
                                     history=ex["ctx"],
                                     move=ex["target"]
-                                    ).with_inputs("message", "board_state", "player_key", "history")
+                                    ).with_inputs("board_state", "role", "history")
                 examples.append(example)
         return examples

@@ -53,9 +53,9 @@ class InfiltratorGuessModule(dspy.Module):
 @PLAYER_REGISTRY.register("gandalf", "gandalf_sentinel")
 class SentinelPlayer(Player):
     def init_action_module_dict(self):
-        return {"Sentinel": SentinelResponseModule()}
+        return {"sentinel": SentinelResponseModule()}
 
 @PLAYER_REGISTRY.register("gandalf", "gandalf_infiltrator")
 class InfiltratorPlayer(Player):
     def init_action_module_dict(self):
-        return {"Infiltrator": InfiltratorGuessModule()}
+        return {"infiltrator": InfiltratorGuessModule()}

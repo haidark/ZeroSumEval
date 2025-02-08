@@ -12,6 +12,13 @@ from .debate_judge import DebateJudge, RubricWeights
 
 @GAME_REGISTRY.register("debate")
 class DebateGame(GameState):
+    """
+    This is a two-player game where the players take turns to make moves in a debate.
+    """ 
+    # Player keys
+    FOR_KEY = "for"
+    AGAINST_KEY = "against"
+    
     def __init__(
         self,
         rebuttal_rounds: int = 1,
@@ -52,7 +59,7 @@ class DebateGame(GameState):
         self._init_judges(judges)
 
         self.evaluations = None
-        self.scores = {"for": 0, "against": 0}
+        self.scores = {self.FOR_KEY: 0, self.AGAINST_KEY: 0}
         self.verdict = None
 
     def _init_judges(self, judges: List[Dict]) -> None:
@@ -69,7 +76,7 @@ class DebateGame(GameState):
     def update_game(self, move: Move):
         self.history.append(
             {
-                "action": self.get_next_action().name + " | " + self.get_next_action().player.role,
+                "action": self.get_next_action().name + " | " + self.get_next_action().player.player_key,
                 "move": move.value,
             }
         )
@@ -82,8 +89,8 @@ class DebateGame(GameState):
 
     def get_scores(self):
         if self.is_over():
-            return {"for": 1, "against": 0} if self.verdict == "ForWin" else {"for": 0, "against": 1}
-        return {"for": 0, "against": 0}
+            return {self.FOR_KEY: 1, self.AGAINST_KEY: 0} if self.verdict == "ForWin" else {self.FOR_KEY: 0, self.AGAINST_KEY: 1}
+        return {self.FOR_KEY: 0, self.AGAINST_KEY: 0}
 
     def judge(self):
         for_score, against_score = 0, 0
@@ -93,24 +100,24 @@ class DebateGame(GameState):
                 for_evaluation = self.judge_module(
                     topic=self.topic,
                     history=self.history,
-                    side="for",
+                    side=self.FOR_KEY,
                 )
                 for_score += for_evaluation.weighted_score
 
                 against_evaluation = self.judge_module(
                     topic=self.topic,
                     history=self.history,
-                    side="against",
+                    side=self.AGAINST_KEY,
                 )
                 against_score += against_evaluation.weighted_score
 
                 evaluations[llm_judge.model] = {
-                    "for": for_evaluation.toDict(),
-                    "against": against_evaluation.toDict(),
+                    self.FOR_KEY: for_evaluation.toDict(),
+                    self.AGAINST_KEY: against_evaluation.toDict(),
                 }
 
         self.evaluations = evaluations
-        self.scores = {"for": for_score, "against": against_score}
+        self.scores = {self.FOR_KEY: for_score, self.AGAINST_KEY: against_score}
         
         if for_score > against_score:
             return "ForWin"
@@ -121,7 +128,7 @@ class DebateGame(GameState):
 
     def get_next_action(self) -> Action:
         # The first side to make a move is the "for" side
-        side = "for" if len(self.history) % 2 == 0 else "against"
+        side = self.FOR_KEY if len(self.history) % 2 == 0 else self.AGAINST_KEY
 
         # The first 2 moves are opening statements
         if len(self.history) < 2:
@@ -145,7 +152,7 @@ class DebateGame(GameState):
     def player_inputs(self) -> Dict[str, str]:
         inputs = {
             "topic": self.topic,
-            "side": self.get_next_action().player.role,
+            "side": self.get_next_action().player.player_key,
         }
         # history is passed to the player only if the next action is not an opening statement
         if not self.get_next_action().name == "OpeningStatement":
@@ -155,24 +162,24 @@ class DebateGame(GameState):
 
     def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDefinition(player_key="for", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
-            PlayerDefinition(player_key="against", actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDefinition(player_key=self.FOR_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
+            PlayerDefinition(player_key=self.AGAINST_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
         ]
 
     def display(self) -> str:
-        display_str = f"Action: {self.get_next_action().name}, Side: {self.get_next_action().player.role}"
+        display_str = f"Action: {self.get_next_action().name}, Side: {self.get_next_action().player.player_key}"
         display_str += f"\nTopic: {self.topic}"
         display_str += f"\nHistory:\n{self.formatted_move_history()}"
         if self.verdict:
             display_str += f"\n\nJudge Evaluations:"
             for judge, evaluation in self.evaluations.items():
                 display_str += f"\n\nJudge: {judge}"
-                display_str += f"\nFor: {json.dumps(evaluation['for'], indent=4)}"
-                display_str += f"\n\nAgainst: {json.dumps(evaluation['against'], indent=4)}"
+                display_str += f"\nFor: {json.dumps(evaluation[self.FOR_KEY], indent=4)}"
+                display_str += f"\n\nAgainst: {json.dumps(evaluation[self.AGAINST_KEY], indent=4)}"
                 display_str += f"\n\n===================="
             display_str += f"\nAggregated Scores:"
-            display_str += f"\nFor: {self.scores['for']}"
-            display_str += f"\nAgainst: {self.scores['against']}"
+            display_str += f"\nFor: {self.scores[self.FOR_KEY]}"
+            display_str += f"\nAgainst: {self.scores[self.AGAINST_KEY]}"
             display_str += f"\nFinal Verdict: {self.verdict}"
         return display_str
 
@@ -182,6 +189,6 @@ class DebateGame(GameState):
             "topic": self.topic,
             "verdict": self.verdict,
             "evaluations": self.evaluations,
-            "next_action": self.get_next_action().name + " " + self.get_next_action().player.role,
+            "next_action": self.get_next_action().name + " " + self.get_next_action().player.player_key,
             "scores": self.get_scores(),
         }
