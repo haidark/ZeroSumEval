@@ -8,8 +8,6 @@ from copy import copy
 from dataclasses import dataclass
 from typing import Dict, List, Type
 
-import dspy
-
 from zero_sum_eval.types import ActionConfig
 from zero_sum_eval.player import Move, Player, PlayerDefinition
 
@@ -91,7 +89,6 @@ class GameState(ABC):
 
         Args:
             move (str): The move to be applied to the game state.
-            trace (dspy.Prediction, optional): The trace of the move made by the player, to save in the state.
 
         Raises:
             InvalidMoveError: If the move is not compatible with the current game state.
@@ -150,35 +147,6 @@ class GameState(ABC):
             List[PlayerDefinition]: A list of player definitions.
         """
         raise NotImplementedError
-
-    def step(self) -> Move:
-        """
-        Perform a single step in the game. Updates the game state and returns the move made by the player.
-
-        Returns:
-            Move: The move made by the player.
-
-        Raises:
-            InvalidMoveError: If the move is not compatible with the current game state.
-        """
-        if self.is_over():
-            raise InvalidMoveError("Game is already over")
-
-        inputs = self.player_inputs()
-        action: Action = self.get_next_action()
-        
-        with dspy.context(lm=action.player.llm_model):
-            trace = action.player.module_dict[action.name](**inputs)
-
-        # the final value in the prediction is assumed to be the output of the module
-        output = trace.items()[-1][1]
-
-        move = Move(value=output, trace=trace)
-
-        self.update_game(move)
-
-        return move
-
 
     def __init_subclass__(cls):
         """

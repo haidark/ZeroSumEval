@@ -1,15 +1,15 @@
-# file: game_manager.py
-# TODO: ADD SUPPORT FOR MULTIPLE KINDS OF PLAYERS
-from collections import defaultdict
-from typing import List, Dict
-from logging import getLogger
+"""Game manager module for handling game execution and state management."""
 
-from zero_sum_eval.game_state import GameState, InvalidMoveError
-from zero_sum_eval.player import Player
+import os
+import dspy
+from collections import defaultdict
+from logging import getLogger
+from typing import Dict, List
 
 import jsonlines
 
-import os
+from zero_sum_eval.game_state import GameState, InvalidMoveError
+from zero_sum_eval.player import Player, Move
 
 class GameManager:
     def __init__(self, config: Dict):
@@ -43,15 +43,21 @@ class GameManager:
             if game_state.is_over():
                 break
             action = game_state.get_next_action()
+            inputs = game_state.player_inputs()
             player: Player = action.player
 
             logger.info(f"\t\t--- Start Turn {round_count} ---")
             logger.info(f"\t\t--- {player.id} (attempt # {self.player_attempts[player]}) ---")
+            logger.info(f"Game State:\n{game_state.display()}\n")
+            with dspy.context(lm=action.player.llm_model):
+                trace = player.module_dict[action.name](**inputs)
+            # the final value in the prediction is assumed to be the output of the module
+            output = trace.items()[-1][1]
 
+            move = Move(value=output, trace=trace)
+            logger.info(f"\nPlayer {player.id} made move:\n{move.value}\n\n")
             try:
-                logger.info(f"Game State:\n{game_state.display()}\n")
-                move = game_state.step()
-                logger.info(f"\nPlayer {player.id} made move:\n{move.value}\n\n")
+                game_state.update_game(move)
             except InvalidMoveError as e:
                 # If the move was invalid, log the error and increment the player's attempts
                 logger.error(f"Invalid move: {e}")
