@@ -12,21 +12,21 @@ game:
         name: gandalf_sentinel
         args:
           id: llama3.3 70b sentinel
-          # actions:
-          #   - name: Sentinel
-          #     optimize: false
-          #     metric: sentinel_response_validation_metric
-          #     dataset: gandalf_dataset
-          #     dataset_args:
-          #       filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
-          #       role: Sentinel
-          #       num_examples: 10
-          # optimizer: MIPROv2
-          # optimizer_args:
-          #   max_bootstrapped_demos: 1
-          #   max_labeled_demos: 1
-          # compilation_args:
-          #   minibatch_size: 2
+          actions:
+            - name: Sentinel
+              optimize: true
+              metric: sentinel_response_validation_metric
+              dataset: gandalf_dataset
+              dataset_args:
+                filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+                player_key: Sentinel
+                num_examples: 10
+          optimizer: MIPROv2
+          optimizer_args:
+            max_bootstrapped_demos: 1
+            max_labeled_demos: 1
+          compilation_args:
+            minibatch_size: 2
           lm:
             model: openrouter/meta-llama/llama-3.3-70b-instruct
           max_tries: 5
@@ -34,21 +34,21 @@ game:
         name: gandalf_infiltrator
         args:
           id: llama3.1 70b infiltrator
-          # actions:
-          #   - name: Infiltrator
-          #     optimize: false
-          #     metric: infiltrator_guess_validation_metric
-          #     dataset: gandalf_dataset
-          #     dataset_args:
-          #       filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
-          #       role: Infiltrator
-          #       num_examples: 10
-          # optimizer: MIPROv2
-          # optimizer_args:
-          #   max_bootstrapped_demos: 1
-          #   max_labeled_demos: 1
-          # compilation_args:
-          #   minibatch_size: 2
+          actions:
+            - name: Infiltrator
+              optimize: false
+              metric: infiltrator_guess_validation_metric
+              dataset: gandalf_dataset
+              dataset_args:
+                filename: data/gandalf/gandalf_cyberseceval_examples.jsonl
+                player_key: Infiltrator
+                num_examples: 10
+          optimizer: MIPROv2
+          optimizer_args:
+            max_bootstrapped_demos: 1
+            max_labeled_demos: 1
+          compilation_args:
+            minibatch_size: 2
           lm:
             model: openrouter/meta-llama/llama-3.1-70b-instruct
           max_tries: 5

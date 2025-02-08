@@ -45,7 +45,7 @@ class MathQuizGame(GameState):
         if next_action.name == "GenerateQuestion":
             self.question = move
             self.message = "Teacher to answer the question"
-        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == "teacher":
+        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == "Teacher":
             if not self.verify_answer(move):
                 # If the teacher's answer is incorrect, generate a new target number and raise an error to be caught by the game manager
                 self.target = str(randint(1, 1000))
@@ -55,7 +55,7 @@ class MathQuizGame(GameState):
                 raise InvalidMoveError("TeacherIncorrect")
             self.message = "Student to answer the question"
             self.teacher_answer = move
-        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == "student":
+        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == "Student":
             if not self.verify_answer(move):
                 # If the student's answer is incorrect, raise an error to be caught by the game manager
                 self.scores = {"teacher": 1, "student": 0}
@@ -97,8 +97,8 @@ class MathQuizGame(GameState):
         
     def player_definitions(self) -> List[PlayerDefinition]:
         return [
-            PlayerDefinition(player_key="teacher", actions=["GenerateQuestion", "AnswerQuestion"], default_player_class=MathQuizTeacher),
-            PlayerDefinition(player_key="student", actions=["AnswerQuestion"], default_player_class=MathQuizStudent),
+            PlayerDefinition(player_key="Teacher", actions=["GenerateQuestion", "AnswerQuestion"], default_player_class=MathQuizTeacher),
+            PlayerDefinition(player_key="Student", actions=["AnswerQuestion"], default_player_class=MathQuizStudent),
         ]
 
     def display(self) -> str:

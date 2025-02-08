@@ -12,24 +12,25 @@ game:
         name: mathquiz_teacher
         args:
           id: llama3.1 teacher
-          # actions: 
-          #   - name: TeacherGenerateQuestion
-          #     optimize: true
-          #     metric: math_question_validation_metric
-          #     dataset: mathquiz_dataset
-          #     dataset_args:
-          #       filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
-          #       # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-          #       role: TeacherGenerateQuestion
-          #       num_examples: 10
-          #   - name: TeacherAnswerQuestion
-          #     metric: math_answer_validation_metric
-          #     dataset: mathquiz_dataset
-          #     dataset_args:
-          #       filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
-          #       # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-          #       role: TeacherAnswerQuestion
-          # optimizer: BootstrapFewShotWithRandomSearch
+          actions: 
+            - name: TeacherGenerateQuestion
+              optimize: true
+              metric: math_question_validation_metric
+              dataset: mathquiz_dataset
+              dataset_args:
+                filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+                # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
+                player_key: Teacher
+                num_examples: 10
+            - name: TeacherAnswerQuestion
+              metric: math_answer_validation_metric
+              dataset: mathquiz_dataset
+              dataset_args:
+                filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+                # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
+                player_key: Teacher
+                num_examples: 10
+          optimizer: BootstrapFewShotWithRandomSearch
           lm:
             model: openrouter/meta-llama/llama-3.3-70b-instruct
           max_tries: 5
@@ -37,17 +38,17 @@ game:
         name: mathquiz_student
         args:
           id: llama3.1 student
-          # actions: 
-          #   - name: StudentAnswerQuestion
-          #     optimize: false
-          #     metric: math_answer_validation_metric
-          #     dataset: mathquiz_dataset
-          #     dataset_args:
-          #       filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
-          #       # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
-          #       role: StudentAnswerQuestion
-          #       num_examples: 10
-          # optimizer: BootstrapFewShotWithRandomSearch
+          actions: 
+            - name: StudentAnswerQuestion
+              optimize: false
+              metric: math_answer_validation_metric
+              dataset: mathquiz_dataset
+              dataset_args:
+                filename: data/mathquiz/mathquiz_hendrycks-math_examples.jsonl
+                # filename: data/mathquiz/mathquiz_gsm8k_examples.jsonl
+                player_key: Student
+                num_examples: 10
+          optimizer: BootstrapFewShotWithRandomSearch
           lm:
             model: openrouter/meta-llama/llama-3.1-70b-instruct
           max_tries: 5
