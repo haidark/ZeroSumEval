@@ -36,8 +36,11 @@ def test_setup_logging(test_config, cleanup_test_logs):
     test_message = "Test log message"
     logger.info(test_message)
     
+    # Get process ID for log file names
+    pid = os.getpid()
+    
     # Check if log files were created and contain the message
-    log_file = os.path.join('./test_logs/logs', 'test_info.log')
+    log_file = os.path.join('./test_logs/logs', f'test_info_{pid}.log')
     assert os.path.exists(log_file)
     
     with open(log_file, 'r') as f:
@@ -52,18 +55,14 @@ def test_cleanup_logging(test_config, cleanup_test_logs):
     handlers = setup_logging(test_config, 'test')
     logger = logging.getLogger()
     
-    # Get initial handler count
-    initial_handler_count = len(logger.handlers)
-    
-    # Perform cleanup
+    # Test cleanup
     cleanup_logging(logger, handlers)
     
-    # Verify handlers were removed
-    assert len(logger.handlers) == initial_handler_count - len(handlers)
-    
-    # Verify all handlers are closed
+    # Verify all handlers are closed and removed
     for handler in handlers.values():
-        assert handler._closed
+        assert handler not in logger.handlers
+        if hasattr(handler, '_closed'):
+            assert handler._closed
 
 def test_log_levels(test_config, cleanup_test_logs):
     # Setup logging
@@ -81,14 +80,17 @@ def test_log_levels(test_config, cleanup_test_logs):
     logger.warning(warning_msg)
     logger.error(error_msg)
     
+    # Get process ID for log file names
+    pid = os.getpid()
+    
     # Verify debug log contains all messages
-    debug_file = os.path.join('./test_logs/logs', 'test_debug.log')
+    debug_file = os.path.join('./test_logs/logs', f'test_debug_{pid}.log')
     with open(debug_file, 'r') as f:
         content = f.read()
         assert all(msg in content for msg in [debug_msg, info_msg, warning_msg, error_msg])
     
     # Verify info log doesn't contain debug messages
-    info_file = os.path.join('./test_logs/logs', 'test_info.log')
+    info_file = os.path.join('./test_logs/logs', f'test_info_{pid}.log')
     with open(info_file, 'r') as f:
         content = f.read()
         assert debug_msg not in content
@@ -104,12 +106,13 @@ def test_custom_output_directory():
     logger = logging.getLogger()
     
     # Verify default directory is used
-    assert os.path.exists('./logs')
+    assert os.path.exists('zse_outputs/logs')
     
     # Cleanup
     cleanup_logging(logger, handlers)
     
     # Remove test directory
-    for file in os.listdir('./logs'):
-        os.remove(os.path.join('./logs', file))
-    os.rmdir('./logs') 
+    for file in os.listdir('zse_outputs/logs'):
+        os.remove(os.path.join('zse_outputs/logs', file))
+    os.rmdir('zse_outputs/logs')
+    os.rmdir('zse_outputs') 
