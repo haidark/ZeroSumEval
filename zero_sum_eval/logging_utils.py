@@ -1,42 +1,57 @@
 import os
 import logging
+import tempfile
+from pathlib import Path
 
-def setup_logging(config, log_prefix):
+def setup_logging(config, prefix):
+    """Set up logging with the given configuration."""
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)  # Set to lowest level to capture all logs
+    logger.setLevel(logging.DEBUG)
     
-    output_dir = os.path.join(config['logging'].get('output_dir', './'), "logs")
-    os.makedirs(output_dir, exist_ok=True)
+    # Get output directory, default to temp dir if not specified
+    output_dir = config.get('logging', {}).get('output_dir')
+    if not output_dir:
+        output_dir = "zse_outputs"
     
-    log_levels = {
-        'debug': logging.DEBUG,
-        'info': logging.INFO,
-        'warning': logging.WARNING,
-        'error': logging.ERROR,
-    }
-
+    # Create logs directory
+    logs_dir = os.path.join(output_dir, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    
+    # Add process ID to log filenames for uniqueness
+    pid = os.getpid()
     handlers = {}
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    for level_name, level in log_levels.items():
-        # File handler
-        log_file = os.path.join(output_dir, f'{log_prefix}_{level_name}.log')
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        handlers[f'file_{level_name}'] = file_handler
-
-    # A single stream handler to capture and display important logs
+    
+    # File handlers for different log levels
+    handler_configs = {
+        'file_debug': (logging.DEBUG, f'{prefix}_debug_{pid}.log'),
+        'file_info': (logging.INFO, f'{prefix}_info_{pid}.log'),
+        'file_warning': (logging.WARNING, f'{prefix}_warning_{pid}.log'),
+        'file_error': (logging.ERROR, f'{prefix}_error_{pid}.log')
+    }
+    
+    for name, (level, filename) in handler_configs.items():
+        handler = logging.FileHandler(os.path.join(logs_dir, filename))
+        handler.setLevel(level)
+        handler.name = name
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        handlers[name] = handler
+    
+    # Stream handler for console output
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.INFO)  # Display info and above on console
-    stream_handler.setFormatter(formatter)
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.name = 'stream'
+    stream_formatter = logging.Formatter('%(levelname)s     %(name)s:%(filename)s:%(lineno)d %(message)s')
+    stream_handler.setFormatter(stream_formatter)
     logger.addHandler(stream_handler)
     handlers['stream'] = stream_handler
-
+    
     return handlers
 
 def cleanup_logging(logger, handlers):
+    """Clean up logging handlers."""
     for handler in handlers.values():
-        logger.removeHandler(handler)
         handler.close()
+        if handler in logger.handlers:
+            logger.removeHandler(handler)

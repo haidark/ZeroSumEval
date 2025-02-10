@@ -5,7 +5,7 @@ import functools
 from dataclasses import dataclass
 import dspy
 
-from dspy.primitives.assertions import assert_transform_module, backtrack_handler
+from dspy.primitives import assert_transform_module, backtrack_handler
 from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
 from zero_sum_eval.types import ActionConfig, Move
 

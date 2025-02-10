@@ -29,8 +29,8 @@ class ChessGame(GameState):
 
             if self.board.is_checkmate():
                 self.message = f"Checkmate"
-                winner = WHITE_KEY if self.board.turn else BLACK_KEY
-                loser = BLACK_KEY if self.board.turn else WHITE_KEY
+                winner = WHITE_KEY if not self.board.turn else BLACK_KEY
+                loser = BLACK_KEY if not self.board.turn else WHITE_KEY
                 self.scores = {winner: 1, loser: 0}
             elif not self.board.is_valid():
                 self.message = f"Invalid move"
