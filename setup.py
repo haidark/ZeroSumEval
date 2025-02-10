@@ -13,6 +13,7 @@ setup(
         "jsonlines>=3.1.0",
         "docker>=6.0.0",
         "random-word>=1.0.11",
+        "pathlib>=1.0",
         
         # Game-specific dependencies
         "chess>=1.9.0",  # For chess game

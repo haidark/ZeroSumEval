@@ -1,7 +1,19 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import dspy
+import os
+from pathlib import Path
 from zero_sum_eval.games.debate.debate_player import FOR_KEY, AGAINST_KEY
+
+@pytest.fixture(autouse=True)
+def setup_logs_dir():
+    """Create logs directory before tests and clean up after"""
+    log_dir = Path("/tmp/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    yield
+    # Optional: Clean up after tests
+    # import shutil
+    # shutil.rmtree(log_dir, ignore_errors=True)
 
 @pytest.fixture
 def mock_config():
