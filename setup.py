@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         # Core dependencies
-        "dspy-ai==2.5.41",
+        "dspy==2.5.41",
         "pyyaml>=6.0",
         "anthropic>=0.3.0",
         "tabulate>=0.9.0",
