@@ -1,7 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import dspy
-from dspy import Prediction
 
 @pytest.fixture(autouse=True)
 def mock_dspy():
@@ -19,7 +18,7 @@ def mock_dspy():
          patch('dspy.InputField', return_value=MagicMock()), \
          patch('dspy.OutputField', return_value=MagicMock()), \
          patch('dspy.LM', return_value=MagicMock()), \
-         patch('dspy.predict.predict.Parameter', mock_parameter_type), \
+         patch('dspy.predict.parameter.Parameter', mock_parameter_type), \
          patch('dspy.Predict', mock_predict_type), \
          patch('dspy.retry.Retry', mock_retry_type):
         
