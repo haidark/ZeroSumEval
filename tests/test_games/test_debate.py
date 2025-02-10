@@ -1,38 +1,7 @@
 import pytest
-from unittest.mock import MagicMock, patch
-import dspy
+from unittest.mock import MagicMock
 from zero_sum_eval.games.debate.debate_game import DebateGame
 from zero_sum_eval.games.debate.debate_player import FOR_KEY, AGAINST_KEY
-
-# Mock all dspy modules and types we use
-@pytest.fixture(autouse=True)
-def mock_dspy():
-    # Create mock classes/types
-    mock_module_type = type('Module', (), {})
-    mock_parameter_type = type('Parameter', (), {})
-    mock_predict_type = type('Predict', (), {})
-    mock_retry_type = type('Retry', (), {})
-
-    with patch('dspy.Module', mock_module_type), \
-         patch('dspy.Module', return_value=MagicMock()), \
-         patch('dspy.ChainOfThought', return_value=MagicMock()), \
-         patch('dspy.Signature', return_value=MagicMock()), \
-         patch('dspy.InputField', return_value=MagicMock()), \
-         patch('dspy.OutputField', return_value=MagicMock()), \
-         patch('dspy.LM', return_value=MagicMock()), \
-         patch('dspy.predict.parameter.Parameter', mock_parameter_type), \
-         patch('dspy.Predict', mock_predict_type), \
-         patch('dspy.retry.Retry', mock_retry_type):
-        
-        # Mock dspy.Module type checking
-        dspy.Module = mock_module_type
-        
-        yield {
-            'module_type': mock_module_type,
-            'parameter_type': mock_parameter_type,
-            'predict_type': mock_predict_type,
-            'retry_type': mock_retry_type
-        }
 
 @pytest.fixture
 def mock_move():

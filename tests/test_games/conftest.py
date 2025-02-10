@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import MagicMock, patch
 import dspy
 from dspy import Prediction
-from dspy.predict.parameter import Parameter
 
 @pytest.fixture(autouse=True)
 def mock_dspy():
@@ -20,13 +19,12 @@ def mock_dspy():
          patch('dspy.InputField', return_value=MagicMock()), \
          patch('dspy.OutputField', return_value=MagicMock()), \
          patch('dspy.LM', return_value=MagicMock()), \
-         patch('dspy.predict.parameter.Parameter', mock_parameter_type), \
+         patch('dspy.predict.predict.Parameter', mock_parameter_type), \
          patch('dspy.Predict', mock_predict_type), \
          patch('dspy.retry.Retry', mock_retry_type):
         
         # Mock dspy.Module type checking
         dspy.Module = mock_module_type
-        dspy.predict.parameter.Parameter = mock_parameter_type
         
         yield {
             'module_type': mock_module_type,
