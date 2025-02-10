@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="zero_sum_eval",
+    name="zero-sum-eval",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[

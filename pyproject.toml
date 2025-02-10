@@ -1,4 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zero-sum-eval"
+version = "0.1.0"
+authors = [
+    { name="Haidar Khan", email="haidark@gmail.com" },
+]
+description = "A framework for evaluating LLMs using zero-sum multiplayer simulations"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    # Core dependencies
+    "dspy==2.5.41",
+    "pyyaml>=6.0",
+    "anthropic>=0.3.0",
+    "tabulate>=0.9.0",
+    "jsonlines>=3.1.0",
+    "docker>=6.0.0",
+    "random-word>=1.0.11",
+    "pathlib>=1.0",
+    
+    # Game-specific dependencies
+    "chess>=1.9.0",
+    "stockfish>=3.28.0",
+    "datasets>=2.12.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-runner>=6.0.0"
+]
+
+[project.scripts]
+zse = "zero_sum_eval.main:cli_run"
+
+[project.urls]
+"Homepage" = "https://github.com/haidark/ZeroSumEval/"
+"Bug Tracker" = "https://github.com/haidark/ZeroSumEval/issues"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v --cov=zero_sum_eval --cov-report=term-missing" 
+python_files = "test_*.py"
+addopts = "--cov=zero_sum_eval" 
