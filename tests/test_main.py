@@ -7,7 +7,7 @@ import json
 import logging
 import os
 
-from main import cli_run
+from zero_sum_eval.main import cli_run
 
 class MockLM:
     def __init__(self, *args, **kwargs):
