@@ -3,13 +3,12 @@ import logging
 import tempfile
 from pathlib import Path
 
-def setup_logging(config, prefix):
+def setup_logging(output_dir, prefix):
     """Set up logging with the given configuration."""
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     
     # Get output directory, default to temp dir if not specified
-    output_dir = config.get('logging', {}).get('output_dir')
     if not output_dir:
         output_dir = "zse_outputs"
     

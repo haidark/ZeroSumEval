@@ -34,29 +34,19 @@ def setup_parser() -> argparse.ArgumentParser:
 def cli_run():
     parser = setup_parser()
     args = parser.parse_args()
+    output_dir = args.output_dir if args.output_dir else f"zse_outputs/{args.game}"
+
     if args.config:
         config = read_config(args.config)
-        args = argparse.Namespace(**{**vars(args), **config})
+        game_name = config.get("game", {})["name"]
+        game_args = config.get("game", {}).get("args", {})
     else:
-        config = {
-            "game": {
-                "name": args.game,
-                "args": dict([arg.split("=") for arg in args.game_kwargs])
-            },
-            "manager": {
-                "args": {
-                    "max_rounds": args.max_rounds,
-                    "max_player_attempts": args.max_player_attempts
-                }
-            },
-            "logging": {
-                "output_dir": args.output_dir if args.output_dir else f"zse_outputs/{args.game}"
-            }
-        }
+        game_name = args.game
+        game_args = dict([arg.split("=") for arg in args.game_kwargs])
         role_model_pairs = [model.split("=") for model in args.models]
-        config["game"]["args"]["players"] = {}
+        game_args["players"] = {}
         for role, model in role_model_pairs:
-            config["game"]["args"]["players"][role] ={
+            game_args["players"][role] = {
                 "args": {
                     "id": f"{role}_{model.split('/')[-1]}",
                     "lm": {"model": model},
@@ -64,11 +54,11 @@ def cli_run():
             }
 
      # Set up logging with 'game' prefix
-    handlers = setup_logging(config, 'game')
+    handlers = setup_logging(output_dir=output_dir, prefix='game')
 
     try:
-        game = GAME_REGISTRY.build(config["game"]["name"], **config["game"]["args"])
-        game_manager = GameManager(config)
+        game = GAME_REGISTRY.build(game_name, **game_args)
+        game_manager = GameManager(max_rounds=args.max_rounds, max_player_attempts=args.max_player_attempts, output_dir=output_dir)
         logger.info("Starting a new game")
         final_state = game_manager.start(game)
         logger.info(
