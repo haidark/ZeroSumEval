@@ -20,18 +20,13 @@ def compute_mle_elo(
         aggfunc="size",
         fill_value=0,
     )
-    # if no tie, create a zero matrix
-    if sum(df["winner"].isin(["tie", "tie (bothbad)"])) == 0:
-        ptbl_tie = pd.DataFrame(0, index=ptbl_a_win.index, columns=ptbl_a_win.columns)
-    else:
-        ptbl_tie = pd.pivot_table(
-            df[df["winner"].isin(["tie", "tie (bothbad)"])],
-            index="model_a",
-            columns="model_b",
-            aggfunc="size",
-            fill_value=0,
-        )
-        ptbl_tie = ptbl_tie + ptbl_tie.T
+
+    # TODO: patch to fix sets with ties when not all models have ties
+    # but currently not optimal due to the iterrows().
+    ptbl_tie = pd.DataFrame(0, index=ptbl_a_win.index, columns=ptbl_a_win.columns)
+    for _, row in df[df["winner"].isin(["tie", "tie (bothbad)"])].iterrows():
+        ptbl_tie.loc[row['model_a'],row['model_b']] += 1
+        ptbl_tie.loc[row['model_b'],row['model_a']] += 1
 
     ptbl_b_win = pd.pivot_table(
         df[df["winner"] == "model_b"],
@@ -80,8 +75,15 @@ def compute_mle_elo(
 # Function from https://lmsys.org/blog/2023-12-07-leaderboard/
 def get_bootstrap_result(battles, func_compute_elo, num_round):
     rows = []
-    for i in tqdm(range(num_round), desc="bootstrap"):
-        rows.append(func_compute_elo(battles.sample(frac=1.0, replace=True)))
+    for _ in tqdm(range(num_round), desc="bootstrap"):
+        try:
+            rows.append(func_compute_elo(battles.sample(frac=1.0, replace=True)))
+        except KeyError:
+            pass
+    
+    if len(rows) != num_round:
+        print(f"Only used {len(rows)}/{num_round} bootstrap rounds due to samples that have zero matches for some models")
+
     df = pd.DataFrame(rows)
     return df[df.median().sort_values(ascending=False).index]
 
@@ -94,15 +96,21 @@ def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
         1.0: 'model_a',
     }
 
+    def standardize_model_names(model: str) -> str:
+        for opt in ['default', 'bsfs', 'bsfsrs', 'mipro']:
+            model = model.replace(f'optimized-{opt}', opt)
+            
+        return model
+    
     matches = []
-    for match_results_path in glob(f'{args.logs_path}/matches/*/results.json'):
+    for match_results_path in glob(f'{args.logs_path}/**/matches/*/results.json', recursive=True):
         with open(match_results_path) as f:
             result = json.load(f)
         models = list(result.keys())
         assert len(models) == 2
         matches.append([
-            models[0],
-            models[1],
+            standardize_model_names(models[0]),
+            standardize_model_names(models[1]),
             score_to_result[round(result[models[0]]['result'], 1)],
         ])
 
@@ -112,7 +120,6 @@ def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
 
 def main(args: argparse.Namespace) -> None:
     match_df = convert_matches_to_df(args)
-    print(compute_mle_elo(match_df))
 
     np.random.seed(1)
     bootstrap_elo_lu = get_bootstrap_result(match_df, compute_mle_elo, args.bootstrap_rounds)
@@ -121,7 +128,7 @@ def main(args: argparse.Namespace) -> None:
         lower = bootstrap_elo_lu.quantile(.025),
         rating = bootstrap_elo_lu.quantile(.5),
         upper = bootstrap_elo_lu.quantile(.975),
-    )).reset_index(names="model").sort_values("rating", ascending=False)
+    )).reset_index(names="model").sort_values("rating", ascending=False).round(decimals=2)
     
     print(bars)
 
