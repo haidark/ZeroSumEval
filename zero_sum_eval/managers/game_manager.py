@@ -12,17 +12,18 @@ from zero_sum_eval.game_state import GameState, InvalidMoveError
 from zero_sum_eval.player import Player, Move
 
 class GameManager:
-    def __init__(self, config: Dict):
+    def __init__(self, max_rounds: int, max_player_attempts: int, output_dir: str):
         """
         Initialize the GameManager with the given configuration.
 
         Args:
-            config (Dict): Configuration dictionary containing game and player settings.
+            max_rounds (int): The maximum number of rounds to play in the game.
+            max_player_attempts (int): The maximum number of attempts a player can make to generate a valid move.
+            output_dir (str): The directory to save game logs and outputs.
         """
-        self.config: Dict = config
-        self.max_rounds: int = self.config["manager"]["args"]["max_rounds"]
-        self.max_player_attempts: int = self.config["manager"]["args"]["max_player_attempts"]
-        self.turns_log_file = os.path.join(self.config["logging"]["output_dir"], "turns.jsonl")
+        self.max_rounds: int = max_rounds
+        self.max_player_attempts: int = max_player_attempts
+        self.turns_log_file = os.path.join(output_dir, "turns.jsonl")
         self.player_attempts = defaultdict(int)
 
     def start(self, game_state: GameState) -> GameState:

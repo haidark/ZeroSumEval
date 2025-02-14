@@ -1,15 +1,11 @@
 import os
 import logging
 import pytest
-from zero_sum_eval.logging_utils import setup_logging, cleanup_logging
+from zero_sum_eval.logging_utils import setup_logging, cleanup_logging, DEFAULT_OUTPUT_DIR
 
 @pytest.fixture
-def test_config():
-    return {
-        'logging': {
-            'output_dir': './test_logs'
-        }
-    }
+def test_output_dir():
+    return './test_logs'
 
 @pytest.fixture
 def cleanup_test_logs():
@@ -23,9 +19,9 @@ def cleanup_test_logs():
         os.rmdir(test_dir)
         os.rmdir('./test_logs')
 
-def test_setup_logging(test_config, cleanup_test_logs):
+def test_setup_logging(test_output_dir, cleanup_test_logs):
     # Setup logging
-    handlers = setup_logging(test_config, 'test')
+    handlers = setup_logging(output_dir=test_output_dir, prefix='test')
     logger = logging.getLogger()
     
     # Test that all expected handlers are created
@@ -50,9 +46,9 @@ def test_setup_logging(test_config, cleanup_test_logs):
     # Cleanup
     cleanup_logging(logger, handlers)
 
-def test_cleanup_logging(test_config, cleanup_test_logs):
+def test_cleanup_logging(test_output_dir, cleanup_test_logs):
     # Setup logging
-    handlers = setup_logging(test_config, 'test')
+    handlers = setup_logging(output_dir=test_output_dir, prefix='test')
     logger = logging.getLogger()
     
     # Test cleanup
@@ -64,9 +60,9 @@ def test_cleanup_logging(test_config, cleanup_test_logs):
         if hasattr(handler, '_closed'):
             assert handler._closed
 
-def test_log_levels(test_config, cleanup_test_logs):
+def test_log_levels(test_output_dir, cleanup_test_logs):
     # Setup logging
-    handlers = setup_logging(test_config, 'test')
+    handlers = setup_logging(output_dir=test_output_dir, prefix='test')
     logger = logging.getLogger()
     
     # Test messages at different levels
@@ -101,18 +97,16 @@ def test_log_levels(test_config, cleanup_test_logs):
 
 def test_custom_output_directory():
     # Test with no output directory specified
-    config = {'logging': {}}
-    handlers = setup_logging(config, 'test')
+    handlers = setup_logging(prefix='test')
     logger = logging.getLogger()
     
     # Verify default directory is used
-    assert os.path.exists('zse_outputs/logs')
+    assert os.path.exists(f'{DEFAULT_OUTPUT_DIR}/logs')
     
     # Cleanup
     cleanup_logging(logger, handlers)
     
     # Remove test directory
-    for file in os.listdir('zse_outputs/logs'):
-        os.remove(os.path.join('zse_outputs/logs', file))
-    os.rmdir('zse_outputs/logs')
-    os.rmdir('zse_outputs') 
+    for file in os.listdir(f'{DEFAULT_OUTPUT_DIR}/logs'):
+        os.remove(os.path.join(f'{DEFAULT_OUTPUT_DIR}/logs', file))
+    os.rmdir(f'{DEFAULT_OUTPUT_DIR}/logs')
