@@ -33,31 +33,23 @@ def mock_game():
 def mock_config():
     """Create a mock configuration for testing"""
     return {
-        "manager": {
-            "args": {
-                "max_rounds": 10,
-                "max_games": 5,
-                "max_matches": 3,
-                "max_player_attempts": 3
-            }
-        },
-        "logging": {
-            "output_dir": "/tmp/logs"
-        }
+        "max_rounds": 10,
+        "max_player_attempts": 3,
+        "output_dir": "/tmp/logs"
     }
 
 def test_game_manager_initialization(mock_config):
     """Test GameManager initialization"""
-    manager = GameManager(mock_config)
-    assert manager.config == mock_config
-    assert manager.max_rounds == mock_config["manager"]["args"]["max_rounds"]
-    # Remove turn_timeout check since it's not part of GameManager
+    manager = GameManager(**mock_config)
+    assert manager.max_rounds == mock_config["max_rounds"]
+    assert manager.max_player_attempts == mock_config["max_player_attempts"]
+    assert manager.turns_log_file == "/tmp/logs/turns.jsonl"
 
 @patch('dspy.context')
 @patch('jsonlines.Writer')
 def test_game_manager_start(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager start functionality"""
-    manager = GameManager(mock_config)
+    manager = GameManager(**mock_config)
     manager.game = mock_game
     
     result = manager.start(mock_game)
@@ -73,7 +65,7 @@ def test_game_manager_start(mock_writer, mock_context, mock_config, mock_game):
 @patch('jsonlines.Writer')
 def test_game_manager_turn_handling(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager turn handling"""
-    manager = GameManager(mock_config)
+    manager = GameManager(**mock_config)
     manager.game = mock_game
     
     # Setup mock action
@@ -106,7 +98,7 @@ def test_game_manager_turn_handling(mock_writer, mock_context, mock_config, mock
 @patch('jsonlines.Writer')
 def test_game_manager_logging(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager logging functionality"""
-    manager = GameManager(mock_config)
+    manager = GameManager(**mock_config)
     manager.game = mock_game
     
     manager.start(mock_game)
@@ -119,7 +111,7 @@ def test_game_manager_logging(mock_writer, mock_context, mock_config, mock_game)
 @patch('jsonlines.Writer')
 def test_game_manager_error_handling(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager error handling"""
-    manager = GameManager(mock_config)
+    manager = GameManager(**mock_config)
     manager.game = mock_game
     
     # Setup error condition

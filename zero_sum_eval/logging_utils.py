@@ -1,16 +1,12 @@
 import os
 import logging
-import tempfile
-from pathlib import Path
 
-def setup_logging(output_dir, prefix):
+DEFAULT_OUTPUT_DIR = "zse_outputs"
+
+def setup_logging(prefix: str, output_dir: str = DEFAULT_OUTPUT_DIR):
     """Set up logging with the given configuration."""
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
-    
-    # Get output directory, default to temp dir if not specified
-    if not output_dir:
-        output_dir = "zse_outputs"
     
     # Create logs directory
     logs_dir = os.path.join(output_dir, "logs")
