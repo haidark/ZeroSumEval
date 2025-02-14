@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import dspy
 from typing import Dict
 from zero_sum_eval.player import Player, PlayerDefinition, HumanPlayer
-from zero_sum_eval.types import ActionConfig
+from zero_sum_eval.type_definitions import ActionConfig
 
 class SimpleTestPlayer(Player):
     """A simple concrete implementation of Player for testing"""

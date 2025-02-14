@@ -8,7 +8,7 @@ from copy import copy
 from dataclasses import dataclass
 from typing import Dict, List, Type
 
-from zero_sum_eval.types import ActionConfig
+from zero_sum_eval.type_definitions import ActionConfig
 from zero_sum_eval.player import Move, Player, PlayerDefinition
 
 class InvalidMoveError(Exception):
@@ -156,12 +156,17 @@ class GameState(ABC):
         
         def move_logging_wrapper(fn):
             def wrapped(self, move: Move):
-                new_state = fn(self, move)
-                if not self.log_moves:
+                try:
+                    new_state = fn(self, move)
+                    if not self.log_moves:
+                        return new_state
+                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict()}
                     return new_state
-                self._log = {"last_move": move.value, "last_trace": move.trace.toDict()}
-
-                return new_state
+                except InvalidMoveError as e:
+                    if not hasattr(self, '_log'):
+                        self._log = {}
+                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict(), "error": str(e)})
+                    raise
             return wrapped
         
         cls.update_game = move_logging_wrapper(cls.update_game)

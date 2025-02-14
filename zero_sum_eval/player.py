@@ -7,7 +7,7 @@ import dspy
 
 from dspy.primitives import assert_transform_module, backtrack_handler
 from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
-from zero_sum_eval.types import ActionConfig, Move
+from zero_sum_eval.type_definitions import ActionConfig, Move
 
 # Disable debugging logs of litellm
 import litellm
