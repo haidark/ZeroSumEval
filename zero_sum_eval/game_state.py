@@ -64,7 +64,7 @@ class GameState(ABC):
             loaded_player_keys.append(player_key)           
 
         for definition in self.player_definitions():
-            if definition.player_key in loaded_player_keys:
+            if definition.player_key in loaded_player_keys or definition.optional:
                 continue
 
             logging.warning(f"Player for player key {definition.player_key} not specified. Using default player with GPT-4o.")
