@@ -149,6 +149,7 @@ class PlayerDefinition:
     player_key: str
     actions: List[str]
     default_player_class: Type[Player]
+    optional: bool = False
 
 
 class HumanPlayer(Player):
