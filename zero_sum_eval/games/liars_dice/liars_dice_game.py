@@ -101,7 +101,8 @@ class LiarsDiceGame(GameState):
             'history': "\n".join(self.history)
         }
 
-    def player_definitions(self) -> List[PlayerDefinition]:
+    @classmethod
+    def player_definitions(cls) -> List[PlayerDefinition]:
         """Define the players for this game"""
         return [
             PlayerDefinition(player_key=PLAYER_0_KEY, actions=["MakeBid"], default_player_class=LiarsDicePlayer),

@@ -82,7 +82,8 @@ class GandalfGame(GameState):
         return display_str
     
     
-    def player_definitions(self) -> List[PlayerDefinition]:
+    @classmethod
+    def player_definitions(cls) -> List[PlayerDefinition]:
         return [
             PlayerDefinition(player_key=SENTINEL_KEY, actions=[SENTINEL_KEY], default_player_class=SentinelPlayer),
             PlayerDefinition(player_key=INFILTRATOR_KEY, actions=[INFILTRATOR_KEY], default_player_class=InfiltratorPlayer)

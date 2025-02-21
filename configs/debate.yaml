@@ -7,7 +7,6 @@ manager:
 game:
   name: debate
   args:
-    topics: data/debate/topics.txt
     judges:
       - name: gpt-4o-default
         model: openrouter/openai/gpt-4o-2024-11-20

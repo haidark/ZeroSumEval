@@ -6,7 +6,7 @@ import logging
 from abc import ABC, abstractmethod
 from copy import copy
 from dataclasses import dataclass
-from typing import Dict, List, Type
+from typing import Dict, List
 
 from zero_sum_eval.type_definitions import ActionConfig
 from zero_sum_eval.player import Move, Player, PlayerDefinition
@@ -44,7 +44,7 @@ class GameState(ABC):
             
             # fill in the non-specified actions with the default actions
             config["args"]["actions"] = config["args"].get("actions", [])
-            names = [action["name"] for action in config["args"].get("actions", [])]
+            names = [action.name if isinstance(action, ActionConfig) else action["name"] for action in config["args"].get("actions", [])]
             for action in definition.actions:
                 if action not in names:
                     config["args"]["actions"].append(ActionConfig(name=action))
@@ -72,7 +72,7 @@ class GameState(ABC):
             self.players[definition.player_key] = player
 
     @abstractmethod
-    def get_scores(self):
+    def get_scores(self) -> Dict[str, float]:
         """
         Get the current scores of the players in the game.
 
@@ -127,7 +127,7 @@ class GameState(ABC):
         """
         raise NotImplementedError
 
-    def export(self):
+    def export(self) -> Dict:
         """
         Export the game state to a dictionary.
 
@@ -138,8 +138,9 @@ class GameState(ABC):
         new_dict.pop("players")
         return self.__dict__
     
+    @classmethod
     @abstractmethod
-    def player_definitions(self) -> List[PlayerDefinition]:
+    def player_definitions(cls) -> List[PlayerDefinition]:
         """
         Get the definitions of all players in the game.
 

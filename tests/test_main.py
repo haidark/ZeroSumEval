@@ -1,11 +1,6 @@
-import pytest
 import tempfile
-from pathlib import Path
 from unittest.mock import patch
-import dspy
 import json
-import logging
-import os
 
 from zero_sum_eval.main import cli_run
 
@@ -60,7 +55,7 @@ def test_complete_mathquiz_game(monkeypatch, cleanup_logging):
         test_args = [
             'main.py',
             '-g', 'mathquiz',  # Use mathquiz game
-            '-m',              # Specify models for each player
+            '-p',              # Specify models for each player
             'teacher=mock-model',
             'student=mock-model',
             '-o', temp_dir,    # Use temp dir for outputs

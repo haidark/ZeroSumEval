@@ -1,7 +1,7 @@
 import csv
 import os
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from logging import getLogger
 from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
@@ -18,34 +18,35 @@ import json
 
 class Matcher(ABC):
     def __init__(self, llm_elos: List[Dict[str, int]]):
+        # llm_elos is a dictionary of model names and their corresponding ELO ratings
         self.llm_elos = llm_elos
     
     @abstractmethod
     def get_next_match():
         raise NotImplementedError()
     
-# TODO: only handles 2 player games for now
 class RoundRobin(Matcher):
-    def __init__(self, llm_elos: Dict[str, int], max_rounds: int = 5):
+    def __init__(self, llm_elos: Dict[str, int], players_per_match: int = 2, max_rounds: int = 5):
         super().__init__(llm_elos=llm_elos)
         self.max_rounds = max_rounds
         self.round = 0
-        self.pair_index = 0
-        self.matches = self._generate_round_robin_pairs()
+        self.match_index = 0
+        self.players_per_match = players_per_match
+        self.matches = self._generate_round_robin_matches()
 
-    def _generate_round_robin_pairs(self):
+    def _generate_round_robin_matches(self) -> List[Tuple[str, ...]]:
         participants = list(self.llm_elos.keys())
-        schedule = list(itertools.permutations(participants, 2))
+        # Assumes the order matters
+        schedule = list(itertools.permutations(participants, self.players_per_match))
         return schedule
 
-    def get_next_match(self):
-        if self.pair_index >= len(self.matches):
-            # Reset matches
-            self.pair_index = 0
+    def get_next_match(self) -> Tuple[str, ...]:
+        if self.match_index >= len(self.matches):
+            self.match_index = 0
             self.round += 1
 
-        next_match = self.matches[self.pair_index]
-        self.pair_index += 1
+        next_match = self.matches[self.match_index]
+        self.match_index += 1
         return next_match
 
 class MatchManager:

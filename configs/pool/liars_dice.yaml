@@ -1,0 +1,23 @@
+manager:
+  max_matches: 10
+  max_rounds_per_match: 100
+  max_player_attempts: 3
+  output_dir: ../output/liars_dice_pool
+game:
+  name: liars_dice
+  args:
+    num_dice: 5  # Number of dice per player
+    players:
+      player_0:
+        args:
+          max_tries: 5
+      player_1:
+        args:
+          max_tries: 5
+llms:
+  - name: gpt-4o-optimized-default
+    model: openrouter/openai/chatgpt-4o-latest
+  - name: llama3.1-70b-optimized-default
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+  - name: mistral-large-default
+    model: openrouter/mistralai/mistral-large-2411
