@@ -1,0 +1,47 @@
+logging:
+  output_dir: ../output/poker_game
+manager:
+  args:
+    max_player_attempts: 5
+    max_rounds: 100
+game:
+  name: poker
+  args:
+    starting_chips: 1000
+    small_blind: 10
+    players:
+      player_0:
+        name: poker_player
+        args:
+          id: llama3.3 70b player0
+          lm:
+            model: openrouter/meta-llama/llama-3.3-70b-instruct
+          max_tries: 5
+      player_1:
+        name: poker_player
+        args:
+          id: llama3.1 70b player1
+          lm:
+            model: openrouter/meta-llama/llama-3.1-70b-instruct
+          max_tries: 5
+      player_2:
+        name: poker_player
+        args:
+          id: gpt4 player2
+          lm:
+            model: openrouter/openai/gpt-4o-2024-11-20
+          max_tries: 5 
+      player_3:
+        name: poker_player
+        args:
+          id: gpt4 player3
+          lm:
+            model: openrouter/openai/gpt-4o-2024-11-20
+          max_tries: 5 
+      player_4:
+        name: poker_player
+        args:
+          id: gpt4 player4
+          lm:
+            model: openrouter/openai/gpt-4o-2024-11-20
+          max_tries: 5 
