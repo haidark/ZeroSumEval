@@ -79,7 +79,8 @@ class ChessGame(GameState):
                 formatted_history += f"{history[j+1]} "
         return formatted_history.strip()
 
-    def player_definitions(self) -> List[PlayerDefinition]:
+    @classmethod
+    def player_definitions(cls) -> List[PlayerDefinition]:
         return [
             PlayerDefinition(player_key=WHITE_KEY, actions=["MakeMove"], default_player_class=ChessPlayer),
             PlayerDefinition(player_key=BLACK_KEY, actions=["MakeMove"], default_player_class=ChessPlayer)
