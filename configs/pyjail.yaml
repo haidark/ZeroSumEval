@@ -3,61 +3,24 @@ logging:
 manager:
   args:
     max_player_attempts: 5
-    max_rounds: 10
-    win_conditions:
-      - AttackerCorrect
-    draw_conditions:
-      - MaxAttemptsReached
+    max_rounds: 200
 game:
   name: pyjail
-  players:
-    - name: pyjail_player
-      args:
-        id: llama3.3 70b defender
-        roles:
-          - name: DefenderGenerateCode
-            optimize: false
-            metric: pyjail_code_validation_metric
-            dataset: pyjail_dataset
-            dataset_args:
-              filename: data/pyjail/pyjail_examples.jsonl
-              role: DefenderGenerateCode
-              num_examples: 10
-          - name: DefenderSolveCode
-            optimize: false
-            metric: pyjail_solution_validation_metric
-            dataset: pyjail_dataset
-            dataset_args:
-              filename: data/pyjail/pyjail_examples.jsonl
-              role: DefenderSolveCode
-              num_examples: 10
-        optimizer: MIPROv2
-        optimizer_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        compilation_args:
-          minibatch_size: 2
-        lm:
-          model: openrouter/meta-llama/llama-3.3-70b-instruct
-        max_tries: 5
-    - name: pyjail_player
-      args:
-        id: llama3.1 70b attacker
-        roles:
-          - name: AttackerSolveCode
-            optimize: false
-            metric: pyjail_solution_validation_metric
-            dataset: pyjail_dataset
-            dataset_args:
-              filename: data/pyjail/pyjail_examples.jsonl
-              role: AttackerSolveCode
-              num_examples: 10
-        optimizer: MIPROv2
-        optimizer_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        compilation_args:
-          minibatch_size: 2
-        lm:
-          model: openrouter/meta-llama/llama-3.1-70b-instruct
-        max_tries: 5
+  args:
+    # ask_permission: False
+
+    players:
+      defender:
+        name: pyjail_player
+        args:
+          id: gpt-4o defender
+          lm:
+            model: openrouter/openai/gpt-4o-2024-11-20
+          max_tries: 5
+      attacker:
+        name: pyjail_player
+        args:
+          id: llama3.3 70b attacker
+          lm:
+            model: openrouter/meta-llama/llama-3.3-70b-instruct
+          max_tries: 5

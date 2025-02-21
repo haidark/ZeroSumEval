@@ -55,8 +55,8 @@ class GameState(ABC):
                 player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=config["class"], player_key=player_key, **config["args"])
             else:
                 player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=definition.default_player_class.__name__, player_key=player_key, **config["args"])
-
-            if set(player.module_dict.keys()) != set(definition.actions):
+                
+            if not set(definition.actions).issubset(set(player.module_dict.keys())):
                 raise ValueError(f"Player {player_key} does not support all actions {definition.actions}. Missing actions: {set(definition.actions) - set(player.module_dict.keys())}")
 
             self.players[player_key] = player
