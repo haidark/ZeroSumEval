@@ -105,9 +105,10 @@ def run_pool_matches(args):
 def cli_run():
     parser = setup_parser()
     args = parser.parse_args()
-    args.output_dir = args.output_dir if args.output_dir else f"zse_outputs/{args.game}"
-    if not args.output_dir:
+    if args.output_dir is None:
         args.output_dir = f"zse_outputs/{args.game}"
+        if args.pool:
+            args.output_dir += "_pool"
 
     if args.pool:
         run_pool_matches(args)
