@@ -7,8 +7,8 @@ from zero_sum_eval.game_state import Action, GameState, PlayerDefinition, Invali
 from zero_sum_eval.registry import GAME_REGISTRY, LM_REGISTRY
 from typing import Dict, List, Optional, Union
 import dspy
-from dspy import Prediction
 from .debate_judge import DebateJudge, RubricWeights
+from pathlib import Path
 
 @GAME_REGISTRY.register("debate")
 class DebateGame(GameState):
@@ -30,7 +30,7 @@ class DebateGame(GameState):
             },
         ],
         rubric_weights: Dict = None,
-        topics: Union[str, List[str]] = "topics.txt",
+        topics: Union[str, List[str]] = str(Path(__file__).parent / "topics.txt"),
         topic: Optional[str] = None,
         **kwargs,
     ) -> None:
@@ -157,7 +157,8 @@ class DebateGame(GameState):
         
         return inputs
 
-    def player_definitions(self) -> List[PlayerDefinition]:
+    @classmethod
+    def player_definitions(cls) -> List[PlayerDefinition]:
         return [
             PlayerDefinition(player_key=FOR_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),
             PlayerDefinition(player_key=AGAINST_KEY, actions=["OpeningStatement", "Rebuttal", "ClosingStatement"], default_player_class=DebatePlayer),

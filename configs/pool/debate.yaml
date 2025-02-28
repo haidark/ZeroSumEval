@@ -1,0 +1,29 @@
+manager:
+  max_matches: 10
+  max_rounds_per_match: 100
+  max_player_attempts: 3
+  output_dir: ../output/debate_pool
+game:
+  name: debate
+  args:
+    judges:
+      - name: gpt-4o-default
+        model: openrouter/openai/gpt-4o-2024-11-20
+      - name: llama3.1-70b-default
+        model: openrouter/meta-llama/llama-3.1-70b-instruct
+    players:
+      for:
+        args:
+          max_tries: 5
+      against: 
+        args:
+          max_tries: 5
+llms:
+  - name: gpt-4o-optimized-default
+    model: openrouter/openai/chatgpt-4o-latest
+
+  - name: llama3.1-70b-optimized-default
+    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+
+  - name: mistral-large-default
+    model: openrouter/mistralai/mistral-large-2411

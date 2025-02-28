@@ -95,7 +95,8 @@ class MathQuizGame(GameState):
         except:
             return False
         
-    def player_definitions(self) -> List[PlayerDefinition]:
+    @classmethod
+    def player_definitions(cls) -> List[PlayerDefinition]:
         return [
             PlayerDefinition(player_key=TEACHER_KEY, actions=["GenerateQuestion", "AnswerQuestion"], default_player_class=MathQuizTeacher),
             PlayerDefinition(player_key=STUDENT_KEY, actions=["AnswerQuestion"], default_player_class=MathQuizStudent),
