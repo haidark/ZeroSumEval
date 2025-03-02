@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="zero-sum-eval",
-    version="0.1.0",
+    version="0.2.0",
     packages=find_packages(),
     install_requires=[
         # Core dependencies
@@ -49,7 +49,7 @@ setup(
     python_requires=">=3.8",  # Updated based on f-strings and type hints usage
     entry_points={
         'console_scripts': [
-            'zse=zero_sum_eval.main:cli_run',
+            'zero-sum-eval=zero_sum_eval.main:cli_run',
         ],
     },
 )

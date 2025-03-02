@@ -59,12 +59,12 @@ Its possible to run a single game or a series of matches with or without a detai
 
 single game:
 ```
-python -m zero_sum_eval.main -g chess -p "white=openai/gpt-4o" -p "black=openai/gpt-4o"
+python -m zero_sum_eval.main -g chess -p "white=openai/gpt-4o" "black=openai/gpt-4o"
 ```
 
 pool of matches:
 ```
-python -m zero_sum_eval.main --pool -g chess -p "white=openai/gpt-4o" -p "black=openai/gpt-4o"
+python -m zero_sum_eval.main --pool -g chess -p "white=openai/gpt-4o" "black=openai/gpt-4o"
 ```
 
 ### Running from a config file
