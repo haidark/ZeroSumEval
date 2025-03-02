@@ -3,7 +3,7 @@
 </p>
 <p align="left">
 
-ZeroSumEval is a framework for evaluating the reasoning abilities of Large Language Models (LLMs) using zero-sum multiplayer simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) for automatic prompt optimization to ensure evaluations are fair.
+ZeroSumEval is a framework for evaluating Large Language Models (LLMs) using zero-sum multi-agent simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) under the hood to ensure evaluations are fair.
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -19,7 +19,7 @@ ZeroSumEval is a framework for evaluating the reasoning abilities of Large Langu
 
 ## Overview
 
-ZeroSumEval aims to create a robust evaluation framework for LLMs using competitive scenarios. Instead of fixed evaluation benchmarks or model-based judging, ZSEval uses multiplayer simulations/games with clear win conditions to pit models against each other. 
+ZeroSumEval is a dynamic evaluation benchmark for LLMs using competitive scenarios that scales with model capabilities (i.e. as models get better, the benchmark gets harder). Instead of fixed evaluation benchmarks or subjective judging criteria, ZSEval uses multi-agent simulations with clear win conditions to pit models against each other. 
 
 The framework tests various model capabilities, including knowledge, reasoning, and planning. In addition, ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) optimization to test the self-improvement capability of models and ensure the competition between models is fair.
 
@@ -31,6 +31,8 @@ Key features:
 - Integration with DSPy for automated prompt optimization
 - Comprehensive logging and analysis tools
 
+TODO: barcharts should go here
+
 ## Project Structure
 
 The project is organized as follows:
@@ -38,35 +40,43 @@ The project is organized as follows:
 - `zero_sum_eval/`: Main package containing the core framework
   - `games/`: Individual game implementations
   - `managers/`: Game and match management classes
+  - `main.py`: Entry point for running games and matches
 - `data/`: Game-specific data and examples
 - `configs/`: Configuration files for different games and scenarios
-- `run_game.py`: Script to run individual games
-- `run_matches.py`: Script to run a series of matches
 
 ## Installation
 
-1. Clone the repository:
+1. Use `pip` to install ZeroSumEval:
    ```
-   git clone https://github.com/your-username/ZeroSumEval.git
-   cd ZeroSumEval
-   ```
-
-2. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
+   pip install zero-sum-eval
    ```
 
 ## Usage
 
-To run a game:
+Its possible to run a single game or a series of matches with or without a detailed config file.
 
+### Running without a config file
+
+single game:
 ```
-python run_game.py -c configs/chess.yaml
+python -m zero_sum_eval.main -g chess -p "white=openai/gpt-4o" -p "black=openai/gpt-4o"
 ```
 
-To run a series of matches:
+pool of matches:
 ```
-python run_matches.py -c configs/mathquiz.yaml
+python -m zero_sum_eval.main --pool -g chess -p "white=openai/gpt-4o" -p "black=openai/gpt-4o"
+```
+
+### Running from a config file
+
+single game:
+```
+python -m zero_sum_eval.main -c configs/chess.yaml
+```
+
+pool of matches:
+```
+python -m zero_sum_eval.main --pool -c configs/pool/chess.yaml
 ```
 
 ## Games
@@ -74,9 +84,12 @@ python run_matches.py -c configs/mathquiz.yaml
 ZeroSumEval currently supports the following games:
 
 1. Chess
-2. Math Quiz
+2. Debate
 3. Gandalf (Password Guessing)
-4. PyJail (Capture The Flag)
+4. Liar's Dice
+5. Math Quiz
+6. Poker (Simple Texas Hold'em)
+7. PyJail (Capture The Flag)
 
 Each game is implemented as a separate module in the `zero_sum_eval/games/` directory.
 
@@ -85,6 +98,7 @@ Each game is implemented as a separate module in the `zero_sum_eval/games/` dire
 Game configurations are defined in YAML files located in the `configs/` directory. These files specify:
 
 - Logging settings
+- Manager settings
 - Game parameters
 - Player configurations
 - LLM settings
@@ -97,88 +111,46 @@ logging:
   output_dir: ../output/chess_game
 manager:
   args:
+    max_player_attempts: 5
     max_rounds: 200
-    win_conditions: 
-      - Checkmate
-    draw_conditions:
-      - Stalemate
-      - ThreefoldRepetition
-      - FiftyMoveRule
-      - InsufficientMaterial
 game:
   name: chess
-  players:
-    - name: chess_player
-      args:
-        id: gpt4 white
-        roles: 
-          - White
-        optimize: false
-        dataset: chess_dataset
-        dataset_args:
-          filename: ./data/chess/stockfish_examples.jsonl
-          role: White
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: chess_move_validation_metric
-        lm:
-          type: AzureOpenAI
-          args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
-        max_tries: 5
-    - name: chess_player
-      args:
-        id: gpt4 black
-        roles: 
-          - Black
-        optimize: false
-        dataset: chess_dataset
-        dataset_args:
-          filename: ./data/chess/stockfish_examples.jsonl
-          role: Black
-        optimizer: MIPROv2
-        optimizer_args:
-          num_candidates: 5
-          minibatch_size: 20
-          minibatch_full_eval_steps: 10
-        compilation_args:
-          max_bootstrapped_demos: 1
-          max_labeled_demos: 1
-        metric: chess_move_validation_metric
-        lm:
-          type: AzureOpenAI
-          args:
-            api_base: https://allam-swn-gpt-01.openai.azure.com/
-            api_version: 2023-07-01-preview
-            deployment_id: gpt-4o-900ptu
-            max_tokens: 800
-            temperature: 0.8
-            top_p: 0.95
-            frequency_penalty: 0
-            presence_penalty: 0
-        max_tries: 5
+  args:
+    players:
+      white:
+        class: chess_player
+        args:
+          id: llama3.1 70b white
+          actions:
+            - name: MakeMove
+              optimize: true
+              metric: chess_move_validation_metric
+              dataset: chess_dataset
+              dataset_args:
+                filename: ./data/chess/stockfish_examples.jsonl
+                player_key: white
+                num_examples: 10
+          lm:
+            model: openrouter/meta-llama/llama-3.3-70b-instruct
+          optimizer: BootstrapFewshot
+          optimizer_args:
+            max_bootstrapped_demos: 1
+          max_tries: 5
+      black:
+        class: chess_player
+        args:
+          id: llama3.3 70b black
+          lm:
+            model: openrouter/meta-llama/llama-3.3-70b-instruct
+          max_tries: 5
 ```
-
 </details>
 
 
 ## Contributing
 
-Contributions to ZeroSumEval are welcome! Please open a pull request
+Contributions to ZeroSumEval are welcome! Please follow the [contribution guidelines](CONTRIBUTING.md) and open a pull request or issue on the [GitHub repository](https://github.com/haidark/zero-sum-eval).
 
 ## License
 
-This project is licensed under the Apache License 2.0. See the LICENSE file for details.
+This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
