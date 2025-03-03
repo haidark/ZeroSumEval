@@ -76,7 +76,7 @@ class ClosingStatement(dspy.Module):
 
 @PLAYER_REGISTRY.register("debate", "debate_player")
 class DebatePlayer(Player):
-    def init_action_module_dict(self):
+    def init_actions(self):
         return {
             "OpeningStatement": OpeningStatement(),
             "Rebuttal": Rebuttal(),

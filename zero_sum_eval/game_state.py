@@ -5,20 +5,13 @@ import logging
 
 from abc import ABC, abstractmethod
 from copy import copy
-from dataclasses import dataclass
 from typing import Dict, List
 
-from zero_sum_eval.type_definitions import ActionConfig
-from zero_sum_eval.player import Move, Player, PlayerDefinition
+from zero_sum_eval.type_definitions import ActionConfig, Action
+from zero_sum_eval.player import Move, PlayerDefinition
 
 class InvalidMoveError(Exception):
     pass
-
-
-@dataclass
-class Action:
-    name: str
-    player: Player
 
 
 class GameState(ABC):
@@ -56,8 +49,8 @@ class GameState(ABC):
             else:
                 player = PLAYER_REGISTRY.build(game_name=self.__class__.__name__, player_name=definition.default_player_class.__name__, player_key=player_key, **config["args"])
                 
-            if not set(definition.actions).issubset(set(player.module_dict.keys())):
-                raise ValueError(f"Player {player_key} does not support all actions {definition.actions}. Missing actions: {set(definition.actions) - set(player.module_dict.keys())}")
+            if not set(definition.actions).issubset(set(player.action_fn_dict.keys())):
+                raise ValueError(f"Player {player_key} does not support all actions {definition.actions}. Missing actions: {set(definition.actions) - set(player.action_fn_dict.keys())}")
 
             self.players[player_key] = player
 
@@ -116,16 +109,6 @@ class GameState(ABC):
             Action: The next action to be taken.
         """
         raise NotImplementedError
-    
-    @abstractmethod
-    def player_inputs(self) -> Dict[str, str]:
-        """
-        Provides a representation of the game state according to the current player_key
-
-        Returns:
-            dict
-        """
-        raise NotImplementedError
 
     def export(self) -> Dict:
         """
@@ -161,12 +144,12 @@ class GameState(ABC):
                     new_state = fn(self, move)
                     if not self.log_moves:
                         return new_state
-                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict()}
+                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None}
                     return new_state
                 except InvalidMoveError as e:
                     if not hasattr(self, '_log'):
                         self._log = {}
-                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict(), "error": str(e)})
+                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "error": str(e)})
                     raise
             return wrapped
         

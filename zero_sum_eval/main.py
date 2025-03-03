@@ -17,7 +17,7 @@ def setup_parser() -> argparse.ArgumentParser:
     parser.add_argument("-g", "--game", type=str, default="chess")
     parser.add_argument("-o", "--output_dir", type=str, default='./zse_outputs', help="Output directory for logs and results.")
 
-    parser.add_argument("-p", "--players", type=str, nargs="+", required=True, help='List of models to evaluate and their roles. (LiteLLM model names, for example, "white=openai/gpt-4o" or "black=openrouter/meta-llama/llama-3.3-70b-instruct")')
+    parser.add_argument("-p", "--players", type=str, nargs="+", help='List of models to evaluate and their roles. (LiteLLM model names, for example, "white=openai/gpt-4o" or "black=openrouter/meta-llama/llama-3.3-70b-instruct")')
     parser.add_argument("--game_kwargs", type=str, nargs="+", default="", help="Arguments to pass to the game constructor as a string. For example, 'rebuttal_rounds=2', 'topics=topics.txt' for the debate game.")
     parser.add_argument("--max_rounds", type=int, default=100, help="Maximum number of rounds to play.")
     parser.add_argument("--max_player_attempts", type=int, default=5, help="Maximum number of attempts to generate a valid player move.")

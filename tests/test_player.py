@@ -7,7 +7,7 @@ from zero_sum_eval.type_definitions import ActionConfig
 
 class SimpleTestPlayer(Player):
     """A simple concrete implementation of Player for testing"""
-    def init_action_module_dict(self) -> Dict[str, dspy.Module]:
+    def init_actions(self) -> Dict[str, dspy.Module]:
         class TestModule(dspy.Module):
             def forward(self, input_text):
                 return {"output": "test response"}
@@ -16,7 +16,7 @@ class SimpleTestPlayer(Player):
 
 class TestHumanPlayer(HumanPlayer):
     """Test implementation of HumanPlayer"""
-    def init_action_module_dict(self) -> Dict[str, dspy.Module]:
+    def init_actions(self) -> Dict[str, dspy.Module]:
         return {action.name: MagicMock() for action in self.actions}
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def test_player_initialization(basic_lm_config, basic_actions):
     assert player.player_key == "test"
     assert len(player.actions) == 2
     assert player.action_names == ["test_action1", "test_action2"]
-    assert all(action in player.module_dict for action in player.action_names)
+    assert all(action in player.action_fn_dict for action in player.action_names)
 
 def test_player_initialization_with_string_actions():
     actions = ["move", "evaluate"]

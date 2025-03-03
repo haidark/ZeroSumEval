@@ -46,29 +46,19 @@ class GandalfGame(GameState):
 
     def get_next_action(self):
         # Alternate between Sentinel and Infiltrator
-        if self.conversation[-1]["name"] == SENTINEL_KEY:
-            return Action(INFILTRATOR_KEY, self.players[INFILTRATOR_KEY])
-        return Action(SENTINEL_KEY, self.players[SENTINEL_KEY])
+        player_key = INFILTRATOR_KEY if self.conversation[-1]["name"] == SENTINEL_KEY else SENTINEL_KEY
+        inputs = {
+            'conversation': GandalfGame.format_conversation(self.conversation, len(self.conversation)),
+            'secret_password': self.secret_password
+        }
+        return Action(name=player_key, player_key=player_key, inputs=inputs)
+        
 
     def get_scores(self):
         # Sentinel wins as long as the secret is not revealed
         if not self.secret_revealed:
             return {SENTINEL_KEY: 1, INFILTRATOR_KEY: 0}
         return {SENTINEL_KEY: 0, INFILTRATOR_KEY: 1}
-
-    def player_inputs(self) -> Dict[str, str]:
-        next_action = self.get_next_action().name
-        if next_action == SENTINEL_KEY:
-            return {
-                'conversation': GandalfGame.format_conversation(self.conversation, len(self.conversation)),
-                'secret_password': self.secret_password
-            }
-        elif next_action == INFILTRATOR_KEY:
-            return {
-                'conversation': GandalfGame.format_conversation(self.conversation, len(self.conversation))
-            }
-        else:
-            raise ValueError(f"Invalid action: {next_action}")
     
     def display(self) -> str:
         display_str = f"Next Action: {self.get_next_action().name}\nSecret: {self.secret_password}\n"

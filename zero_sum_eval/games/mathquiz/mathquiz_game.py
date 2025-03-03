@@ -45,7 +45,7 @@ class MathQuizGame(GameState):
         if next_action.name == "GenerateQuestion":
             self.question = move
             self.message = f"{TEACHER_KEY} to answer the question"
-        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == TEACHER_KEY:
+        elif next_action.name == "AnswerQuestion" and next_action.player_key == TEACHER_KEY:
             if not self.verify_answer(move):
                 # If the teacher's answer is incorrect, generate a new target number and raise an error to be caught by the game manager
                 self.target = str(randint(1, 1000))
@@ -55,7 +55,7 @@ class MathQuizGame(GameState):
                 raise InvalidMoveError("TeacherIncorrect")
             self.message = f"{STUDENT_KEY} to answer the question"
             self.teacher_answer = move
-        elif next_action.name == "AnswerQuestion" and next_action.player.player_key == STUDENT_KEY:
+        elif next_action.name == "AnswerQuestion" and next_action.player_key == STUDENT_KEY:
             if not self.verify_answer(move):
                 # If the student's answer is incorrect, raise an error to be caught by the game manager
                 self.scores = {TEACHER_KEY: 1, STUDENT_KEY: 0}
@@ -73,21 +73,13 @@ class MathQuizGame(GameState):
         return self.scores
 
     def get_next_action(self) -> Action:
-        if self.question is None:
-            return Action("GenerateQuestion", self.players[TEACHER_KEY])
-        elif self.teacher_answer is None:
-            return Action("AnswerQuestion", self.players[TEACHER_KEY])
-        else:
-            return Action("AnswerQuestion", self.players[STUDENT_KEY])
 
-    def player_inputs(self) -> Dict[str, str]:
-        next_action = self.get_next_action().name
-        if next_action == "GenerateQuestion":
-            return {'target': self.target}
-        elif next_action == "AnswerQuestion":
-            return {'question': self.question}
+        if self.question is None:
+            return Action(name="GenerateQuestion", player_key=TEACHER_KEY, inputs={'target': self.target})
+        elif self.teacher_answer is None:
+            return Action(name="AnswerQuestion", player_key=TEACHER_KEY, inputs={'question': self.question})
         else:
-            raise ValueError("Invalid action")
+            return Action(name="AnswerQuestion", player_key=STUDENT_KEY, inputs={'question': self.question})
 
     def verify_answer(self, answer: str) -> bool:
         try:
@@ -103,7 +95,7 @@ class MathQuizGame(GameState):
         ]
 
     def display(self) -> str:
-        display_str = f"Next to Act: {self.get_next_action().player.player_key}\nMessage: {self.message}\n"
+        display_str = f"Next to Act: {self.get_next_action().player_key}\nMessage: {self.message}\n"
         display_str += f"Target: {self.target}\n"
         display_str += f"Question: {self.question}\n"
         display_str += f"Teacher Answer: {self.teacher_answer}\n"

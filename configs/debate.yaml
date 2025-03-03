@@ -1,9 +1,7 @@
-logging:
-  output_dir: ../output/debate_game
 manager:
-  args:
-    max_player_attempts: 3
-    max_rounds: 20
+  output_dir: ../output/debate_game
+  max_player_attempts: 3
+  max_rounds: 20
 game:
   name: debate
   args:

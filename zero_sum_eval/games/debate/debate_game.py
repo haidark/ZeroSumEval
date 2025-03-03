@@ -73,7 +73,7 @@ class DebateGame(GameState):
     def update_game(self, move: Move):
         self.history.append(
             {
-                "action": self.get_next_action().name + " | " + self.get_next_action().player.player_key,
+                "action": self.get_next_action().name + " | " + self.get_next_action().player_key,
                 "move": move.value,
             }
         )
@@ -124,20 +124,24 @@ class DebateGame(GameState):
             return "Tie"
 
     def get_next_action(self) -> Action:
-        # The first side to make a move is the "for" side
-        side = FOR_KEY if len(self.history) % 2 == 0 else AGAINST_KEY
-
-        # The first 2 moves are opening statements
-        if len(self.history) < 2:
-            return Action("OpeningStatement", self.players[side])
+        inputs = {
+            "topic": self.topic,
+            "side": FOR_KEY if len(self.history) % 2 == 0 else AGAINST_KEY,
+        }
         
+        # The first 2 moves are opening statements (no history)
+        if len(self.history) < 2:
+            action_name = "OpeningStatement"
         # The next 2 * rebuttal_rounds moves are rebuttals
         elif len(self.history) >= 2 and len(self.history) < 2 + (self.rebuttal_rounds * 2):
-            return Action("Rebuttal", self.players[side])
-        
+            action_name = "Rebuttal"
+            inputs["history"] = self.formatted_move_history()
         # The last 2 moves are closing statements
         else:
-            return Action("ClosingStatement", self.players[side])
+            action_name = "ClosingStatement"
+            inputs["history"] = self.formatted_move_history()
+
+        return Action(name=action_name, player_key=side, inputs=inputs)
 
     def formatted_move_history(self) -> str:
         history = self.history
@@ -145,17 +149,6 @@ class DebateGame(GameState):
         for entry in history:
             formatted_history += f"==== {entry['action']} ===\n{entry['move']}\n\n"
         return formatted_history
-
-    def player_inputs(self) -> Dict[str, str]:
-        inputs = {
-            "topic": self.topic,
-            "side": self.get_next_action().player.player_key,
-        }
-        # history is passed to the player only if the next action is not an opening statement
-        if not self.get_next_action().name == "OpeningStatement":
-            inputs["history"] = self.formatted_move_history()
-        
-        return inputs
 
     @classmethod
     def player_definitions(cls) -> List[PlayerDefinition]:

@@ -73,7 +73,7 @@ class PokerGame(GameState):
         If the hand is complete and showdown has not yet occurred, handle the showdown here.
         """
         action = move.value.strip()
-        player_key = self.get_next_action().player.player_key
+        player_key = self.get_next_action().player_key
         
         if action.startswith("Fold"):
             self.message = f"{player_key} folds"
@@ -325,12 +325,8 @@ class PokerGame(GameState):
 
     def get_next_action(self) -> Action:
         """Return the next action for the current player."""
-        return Action("MakeMove", self.players[self.player_keys[self.current_player_idx]])
-
-    def player_inputs(self) -> Dict[str, str]:
-        """Return the inputs for the next player's turn."""
-        player_key = self.get_next_action().player.player_key
-        return {
+        player_key = self.player_keys[self.current_player_idx]
+        inputs = {
             'hole_cards': self._format_cards(self.hole_cards[player_key]),
             'community_cards': self._format_cards(self.community_cards),
             'pot': self.pot,
@@ -339,6 +335,8 @@ class PokerGame(GameState):
             'stage': self.stage,
             'history': "\n".join(self.history),
         }
+
+        return Action("MakeMove", player_key=player_key, inputs=inputs)
 
     def _format_cards(self, cards: List[int]) -> str:
         """Convert card integers to a human-readable format."""

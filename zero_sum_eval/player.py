@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Type, Union
+from typing import Callable, Dict, List, Optional, Type, Union
 import logging
 import functools
 from dataclasses import dataclass
@@ -7,7 +7,7 @@ import dspy
 
 from dspy.primitives import assert_transform_module, backtrack_handler
 from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
-from zero_sum_eval.type_definitions import ActionConfig, Move
+from zero_sum_eval.type_definitions import Action, ActionConfig, Move
 
 # Disable debugging logs of litellm
 import litellm
@@ -54,11 +54,12 @@ class Player(ABC):
                 self.actions.append(action)
         
         self.action_names: List[str] = [action if isinstance(action, str) else action.name for action in self.actions]
-        self.module_dict = self.init_action_module_dict()
+        self.action_fn_dict = self.init_actions()
 
         # Add backtracking to all modules
-        for action in self.module_dict:
-            self.module_dict[action] = assert_transform_module(self.module_dict[action], functools.partial(backtrack_handler, max_backtracks=max_tries))
+        for action in self.action_fn_dict:
+            if isinstance(self.action_fn_dict[action], dspy.Module):
+                self.action_fn_dict[action] = assert_transform_module(self.action_fn_dict[action], functools.partial(backtrack_handler, max_backtracks=max_tries))
         
         # Prioritize the optimizer set in the llm config over the one set in the player config
         if "optimizer" in lm:
@@ -72,20 +73,20 @@ class Player(ABC):
 
         for action in self.actions:
             # Option to either only list the action names in the config or provide the full action object with optimization details
-            if action.name not in self.module_dict:
+            if action.name not in self.action_fn_dict:
                 raise ValueError(f"Action {action.name} not found in module_dict")
             
             # Load the module from checkpoint if provided for the action (does not preclude further optimization)
-            if action.name in lm.get("module_paths", {}):
+            if action.name in lm.get("module_paths", {}) and isinstance(self.action_fn_dict[action.name], dspy.Module):
                 path = lm["module_paths"][action.name]
-                self.module_dict[action.name] = load_checkpoint(
-                    module=self.module_dict[action.name],
+                self.action_fn_dict[action.name] = load_checkpoint(
+                    module=self.action_fn_dict[action.name],
                     module_path=path
                 )
                 logger.info(f"Loaded module from {path}")
 
             # prioritize the optimize flag in the lm config over the one in the action config
-            if lm.get("optimize", action.optimize):
+            if lm.get("optimize", action.optimize) and isinstance(self.action_fn_dict[action.name], dspy.Module):
                 if not action.dataset:
                     raise ValueError("A dataset must be passed for players with 'optimize = True'")
                 
@@ -102,10 +103,10 @@ class Player(ABC):
 
                     try:
                         cached_module = load_checkpoint(
-                            module=self.module_dict[action.name],
+                            module=self.action_fn_dict[action.name],
                             module_path=cached_module_path
                         )
-                        self.module_dict[action.name] = cached_module
+                        self.action_fn_dict[action.name] = cached_module
                         logger.info(f"Loaded cached module for Action: {action.name}")
                         continue
                     except FileNotFoundError:
@@ -120,26 +121,36 @@ class Player(ABC):
                 dspy.configure(trace=[])
                 logger.info(f"Optimizing Player: {self.id} for Action: {action.name} with Optimzer: {opt}...")
                 with dspy.context(lm=self.llm_model):
-                    self.module_dict[action.name] = opt.compile(self.module_dict[action.name], trainset=dataset.get_dataset(), **compilation_args)
+                    self.action_fn_dict[action.name] = opt.compile(self.action_fn_dict[action.name], trainset=dataset.get_dataset(), **compilation_args)
 
                 if use_cache:
                     save_checkpoint(
-                        module=self.module_dict[action.name],
+                        module=self.action_fn_dict[action.name],
                         module_path=cached_module_path
                     )
                     logger.info(f"Cached compiled module for Action: {action.name}")
 
     
+    def act(self, action: Action) -> Move:
+        if isinstance(self.action_fn_dict[action.name], dspy.Module):
+            with dspy.context(lm=self.llm_model):
+                trace = self.action_fn_dict[action.name](**action.inputs)
+            output = trace.items()[-1][1]
+            return Move(value=output, trace=trace)
+        else:
+            output = self.action_fn_dict[action.name](**action.inputs)
+            return Move(value=output, trace=None)
+
     @abstractmethod
-    def init_action_module_dict(self) -> Dict[str, dspy.Module]:
+    def init_actions(self) -> Dict[str, Callable]:
         """
-        Abstract method for getting the action-module dictionary for the Player
+        Abstract method for getting the action-function dictionary for the Player
         
         Parameters:
         None
         
         Returns:
-        dict: The action-module dictionary
+        dict: The action-function dictionary
         """
         raise NotImplementedError
 
