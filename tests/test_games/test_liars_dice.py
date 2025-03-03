@@ -1,7 +1,6 @@
 import pytest
 from zero_sum_eval.games.liars_dice.liars_dice_game import LiarsDiceGame
-from zero_sum_eval.games.liars_dice.liars_dice_player import LiarsDicePlayer, PLAYER_0_KEY, PLAYER_1_KEY
-from zero_sum_eval.player import Move
+from zero_sum_eval.games.liars_dice.liars_dice_player import PLAYER_0_KEY, PLAYER_1_KEY
 from zero_sum_eval.game_state import InvalidMoveError
 
 class MockTrace:
@@ -118,7 +117,7 @@ def test_calling_liar_incorrect(game):
 
 def test_player_inputs(game):
     """Test that player inputs are correctly formatted"""
-    inputs = game.player_inputs()
+    inputs = game.get_next_action().inputs
     assert 'dice_roll' in inputs
     assert 'current_bid' in inputs
     assert 'history' in inputs
@@ -128,9 +127,9 @@ def test_player_inputs(game):
 
 def test_alternating_turns(game):
     """Test that players alternate turns correctly"""
-    assert game.get_next_action().player.player_key == PLAYER_0_KEY
+    assert game.get_next_action().player_key == PLAYER_0_KEY
     game.update_game(MockMove("[Bid] 1 2"))
-    assert game.get_next_action().player.player_key == PLAYER_1_KEY
+    assert game.get_next_action().player_key == PLAYER_1_KEY
 
 def test_game_display(game):
     """Test the game display string"""

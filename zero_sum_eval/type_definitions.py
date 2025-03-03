@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Optional
 from dspy import Prediction
     
 @dataclass
@@ -17,3 +17,17 @@ class ActionConfig:
 class Move:
     value: str
     trace: Optional[Prediction] = None
+
+@dataclass
+class Action:
+    """
+    Action class for a player to take in a game
+    
+    Args:
+        name: The name of the action
+        player_key: The key of the player taking the action
+        inputs: The inputs to the function implementing the action
+    """
+    name: str
+    player_key: str
+    inputs: Dict

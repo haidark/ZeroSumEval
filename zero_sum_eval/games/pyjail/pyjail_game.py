@@ -82,11 +82,11 @@ class PyJailGame(GameState):
 
     def get_next_action(self):
         if self.pyjail_code is None:
-            return Action("GeneratePyJail", player=self.players["defender"])
+            return Action(name="GeneratePyJail", player_key="defender", inputs={})
         elif self.defender_solution is None:
-            return Action("SolvePyJail", player=self.players["defender"])
+            return Action(name="SolvePyJail", player_key="defender", inputs={'pyjail_code': self.pyjail_code, 'history': "\n".join(self.history)})
         elif self.attacker_solution is None:
-            return Action("SolvePyJail", player=self.players["attacker"])
+            return Action(name="SolvePyJail", player_key="attacker", inputs={'pyjail_code': self.pyjail_code, 'history': "\n".join(self.history)})
 
     def player_definitions(self):
         return [
@@ -148,16 +148,6 @@ class PyJailGame(GameState):
         # Get the captured stdout output
         output = new_stdout.getvalue()
         return output + str(result)
-
-    def player_inputs(self) -> Dict[str, str]:
-        action = self.get_next_action()
-        if action.name == "GeneratePyJail":
-            return {}
-        elif action.name == "SolvePyJail":
-            return {
-                "pyjail_code": self.pyjail_code if self.show_source_code else "[Source code hidden]",
-                "history": "\n".join(self.history)
-            }
 
     def display(self) -> str:
         display_str = f"Defender Code: {'Set' if self.pyjail_code else 'Not set'}\n"

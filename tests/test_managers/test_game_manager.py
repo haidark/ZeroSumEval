@@ -58,7 +58,6 @@ def test_game_manager_start(mock_writer, mock_context, mock_config, mock_game):
     assert result == mock_game
     assert mock_game.update_game.called
     assert mock_game.get_next_action.called
-    assert mock_game.player_inputs.called
     assert mock_game.export.called
 
 @patch('dspy.context')

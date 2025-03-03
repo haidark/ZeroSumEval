@@ -71,7 +71,7 @@ def test_debate_game_flow(debate_game):
     # Test that first action is OpeningStatement by FOR player
     action = debate_game.get_next_action()
     assert action.name == "OpeningStatement"
-    assert action.player.player_key == FOR_KEY
+    assert action.player_key == FOR_KEY
 
 def test_debate_game_over(debate_game, mock_move):
     # Calculate total moves needed:

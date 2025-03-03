@@ -87,7 +87,14 @@ class ChessCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("chess", "chess_player")
 class ChessPlayer(Player):
-    def init_action_module_dict(self):
+    def init_actions(self):
         return {
             "MakeMove": ChessCoT()
+        }
+    
+@PLAYER_REGISTRY.register("chess", "human_player")
+class HumanPlayer(Player):
+    def init_actions(self):
+        return {
+            "MakeMove": lambda **args: input("Enter a move: ")
         }

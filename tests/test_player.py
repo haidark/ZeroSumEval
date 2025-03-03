@@ -1,23 +1,22 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import dspy
-from typing import Dict
-from zero_sum_eval.player import Player, PlayerDefinition, HumanPlayer
-from zero_sum_eval.type_definitions import ActionConfig
+from zero_sum_eval.player import Player, PlayerDefinition
+from zero_sum_eval.type_definitions import ActionConfig, Action
 
 class SimpleTestPlayer(Player):
     """A simple concrete implementation of Player for testing"""
-    def init_action_module_dict(self) -> Dict[str, dspy.Module]:
+    def init_actions(self):
         class TestModule(dspy.Module):
-            def forward(self, input_text):
-                return {"output": "test response"}
+            def forward(self):
+                return dspy.Prediction(extra="extra dspy output", output="dspy output")
         
         return {action.name: TestModule() for action in self.actions}
 
-class TestHumanPlayer(HumanPlayer):
-    """Test implementation of HumanPlayer"""
-    def init_action_module_dict(self) -> Dict[str, dspy.Module]:
-        return {action.name: MagicMock() for action in self.actions}
+class TestNonDspyPlayer(Player):
+    """Test implementation of Player with actions that are not dspy modules"""
+    def init_actions(self):
+        return {action.name: lambda **args: action.name for action in self.actions}
 
 @pytest.fixture
 def basic_lm_config():
@@ -46,7 +45,7 @@ def test_player_initialization(basic_lm_config, basic_actions):
     assert player.player_key == "test"
     assert len(player.actions) == 2
     assert player.action_names == ["test_action1", "test_action2"]
-    assert all(action in player.module_dict for action in player.action_names)
+    assert all(action in player.action_fn_dict for action in player.action_names)
 
 def test_player_initialization_with_string_actions():
     actions = ["move", "evaluate"]
@@ -125,18 +124,28 @@ def test_module_paths_loading(basic_lm_config):
         
         mock_load.assert_called_once()
 
-def test_human_player():
-    player = TestHumanPlayer(
-        id="human",
+def test_dspy_player(basic_lm_config):
+    player = SimpleTestPlayer(
+        id="test_player",
+        actions=["test_action"],
+        lm=basic_lm_config,
+        player_key="test"
+    )
+
+    move = player.act(Action(name="test_action", player_key="test", inputs={}))
+    assert move.value == "dspy output"
+    assert move.trace.toDict() == {"extra": "extra dspy output", "output": "dspy output"}
+
+def test_non_dspy_player():
+    player = TestNonDspyPlayer(
+        id="non_dspy",
         actions=["move"],
         lm={"model": "gpt-3.5-turbo", "optimize": False},
-        player_key="human"
+        player_key="non_dspy"
     )
-    
-    # Mock input function
-    with patch('builtins.input', return_value="test move"):
-        move = player.make_move("game state")
-        assert move == "test move"
+
+    move = player.act(Action(name="move", player_key="non_dspy", inputs={}))
+    assert move.value == "move"
 
 def test_cached_module_loading(basic_lm_config):
     # Modify lm_config to enable optimization

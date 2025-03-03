@@ -52,7 +52,7 @@ class SolvePyjailCoT(dspy.Module):
 
 @PLAYER_REGISTRY.register("pyjail", "pyjail_player")
 class PyJailPlayer(Player):
-    def init_action_module_dict(self):
+    def init_actions(self):
         return {
             "GeneratePyJail": GeneratePyjailCoT(),
             "SolvePyJail": SolvePyjailCoT()

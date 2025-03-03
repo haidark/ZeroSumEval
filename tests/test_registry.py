@@ -114,7 +114,7 @@ def test_player_registry():
     
     @PLAYER_REGISTRY.register("test_game", "test_player")
     class TestGamePlayer(Player):
-        def init_action_module_dict(self): return {}
+        def init_actions(self): return {}
     
     # Test registration
     assert "test_game" in PLAYER_REGISTRY

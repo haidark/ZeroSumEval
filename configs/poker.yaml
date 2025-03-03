@@ -1,6 +1,5 @@
-logging:
-  output_dir: ../output/poker_game
 manager:
+  output_dir: ../output/poker_game
   args:
     max_player_attempts: 5
     max_rounds: 100

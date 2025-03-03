@@ -66,7 +66,7 @@ class PokerMoveModule(dspy.Module):
 
 @PLAYER_REGISTRY.register("poker", "poker_player")
 class PokerPlayer(Player):    
-    def init_action_module_dict(self) -> Dict[str, dspy.Module]:
+    def init_actions(self) -> Dict[str, dspy.Module]:
         """Initialize the action modules for the player"""
         return {
             "MakeMove": PokerMoveModule()
