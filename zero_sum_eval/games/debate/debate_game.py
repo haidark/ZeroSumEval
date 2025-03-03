@@ -124,9 +124,11 @@ class DebateGame(GameState):
             return "Tie"
 
     def get_next_action(self) -> Action:
+        side = FOR_KEY if len(self.history) % 2 == 0 else AGAINST_KEY
+        
         inputs = {
             "topic": self.topic,
-            "side": FOR_KEY if len(self.history) % 2 == 0 else AGAINST_KEY,
+            "side": side,
         }
         
         # The first 2 moves are opening statements (no history)
