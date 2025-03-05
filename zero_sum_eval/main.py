@@ -79,15 +79,15 @@ def config_from_args(args):
             ]
         }
     else:
+        game_args = dict([arg.split("=") for arg in args.game_kwargs])
         config = {
-            "game": {"name": args.game, "args": {"players": {}}},
+            "game": {"name": args.game, "args": {"players": {}, **game_args}},
             "manager": {
                 "max_player_attempts": args.max_player_attempts,
                 "max_rounds": args.max_rounds,
                 "output_dir": args.output_dir,
             },
         }
-        game_args = dict([arg.split("=") for arg in args.game_kwargs])
         role_model_pairs = [model.split("=") for model in args.players]
         for role, model in role_model_pairs:
             config["game"]["args"]["players"][role] = {
@@ -140,7 +140,12 @@ def cli_run():
     parser = setup_parser()
     args = parser.parse_args()
 
-    if args.game is None and not args.calculate_elos:
+    if args.config:
+        config = read_config(args.config)
+        if config["config_type"] == "pool":
+            args.pool = True
+
+    if args.game is None and not args.calculate_elos and not args.config:
         parser.print_help()
         return
 
@@ -166,10 +171,10 @@ def cli_run():
         if args.pool:
             args.output_dir += "_pool"
 
-    if args.config:
-        config = read_config(args.config)
-    else:
+    # If no config is provided, we need to create one from the arguments
+    if not args.config:
         config = config_from_args(args)
+
     logger.info(f"Running {args.game} with config:\n{config}")
 
     # Run matches if pool mode is enabled
