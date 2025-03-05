@@ -48,7 +48,7 @@ analysis = [
 ]
 
 [project.scripts]
-zse = "zero_sum_eval.main:cli_run"
+zseval = "zero_sum_eval.main:cli_run"
 
 [project.urls]
 "Homepage" = "https://github.com/haidark/ZeroSumEval/"
