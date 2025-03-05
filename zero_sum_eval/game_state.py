@@ -5,6 +5,7 @@ import logging
 
 from abc import ABC, abstractmethod
 from copy import copy
+import time
 from typing import Dict, List
 
 from zero_sum_eval.type_definitions import ActionConfig, Action
@@ -141,15 +142,16 @@ class GameState(ABC):
         def move_logging_wrapper(fn):
             def wrapped(self, move: Move):
                 try:
+                    start_time = time.time()
                     new_state = fn(self, move)
                     if not self.log_moves:
                         return new_state
-                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None}
+                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "time": time.time() - start_time}
                     return new_state
                 except InvalidMoveError as e:
                     if not hasattr(self, '_log'):
                         self._log = {}
-                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "error": str(e)})
+                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "error": str(e), "time": time.time() - start_time})
                     raise
             return wrapped
         
