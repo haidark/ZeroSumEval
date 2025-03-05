@@ -1,9 +1,9 @@
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from copy import copy
 from glob import glob
 import json
 from logging import getLogger
+from math import inf
 import os
 import time
 from typing import Dict, List
@@ -128,7 +128,9 @@ class GamePoolManager:
         matchup_string = matchup_string[:-4]
         self.logger.info(f"Matchup: {matchup_string}")
 
-        final_game_state = game_manager.start(game_state)
+        results = game_manager.start(game_state)
+        final_game_state = results["game_state"]
+        player_attempts = results["player_attempts"]
 
         winner_role = max(final_game_state.get_scores().items(), key=lambda x: x[1])[0]
 
@@ -142,7 +144,8 @@ class GamePoolManager:
             lm, role = player.id.split("||")
             scores[lm] = {
                 "score": final_game_state.get_scores()[role],
-                "role": role
+                "role": role,
+                "attempts": player_attempts[player]
             }
 
         with open(os.path.join(turn_dir, "scores.json"), mode='w', newline='') as f:
@@ -152,8 +155,6 @@ class GamePoolManager:
 
     def start(self):
         self.logger.info("Let the games begin!")
-
-        os.makedirs(os.path.join(self.output_dir, "leaderboard_history"), exist_ok=True)
 
         with ThreadPoolExecutor(max_workers=self.max_concurrent_matches) as executor:
             future_to_match = {}
@@ -171,7 +172,8 @@ class GamePoolManager:
                         f.cancel()
                     raise e
                 
-                scores = {lm: result["score"] for lm, result in results.items()}
+                # If a player has reached the max number of attempts, they are assigned a score of -inf (always lose)
+                scores = {lm: result["score"] if result["attempts"] < self.max_player_attempts else -inf for lm, result in results.items()}
                 best_score = max(scores.items(), key=lambda x: x[1])[1]
                 best_lms = [lm for lm, score in scores.items() if score == best_score]
 

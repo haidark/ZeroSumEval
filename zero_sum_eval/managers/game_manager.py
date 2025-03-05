@@ -26,7 +26,7 @@ class GameManager:
         self.turns_log_file = os.path.join(output_dir, "turns.jsonl")
         self.player_attempts = defaultdict(int)
 
-    def start(self, game_state: GameState) -> GameState:
+    def start(self, game_state: GameState) -> Dict:
         """
         Start the game with the given state.
 
@@ -34,7 +34,7 @@ class GameManager:
             game_state (GameState): The initial state of the game.
 
         Returns:
-            GameState: The final state of the game after the game loop ends.
+            Dict: A dictionary containing the final game state, the list of turns, and the player attempts.
         """
         logger = getLogger()
         turns: List[Dict] = []
@@ -68,7 +68,11 @@ class GameManager:
             
         self._log_game_turns(turns)
         
-        return game_state
+        return {
+            "game_state": game_state,
+            "turns": turns,
+            "player_attempts": self.player_attempts,
+        }
 
     def _log_game_turns(self, turns):
         with jsonlines.open(self.turns_log_file, "w") as f:

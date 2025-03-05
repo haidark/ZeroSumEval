@@ -1,4 +1,5 @@
 import pytest
+import time
 from unittest.mock import MagicMock
 from zero_sum_eval.game_state import GameState, Action, PlayerDefinition
 from zero_sum_eval.player import Player
@@ -30,16 +31,15 @@ class TestGameState(GameState):
         return {"player1": 0, "player2": 0}
     
     def update_game(self, move):
+        # simulate an update taking time to test time logging
+        time.sleep(0.001)
         pass
     
     def is_over(self):
         return False
     
     def get_next_action(self):
-        return Action("test_action", self.players["player1"])
-    
-    def player_inputs(self):
-        return {}
+        return Action(name="test_action", player_key="player1", inputs={})
     
     def player_definitions(self):
         return [
@@ -76,9 +76,21 @@ def test_game_state_logging(mock_player):
     # Test that moves are logged
     class TestMove:
         value = "test_move"
-        trace = type('obj', (object,), {'toDict': lambda self: {}})()
+        class MockTrace:
+            def toDict(self):
+                return {}
+        trace = MockTrace()
     
     game.update_game(TestMove())
     exported = game.export()
     assert "last_move" in exported
-    assert exported["last_move"] == "test_move" 
+    assert "last_trace" in exported
+    assert "next_action" in exported
+    assert "player_key" in exported
+    assert "time" in exported
+    assert exported["last_move"] == "test_move"
+    assert exported["last_trace"] == {}
+    assert exported["next_action"] == "test_action"
+    assert exported["player_key"] == "player1"
+    assert isinstance(exported["time"], float)
+    assert exported["time"] > 0

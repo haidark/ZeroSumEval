@@ -5,7 +5,7 @@ from glob import glob
 
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
+
 from tqdm import tqdm
 
 
@@ -65,6 +65,11 @@ def compute_mle_elo(
     X = X[:cur_row]
     Y = Y[:cur_row]
 
+    try:
+        from sklearn.linear_model import LogisticRegression
+    except ImportError:
+        raise ImportError("scikit-learn is required to calculate ELOs. Please install it with `pip install zero-sum-eval[analysis]`.")
+
     lr = LogisticRegression(fit_intercept=False, penalty=None, tol=1e-6)
     lr.fit(X, Y, sample_weight=sample_weights)
     elo_scores = SCALE * lr.coef_[0] + INIT_RATING
@@ -88,41 +93,33 @@ def get_bootstrap_result(battles, func_compute_elo, num_round):
     return df[df.median().sort_values(ascending=False).index]
 
 
-def convert_matches_to_df(args: argparse.Namespace) -> pd.DataFrame:
-
-    score_to_result = {
-        0.0: 'model_b',
-        0.5: 'tie',
-        1.0: 'model_a',
-    }
-
-    def standardize_model_names(model: str) -> str:
-        for opt in ['default', 'bsfs', 'bsfsrs', 'mipro']:
-            model = model.replace(f'optimized-{opt}', opt)
-            
-        return model
-    
+def convert_matches_to_df(logs_path: str, max_player_attempts: int) -> pd.DataFrame:
     matches = []
-    for match_results_path in glob(f'{args.logs_path}/**/matches/*/results.json', recursive=True):
+    for match_results_path in glob(f'{logs_path}/**/matches/*/scores.json', recursive=True):
         with open(match_results_path) as f:
-            result = json.load(f)
-        models = list(result.keys())
-        assert len(models) == 2
+            scores = json.load(f)
+        
+        # TODO: just uses first two models of each matchup for now, probably not the correct/best way to do this for multi-player games
+        models = list(scores.keys())[:2]
+
+        for model in models:
+            if scores[model]['attempts'] >= max_player_attempts:
+                scores[model]['score'] = -math.inf
+
         matches.append([
-            standardize_model_names(models[0]),
-            standardize_model_names(models[1]),
-            score_to_result[round(result[models[0]]['result'], 1)],
+            models[0],
+            models[1],
+            "model_a" if scores[models[0]]['score'] > scores[models[1]]['score'] else "model_b",
         ])
 
     matches_df = pd.DataFrame(matches, columns=['model_a', 'model_b', 'winner'])
     return matches_df
 
 
-def main(args: argparse.Namespace) -> None:
-    match_df = convert_matches_to_df(args)
-
+def calculate_elos(logs_path: str, bootstrap_rounds: int, max_player_attempts: int) -> pd.DataFrame:
+    match_df = convert_matches_to_df(logs_path, max_player_attempts)
     np.random.seed(1)
-    bootstrap_elo_lu = get_bootstrap_result(match_df, compute_mle_elo, args.bootstrap_rounds)
+    bootstrap_elo_lu = get_bootstrap_result(match_df, compute_mle_elo, bootstrap_rounds)
 
     bars = pd.DataFrame(dict(
         lower = bootstrap_elo_lu.quantile(.025),
@@ -130,7 +127,7 @@ def main(args: argparse.Namespace) -> None:
         upper = bootstrap_elo_lu.quantile(.975),
     )).reset_index(names="model").sort_values("rating", ascending=False).round(decimals=2)
     
-    print(bars)
+    return bars
 
     
 if __name__ == "__main__":
@@ -138,6 +135,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--logs-path", "-p", help="Path to the match logs file")
     parser.add_argument("--bootstrap-rounds", "-b", help="Number of rounds to bootstrap for confidence intervals.", type=int, default=100)
+    parser.add_argument("--max-player-attempts", "-m", help="Maximum number of player attempts.", type=int, default=5)
     args = parser.parse_args()
 
-    main(args)
+    elos = calculate_elos(logs_path=args.logs_path, bootstrap_rounds=args.bootstrap_rounds, max_player_attempts=args.max_player_attempts)
+    print(elos)

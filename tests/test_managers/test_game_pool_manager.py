@@ -14,7 +14,9 @@ class DummyPlayerDef:
 @pytest.fixture
 def tmp_output_dir(tmp_path):
     """Fixture to provide a temporary output directory."""
-    return str(tmp_path / "pool_output")
+    output_dir = tmp_path / "pool_output"
+    output_dir.mkdir(parents=True, exist_ok=True)  # Create the directory
+    return str(output_dir)
 
 @pytest.fixture
 def default_llm_configs():
@@ -86,6 +88,7 @@ def test_start(tmp_output_dir, default_llm_configs):
     manager = GamePoolManager(
         max_matches=2,
         max_concurrent_matches=1,
+        max_player_attempts=5,
         output_dir=tmp_output_dir,
         game="chess",
         game_args={"players": {}},
@@ -101,15 +104,15 @@ def test_start(tmp_output_dir, default_llm_configs):
     # Define two simulated match results.
     # In the first match, gpt-4o wins.
     result1 = {
-        "gpt-4o": {"score": 10, "role": "white"},
-        "claude-3-5-sonnet": {"score": 5, "role": "black"},
-        "mistral-large": {"score": 5, "role": "black"},
+        "gpt-4o": {"score": 10, "role": "white", "attempts": 0},
+        "claude-3-5-sonnet": {"score": 5, "role": "black", "attempts": 0},
+        "mistral-large": {"score": 5, "role": "black", "attempts": 0},
     }
     # In the second match, all three tie.
     result2 = {
-        "gpt-4o": {"score": 3, "role": "white"},
-        "claude-3-5-sonnet": {"score": 3, "role": "black"},
-        "mistral-large": {"score": 0, "role": "black"},
+        "gpt-4o": {"score": 3, "role": "white", "attempts": 0},
+        "claude-3-5-sonnet": {"score": 3, "role": "black", "attempts": 0},
+        "mistral-large": {"score": 0, "role": "black", "attempts": 0},
     }
 
     # Patch run_match so that the two matches return our predetermined results.
@@ -132,3 +135,41 @@ def test_start(tmp_output_dir, default_llm_configs):
     with open(wdl_path, "r") as f:
         file_wdl = json.load(f)
     assert file_wdl == expected_wdl
+
+def test_start_with_max_player_attempts(tmp_output_dir, default_llm_configs):
+    """
+    Test the start method with max_player_attempts set to 5.
+    """
+    manager = GamePoolManager(
+        max_matches=1,
+        max_concurrent_matches=1,
+        max_player_attempts=5,
+        output_dir=tmp_output_dir,
+        game="chess",
+        game_args={"players": {}},
+        llm_configs=default_llm_configs,
+    )
+    # Reset llm_wdl to known initial state for our three models.
+    manager.llm_wdl = {
+        "gpt-4o": {"wins": 0, "draws": 0, "losses": 0},
+        "claude-3-5-sonnet": {"wins": 0, "draws": 0, "losses": 0},
+        "mistral-large": {"wins": 0, "draws": 0, "losses": 0},
+    }
+    # gpt-4o scores highest, but uses all 5 attempts. Therefore, it loses.
+    # claude-3-5-sonnet and mistral-large score the same, so they draw.
+    result = {
+        "gpt-4o": {"score": 10, "role": "white", "attempts": 5},
+        "claude-3-5-sonnet": {"score": 5, "role": "black", "attempts": 0},
+        "mistral-large": {"score": 5, "role": "black", "attempts": 0},
+    }
+
+    # Patch run_match so that the two matches return our predetermined results.
+    with patch.object(manager, "run_match", side_effect=[result]) as mock_run_match:
+        final_wdl = manager.start()
+
+    expected_wdl = {
+        "gpt-4o": {"wins": 0, "draws": 0, "losses": 1},
+        "claude-3-5-sonnet": {"wins": 0, "draws": 1, "losses": 0},
+        "mistral-large": {"wins": 0, "draws": 1, "losses": 0},
+    }
+    assert final_wdl == expected_wdl

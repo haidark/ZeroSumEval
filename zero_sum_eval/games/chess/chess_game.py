@@ -102,7 +102,6 @@ class ChessGame(GameState):
         return {
             'message': self.message,
             'board_state': self.board.fen(),
-            'next_action': self.get_next_action().name,
             'history': self.history,
             'scores': self.get_scores()
         }
