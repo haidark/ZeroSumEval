@@ -140,19 +140,27 @@ class GameState(ABC):
         super().__init_subclass__()
         
         def move_logging_wrapper(fn):
-            def wrapped(self, move: Move):
+            def wrapped(self: GameState, move: Move):
+                next_action = self.get_next_action()
+                _log = {
+                    "last_move": move.value,
+                    "last_trace": move.trace.toDict() if move.trace else None,
+                    "next_action": next_action.name,
+                    "player_key": next_action.player_key,
+                }
                 try:
                     start_time = time.time()
                     new_state = fn(self, move)
                     if not self.log_moves:
                         return new_state
-                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "time": time.time() - start_time}
+                    _log["time"] = time.time() - start_time
+                    self._log = _log
                     return new_state
                 except InvalidMoveError as e:
-                    if not hasattr(self, '_log'):
-                        self._log = {}
-                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "error": str(e), "time": time.time() - start_time})
-                    raise
+                    _log["error"] = str(e)
+                    _log["time"] = time.time() - start_time
+                    self._log = _log
+                    raise e
             return wrapped
         
         cls.update_game = move_logging_wrapper(cls.update_game)
