@@ -43,6 +43,10 @@ dev = [
     "pytest-runner>=6.0.0"
 ]
 
+analysis = [
+    "scikit-learn>=1.0.0",
+]
+
 [project.scripts]
 zse = "zero_sum_eval.main:cli_run"
 
