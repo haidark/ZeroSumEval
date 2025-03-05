@@ -61,7 +61,7 @@ class MakeBidModule(dspy.Module):
 
 @PLAYER_REGISTRY.register("liars_dice", "liars_dice_player")
 class LiarsDicePlayer(Player):
-    def init_action_module_dict(self):
+    def init_actions(self):
         return {
             "MakeBid": MakeBidModule()
         }

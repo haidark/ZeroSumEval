@@ -40,7 +40,7 @@ class LiarsDiceGame(GameState):
             )
             
             # Determine winner
-            caller = self.get_next_action().player.player_key
+            caller = self.get_next_action().player_key
             bidder = PLAYER_1_KEY if caller == PLAYER_0_KEY else PLAYER_0_KEY
             
             if total < self.current_bid[0]:
@@ -87,19 +87,16 @@ class LiarsDiceGame(GameState):
 
     def get_next_action(self) -> Action:
         """Get the next player's action"""
+        player_key = PLAYER_0_KEY if len(self.history) % 2 == 0 else PLAYER_1_KEY
         return Action(
             "MakeBid",
-            self.players[PLAYER_0_KEY if len(self.history) % 2 == 0 else PLAYER_1_KEY]
+            player_key=player_key,
+            inputs={
+                'dice_roll': str(self.dice[player_key]),
+                'current_bid': f"{self.current_bid[0]} {self.current_bid[1]}" if self.current_bid[0] > 0 else "0 0",
+                'history': "\n".join(self.history)
+            }
         )
-
-    def player_inputs(self) -> Dict[str, str]:
-        """Get the inputs for the next player's turn"""
-        player_key = self.get_next_action().player.player_key
-        return {
-            'dice_roll': str(self.dice[player_key]),
-            'current_bid': f"{self.current_bid[0]} {self.current_bid[1]}" if self.current_bid[0] > 0 else "0 0",
-            'history': "\n".join(self.history)
-        }
 
     @classmethod
     def player_definitions(cls) -> List[PlayerDefinition]:

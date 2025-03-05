@@ -13,12 +13,12 @@ def mock_player():
             self.id = kwargs.get('id', 'test_id')
             self.player_key = kwargs.get('player_key', 'player1')
             # Initialize module_dict from init_action_module_dict
-            self.module_dict = self.init_action_module_dict()
+            self.action_fn_dict = self.init_actions()
             # Set other required attributes
             self.actions = kwargs.get('actions', [])
             self.llm_model = MagicMock()
             
-        def init_action_module_dict(self):
+        def init_actions(self):
             return {"test_action": MagicMock()}
 
     # Register the mock player

@@ -2,7 +2,8 @@ import chess
 
 from zero_sum_eval.games.chess.chess_player import ChessPlayer, WHITE_KEY, BLACK_KEY
 from zero_sum_eval.player import Move
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
+from zero_sum_eval.game_state import GameState, InvalidMoveError, PlayerDefinition
+from zero_sum_eval.type_definitions import Action
 from zero_sum_eval.registry import GAME_REGISTRY
 from typing import Dict, List
 
@@ -64,7 +65,12 @@ class ChessGame(GameState):
         return self.board.is_game_over() or not self.board.is_valid()
 
     def get_next_action(self) -> Action:
-        return Action("MakeMove", self.players[WHITE_KEY]) if self.board.turn else Action("MakeMove", self.players[BLACK_KEY])
+        inputs = {
+            'board_state': self.board.fen(),
+            'role': self.message,
+            'history': self.formatted_move_history()
+        }
+        return Action(name="MakeMove", player_key=WHITE_KEY if self.board.turn else BLACK_KEY, inputs=inputs)
 
     def formatted_move_history(self) -> str:
         history = self.history
@@ -85,13 +91,6 @@ class ChessGame(GameState):
             PlayerDefinition(player_key=WHITE_KEY, actions=["MakeMove"], default_player_class=ChessPlayer),
             PlayerDefinition(player_key=BLACK_KEY, actions=["MakeMove"], default_player_class=ChessPlayer)
         ]
-
-    def player_inputs(self) -> Dict[str, str]:
-        return {
-            'board_state': self.board.fen(),
-            'role': self.message,
-            'history': self.formatted_move_history()
-        }
     
     def display(self) -> None:
         display_str = f"{self.message}\n"
