@@ -55,7 +55,7 @@ def test_game_manager_start(mock_writer, mock_context, mock_config, mock_game):
     result = manager.start(mock_game)
     
     # Verify game was played correctly
-    assert result == mock_game
+    assert result["game_state"] == mock_game
     assert mock_game.update_game.called
     assert mock_game.get_next_action.called
     assert mock_game.export.called
@@ -88,7 +88,7 @@ def test_game_manager_turn_handling(mock_writer, mock_context, mock_config, mock
     result = manager.start(mock_game)
     
     # Verify turn was handled correctly
-    next_action = result.get_next_action()
+    next_action = result["game_state"].get_next_action()
     assert next_action == mock_action
     assert next_action.name == "test_action"
     assert next_action.player.player_key == "test_player"
