@@ -76,6 +76,7 @@ def test_game_state_logging(mock_player):
     # Test that moves are logged
     class TestMove:
         value = "test_move"
+        time = 0.1
         class MockTrace:
             def toDict(self):
                 return {}

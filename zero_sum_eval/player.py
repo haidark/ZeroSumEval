@@ -4,7 +4,7 @@ import logging
 import functools
 from dataclasses import dataclass
 import dspy
-
+import time
 from dspy.primitives import assert_transform_module, backtrack_handler
 from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
 from zero_sum_eval.type_definitions import Action, ActionConfig, Move
@@ -133,13 +133,15 @@ class Player(ABC):
     
     def act(self, action: Action) -> Move:
         if isinstance(self.action_fn_dict[action.name], dspy.Module):
+            start_time = time.time()
             with dspy.context(lm=self.llm_model):
                 trace = self.action_fn_dict[action.name](**action.inputs)
             output = trace.items()[-1][1]
-            return Move(value=output, trace=trace)
+            return Move(value=output, trace=trace, time=time.time() - start_time)
         else:
+            start_time = time.time()
             output = self.action_fn_dict[action.name](**action.inputs)
-            return Move(value=output, trace=None)
+            return Move(value=output, trace=None, time=time.time() - start_time)
 
     @abstractmethod
     def init_actions(self) -> Dict[str, Callable]:

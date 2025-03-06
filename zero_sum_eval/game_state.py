@@ -145,6 +145,7 @@ class GameState(ABC):
                 _log = {
                     "last_move": move.value,
                     "last_trace": move.trace.toDict() if move.trace else None,
+                    "last_move_time": move.time,
                     "next_action": next_action.name,
                     "player_key": next_action.player_key,
                 }
@@ -168,9 +169,8 @@ class GameState(ABC):
         def export_logging_wrapper(fn):
             def wrapped(self):
                 new_dict = fn(self)
-                if not self.log_moves:
-                    return new_dict
-                new_dict.update(self._log)
+                if self.log_moves:
+                    new_dict.update(self._log)
                 return new_dict
             return wrapped
         
