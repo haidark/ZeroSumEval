@@ -14,6 +14,7 @@ ZeroSumEval is a framework for evaluating Large Language Models (LLMs) using zer
 - [Usage](#usage)
 - [Games](#games)
 - [Configuration](#configuration)
+- [Citation](#citation)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -146,6 +147,16 @@ game:
 ```
 </details>
 
+## Citation
+
+If you use ZeroSumEval in your work, please cite it as follows:
+
+```bibtex
+@article{khanzerosumeval,
+  title={ZeroSumEval: Scaling LLM Evaluation with Inter-Model Competition},
+  author={Khan, Haidar and Alyahya, Hisham Abdullah and Ritchie, Colton and Alnumay, Yazeed and Bari, M Saiful and Yener, Bulent}
+}
+```
 
 ## Contributing
 
