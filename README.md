@@ -52,6 +52,11 @@ The project is organized as follows:
    pip install zero-sum-eval
    ```
 
+2. test installation:
+   ```
+   zseval --help
+   ```
+
 ## Usage
 
 Its possible to run a single game or a series of matches with or without a detailed config file.
@@ -60,24 +65,24 @@ Its possible to run a single game or a series of matches with or without a detai
 
 single game:
 ```
-python -m zero_sum_eval.main -g chess -p "white=openai/gpt-4o" "black=openai/gpt-4o"
+zseval -g chess -p "white=openai/gpt-4o" "black=openai/gpt-4o"
 ```
 
 pool of matches:
 ```
-python -m zero_sum_eval.main --pool -g chess -p "white=openai/gpt-4o" "black=openai/gpt-4o"
+zseval --pool -g chess -p "white=openai/gpt-4o" "black=openai/gpt-4o"
 ```
 
 ### Running from a config file
 
 single game:
 ```
-python -m zero_sum_eval.main -c configs/chess.yaml
+zseval -c configs/chess.yaml
 ```
 
 pool of matches:
 ```
-python -m zero_sum_eval.main --pool -c configs/pool/chess.yaml
+zseval --pool -c configs/pool/chess.yaml
 ```
 
 ## Games

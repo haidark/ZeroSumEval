@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -44,7 +44,7 @@ dev = [
 ]
 
 [project.scripts]
-zse = "zero_sum_eval.main:cli_run"
+zseval = "zero_sum_eval.main:cli_run"
 
 [project.urls]
 "Homepage" = "https://github.com/haidark/ZeroSumEval/"
@@ -55,5 +55,8 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "--cov=zero_sum_eval"
 
-[tool.poetry.scripts]
-zero-sum-eval = "zero_sum_eval.main:cli_run" 
+
+
+[tool.setuptools]
+# Explicitly specify which packages to include
+packages = ["zero_sum_eval"] 
