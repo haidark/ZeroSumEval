@@ -163,7 +163,7 @@ def cli_run():
             bootstrap_rounds=args.bootstrap_rounds,
             max_player_attempts=args.max_player_attempts
         )
-        logger.info(ratings.to_string())
+        print(ratings)
         return
 
     if args.output_dir is None:
@@ -175,7 +175,7 @@ def cli_run():
     if not args.config:
         config = config_from_args(args)
 
-    logger.info(f"Running {args.game} with config:\n{config}")
+    print(f"Running {args.game} with config:\n{config}")
 
     # Run matches if pool mode is enabled
     if args.pool:
@@ -188,7 +188,7 @@ def cli_run():
             bootstrap_rounds=args.bootstrap_rounds,
             max_player_attempts=args.max_player_attempts
         )
-        logger.info(ratings.to_string())
+        print(ratings)
     # Run single game if no other modes specified
     elif not args.pool and not args.calculate_ratings:
         run_single_game(config)
