@@ -3,14 +3,6 @@ from unittest.mock import MagicMock
 from zero_sum_eval.games.debate.debate_game import DebateGame
 from zero_sum_eval.games.debate.debate_player import FOR_KEY, AGAINST_KEY
 
-@pytest.fixture
-def mock_move():
-    """Common mock move with trace for testing."""
-    class MockMove:
-        def __init__(self, value="test value"):
-            self.value = value
-            self.trace = type('obj', (object,), {'toDict': lambda self: {}})()
-    return MockMove
 
 @pytest.fixture
 def base_player_config():

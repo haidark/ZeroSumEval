@@ -2,44 +2,23 @@ import pytest
 from zero_sum_eval.games.liars_dice.liars_dice_game import LiarsDiceGame
 from zero_sum_eval.games.liars_dice.liars_dice_player import PLAYER_0_KEY, PLAYER_1_KEY
 from zero_sum_eval.game_state import InvalidMoveError
-
-class MockTrace:
-    def toDict(self):
-        return {}
-
-class MockMove:
-    def __init__(self, value):
-        self.value = value
-        self.trace = MockTrace()
-
-class MockPlayer:
-    def __init__(self, player_key):
-        self.player_key = player_key
-        self.id = f"mock_{player_key}"
+from unittest.mock import MagicMock
 
 @pytest.fixture
-def game():
+def liars_dice_game(base_player_config):
     """Create a game instance with fixed dice for testing"""
-    # Create players config dictionary in the expected format
+    # Create players config using the base_player_config fixture
     players = {
-        PLAYER_0_KEY: {
-            "class": "liars_dice_player",
-            "args": {
-                "id": f"mock_{PLAYER_0_KEY}",
-                "actions": [{"name": "MakeBid"}],
-                "lm": {"model": "mock"},  # Add mock LM config
-                "max_tries": 1
-            }
-        },
-        PLAYER_1_KEY: {
-            "class": "liars_dice_player",
-            "args": {
-                "id": f"mock_{PLAYER_1_KEY}",
-                "actions": [{"name": "MakeBid"}],
-                "lm": {"model": "mock"},  # Add mock LM config
-                "max_tries": 1
-            }
-        }
+        PLAYER_0_KEY: base_player_config(
+            f"mock_{PLAYER_0_KEY}", 
+            "liars_dice_player",
+            ["MakeBid"]
+        ),
+        PLAYER_1_KEY: base_player_config(
+            f"mock_{PLAYER_1_KEY}", 
+            "liars_dice_player",
+            ["MakeBid"]
+        )
     }
     
     game = LiarsDiceGame(num_dice=2, players=players)
@@ -50,74 +29,74 @@ def game():
     }
     return game
 
-def test_initial_game_state(game):
+def test_initial_game_state(liars_dice_game):
     """Test the initial game state"""
-    assert game.num_dice == 2
-    assert game.current_bid == (0, 0)
-    assert len(game.history) == 0
-    assert game.scores == {PLAYER_0_KEY: 0, PLAYER_1_KEY: 0}
-    assert game.message == f"{PLAYER_0_KEY} to bid"
-    assert not game.is_over()
+    assert liars_dice_game.num_dice == 2
+    assert liars_dice_game.current_bid == (0, 0)
+    assert len(liars_dice_game.history) == 0
+    assert liars_dice_game.scores == {PLAYER_0_KEY: 0, PLAYER_1_KEY: 0}
+    assert liars_dice_game.message == f"{PLAYER_0_KEY} to bid"
+    assert not liars_dice_game.is_over()
 
-def test_valid_first_bid(game):
+def test_valid_first_bid(liars_dice_game, mock_move):
     """Test making a valid first bid"""
-    move = MockMove("[Bid] 1 2")
-    game.update_game(move)
-    assert game.current_bid == (1, 2)
-    assert len(game.history) == 1
-    assert game.history[0] == "[Bid] 1 2"
-    assert not game.is_over()
+    move = mock_move("[Bid] 1 2")
+    liars_dice_game.update_game(move)
+    assert liars_dice_game.current_bid == (1, 2)
+    assert len(liars_dice_game.history) == 1
+    assert liars_dice_game.history[0] == "[Bid] 1 2"
+    assert not liars_dice_game.is_over()
 
-def test_invalid_first_bid_format(game):
+def test_invalid_first_bid_format(liars_dice_game, mock_move):
     """Test making an invalid first bid"""
     with pytest.raises(InvalidMoveError, match="Invalid action format"):
-        game.update_game(MockMove("Bid 1 2"))
+        liars_dice_game.update_game(mock_move("Bid 1 2"))
 
-def test_invalid_bid_values(game):
+def test_invalid_bid_values(liars_dice_game, mock_move):
     """Test bids with invalid values"""
     # Test face value too high
     with pytest.raises(InvalidMoveError, match="Face value must be between 1 and 6"):
-        game.update_game(MockMove("[Bid] 1 7"))
+        liars_dice_game.update_game(mock_move("[Bid] 1 7"))
     
     # Test quantity zero
     with pytest.raises(InvalidMoveError, match="Quantity must be positive"):
-        game.update_game(MockMove("[Bid] 0 2"))
+        liars_dice_game.update_game(mock_move("[Bid] 0 2"))
 
-def test_bid_must_increase(game):
+def test_bid_must_increase(liars_dice_game, mock_move):
     """Test that each bid must increase either quantity or face value"""
-    game.update_game(MockMove("[Bid] 2 3"))
+    liars_dice_game.update_game(mock_move("[Bid] 2 3"))
     
     # Same quantity, lower face
     with pytest.raises(InvalidMoveError, match="New bid must increase quantity or face value"):
-        game.update_game(MockMove("[Bid] 2 2"))
+        liars_dice_game.update_game(mock_move("[Bid] 2 2"))
     
     # Lower quantity, same face
     with pytest.raises(InvalidMoveError, match="New bid must increase quantity or face value"):
-        game.update_game(MockMove("[Bid] 1 3"))
+        liars_dice_game.update_game(mock_move("[Bid] 1 3"))
 
-def test_calling_liar_correct(game):
+def test_calling_liar_correct(liars_dice_game, mock_move):
     """Test calling liar when the bid is too high"""
     # Set up a bid that's too high
-    game.update_game(MockMove("[Bid] 3 2"))  # Bid 3 twos when there are only 2
-    game.update_game(MockMove("[Call]"))
+    liars_dice_game.update_game(mock_move("[Bid] 3 2"))  # Bid 3 twos when there are only 2
+    liars_dice_game.update_game(mock_move("[Call]"))
     
-    assert game.is_over()
-    assert game.scores == {PLAYER_0_KEY: 0, PLAYER_1_KEY: 1}  # Player 1 wins
-    assert "Game Over" in game.message
+    assert liars_dice_game.is_over()
+    assert liars_dice_game.scores == {PLAYER_0_KEY: 0, PLAYER_1_KEY: 1}  # Player 1 wins
+    assert "Game Over" in liars_dice_game.message
 
-def test_calling_liar_incorrect(game):
+def test_calling_liar_incorrect(liars_dice_game, mock_move):
     """Test calling liar when the bid is valid"""
     # Bid 2 twos when there are exactly 2
-    game.update_game(MockMove("[Bid] 2 2"))
-    game.update_game(MockMove("[Call]"))
+    liars_dice_game.update_game(mock_move("[Bid] 2 2"))
+    liars_dice_game.update_game(mock_move("[Call]"))
     
-    assert game.is_over()
-    assert game.scores == {PLAYER_0_KEY: 1, PLAYER_1_KEY: 0}  # Player 0 wins
-    assert "Game Over" in game.message
+    assert liars_dice_game.is_over()
+    assert liars_dice_game.scores == {PLAYER_0_KEY: 1, PLAYER_1_KEY: 0}  # Player 0 wins
+    assert "Game Over" in liars_dice_game.message
 
-def test_player_inputs(game):
+def test_player_inputs(liars_dice_game):
     """Test that player inputs are correctly formatted"""
-    inputs = game.get_next_action().inputs
+    inputs = liars_dice_game.get_next_action().inputs
     assert 'dice_roll' in inputs
     assert 'current_bid' in inputs
     assert 'history' in inputs
@@ -125,15 +104,15 @@ def test_player_inputs(game):
     # Check first player sees their own dice
     assert str([1, 2]) in inputs['dice_roll']
 
-def test_alternating_turns(game):
+def test_alternating_turns(liars_dice_game, mock_move):
     """Test that players alternate turns correctly"""
-    assert game.get_next_action().player_key == PLAYER_0_KEY
-    game.update_game(MockMove("[Bid] 1 2"))
-    assert game.get_next_action().player_key == PLAYER_1_KEY
+    assert liars_dice_game.get_next_action().player_key == PLAYER_0_KEY
+    liars_dice_game.update_game(mock_move("[Bid] 1 2"))
+    assert liars_dice_game.get_next_action().player_key == PLAYER_1_KEY
 
-def test_game_display(game):
+def test_game_display(liars_dice_game):
     """Test the game display string"""
-    display = game.display()
+    display = liars_dice_game.display()
     assert "Current bid: 0 0s" in display
     assert "Player 0 dice: [1, 2]" in display
     assert "Player 1 dice: [2, 3]" in display 

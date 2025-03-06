@@ -101,4 +101,5 @@ def mock_move():
         def __init__(self, value="test value"):
             self.value = value
             self.trace = type('obj', (object,), {'toDict': lambda self: {}})()
+            self.time = 0.1
     return MockMove 

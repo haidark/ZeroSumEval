@@ -5,6 +5,7 @@ import logging
 
 from abc import ABC, abstractmethod
 from copy import copy
+import time
 from typing import Dict, List
 
 from zero_sum_eval.type_definitions import ActionConfig, Action
@@ -139,18 +140,28 @@ class GameState(ABC):
         super().__init_subclass__()
         
         def move_logging_wrapper(fn):
-            def wrapped(self, move: Move):
+            def wrapped(self: GameState, move: Move):
+                next_action = self.get_next_action()
+                _log = {
+                    "last_move": move.value,
+                    "last_trace": move.trace.toDict() if move.trace else None,
+                    "last_move_time": move.time,
+                    "next_action": next_action.name,
+                    "player_key": next_action.player_key,
+                }
                 try:
+                    start_time = time.time()
                     new_state = fn(self, move)
                     if not self.log_moves:
                         return new_state
-                    self._log = {"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None}
+                    _log["time"] = time.time() - start_time
+                    self._log = _log
                     return new_state
                 except InvalidMoveError as e:
-                    if not hasattr(self, '_log'):
-                        self._log = {}
-                    self._log.update({"last_move": move.value, "last_trace": move.trace.toDict() if move.trace else None, "error": str(e)})
-                    raise
+                    _log["error"] = str(e)
+                    _log["time"] = time.time() - start_time
+                    self._log = _log
+                    raise e
             return wrapped
         
         cls.update_game = move_logging_wrapper(cls.update_game)
@@ -158,9 +169,8 @@ class GameState(ABC):
         def export_logging_wrapper(fn):
             def wrapped(self):
                 new_dict = fn(self)
-                if not self.log_moves:
-                    return new_dict
-                new_dict.update(self._log)
+                if self.log_moves:
+                    new_dict.update(self._log)
                 return new_dict
             return wrapped
         
