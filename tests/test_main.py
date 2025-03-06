@@ -1,7 +1,7 @@
 import tempfile
 from unittest.mock import patch
 import json
-
+import pandas as pd
 from zero_sum_eval.main import cli_run
 
 
@@ -115,8 +115,12 @@ def test_pool_with_calculate_ratings(monkeypatch):
             # Mock the calculate_ratings function
             with patch('zero_sum_eval.main.calculate_ratings') as mock_calculate_ratings:
                 # Configure the mock to return our mock results
-                mock_calculate_ratings.return_value = {
-                    "mock-model": 1000, "mock-model-2": 500}
+                mock_calculate_ratings.return_value = pd.DataFrame({
+                    "model": ["mock-model", "mock-model-2"],
+                    "rating": [1000, 500],
+                    "lower": [950, 450],
+                    "upper": [1050, 550]
+                })
 
                 # Run the CLI again with the calculate_ratings flag
                 cli_run()
