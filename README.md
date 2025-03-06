@@ -79,6 +79,12 @@ pool of matches:
 python -m zero_sum_eval.main --pool -c configs/pool/chess.yaml
 ```
 
+### Calculation ratings
+
+```
+python -m zero_sum_eval.main --calculate-ratings -c configs/chess.yaml
+```
+
 ## Games
 
 ZeroSumEval currently supports the following games:

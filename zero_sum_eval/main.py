@@ -3,7 +3,7 @@ import logging
 
 from collections import defaultdict
 
-from zero_sum_eval.calculate_elo import calculate_elos
+from zero_sum_eval.calculate_ratings import calculate_ratings
 from zero_sum_eval.managers.game_pool_manager import GamePoolManager
 from zero_sum_eval.registry import GAME_REGISTRY
 from zero_sum_eval.logging_utils import cleanup_logging, setup_logging
@@ -36,7 +36,7 @@ This script supports three modes of operation:
 
    
 3. ELO calculation mode: Calculate ELO ratings from existing game logs without running any games
-   Example: zseval --calculate_elos --output_dir ./zse_outputs/chess_pool
+   Example: zseval --calculate_ratings --output_dir ./zse_outputs/chess_pool
 """
     )
     parser.add_argument("-c", "--config", type=str, default=None, help="Optional path to a YAML config file. This overwrites other arguments if passed.")
@@ -54,7 +54,7 @@ This script supports three modes of operation:
     parser.add_argument("--max_matches", type=int, default=10, help="Maximum number of matches to play. (Only for pool mode)")
 
     # Calculate ELOs arguments
-    parser.add_argument("--calculate_elos", action="store_true", help="Calculate ELOs for the models.")
+    parser.add_argument("--calculate_ratings", action="store_true", help="Calculate ratings for the models.")
     parser.add_argument("--bootstrap_rounds", type=int, default=100, help="Number of bootstrap rounds to calculate ELOs.")
 
     # TODO: Add Player arguments. It only works with the default players for now.
@@ -145,25 +145,25 @@ def cli_run():
         if config["config_type"] == "pool":
             args.pool = True
 
-    if args.game is None and not args.calculate_elos and not args.config:
+    if args.game is None and not args.calculate_ratings and not args.config:
         parser.print_help()
         return
 
     # If we are running a single game, we need to specify players
-    if args.game and not args.pool and not args.calculate_elos and args.players is None:
+    if args.game and not args.pool and not args.calculate_ratings and args.players is None:
         raise ValueError("Must specify players when running a single game.")
     
     # Determine if we are running any games
     is_running_games = args.pool or args.game
 
     # If we are not running any games and calculate_elos is True, we need to only calculate ELOs without running any games from the output directory
-    if not is_running_games and args.calculate_elos and args.output_dir:
-        elos = calculate_elos(
+    if not is_running_games and args.calculate_ratings and args.output_dir:
+        ratings = calculate_ratings(
             logs_path=args.output_dir,
             bootstrap_rounds=args.bootstrap_rounds,
             max_player_attempts=args.max_player_attempts
         )
-        print(elos)
+        logger.info(ratings.to_string())
         return
 
     if args.output_dir is None:
@@ -182,15 +182,15 @@ def cli_run():
         run_pool_matches(config)
 
     # Calculate ELO ratings if requested
-    if args.calculate_elos:
-        elos = calculate_elos(
+    if args.calculate_ratings:
+        ratings = calculate_ratings(
             logs_path=args.output_dir,
             bootstrap_rounds=args.bootstrap_rounds,
             max_player_attempts=args.max_player_attempts
         )
-        print(elos)
+        logger.info(ratings.to_string())
     # Run single game if no other modes specified
-    elif not args.pool and not args.calculate_elos:
+    elif not args.pool and not args.calculate_ratings:
         run_single_game(config)
     
 

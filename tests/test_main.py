@@ -92,8 +92,8 @@ def test_pool_mode(monkeypatch):
             cli_run()
 
 
-def test_pool_with_calculate_elos(monkeypatch):
-    """Test the calculate_elos function."""
+def test_pool_with_calculate_ratings(monkeypatch):
+    """Test the calculate_ratings function."""
     with tempfile.TemporaryDirectory(prefix="test_main") as temp_dir:
         test_args = [
             'main.py',
@@ -105,41 +105,41 @@ def test_pool_with_calculate_elos(monkeypatch):
             "--bootstrap_rounds", "1",
             "--output_dir", temp_dir,
             "--pool",
-            "--calculate_elos"
+            "--calculate_ratings"
         ]
 
         # Mock the LLM to avoid API calls
         monkeypatch.setattr("dspy.LM", MockLM)
 
         with patch('sys.argv', test_args):
-            # Mock the calculate_elos function
-            with patch('zero_sum_eval.main.calculate_elos') as mock_calculate_elos:
+            # Mock the calculate_ratings function
+            with patch('zero_sum_eval.main.calculate_ratings') as mock_calculate_ratings:
                 # Configure the mock to return our mock results
-                mock_calculate_elos.return_value = {
+                mock_calculate_ratings.return_value = {
                     "mock-model": 1000, "mock-model-2": 500}
 
-                # Run the CLI again with the calculate_elos flag
+                # Run the CLI again with the calculate_ratings flag
                 cli_run()
 
-                # Verify calculate_elos was called
-                mock_calculate_elos.assert_called_once()
+                # Verify calculate_ratings was called
+                mock_calculate_ratings.assert_called_once()
 
 
-def test_calculate_elos_with_no_pool(monkeypatch):
-    """Test the calculate_elos function with no pool."""
+def test_calculate_ratings_with_no_pool(monkeypatch):
+    """Test the calculate_ratings function with no pool."""
     with tempfile.TemporaryDirectory(prefix="test_main") as temp_dir:
         test_args = [
             'main.py',
             '-o', temp_dir,
-            '--calculate_elos'
+            '--calculate_ratings'
         ]
 
         # Mock the LLM to avoid API calls
         monkeypatch.setattr("dspy.LM", MockLM)
 
         with patch('sys.argv', test_args):
-            with patch('zero_sum_eval.main.calculate_elos') as mock_calculate_elos:
+            with patch('zero_sum_eval.main.calculate_ratings') as mock_calculate_ratings:
                 cli_run()
 
-                # Verify calculate_elos was called
-                mock_calculate_elos.assert_called_once()
+                # Verify calculate_ratings was called
+                mock_calculate_ratings.assert_called_once()

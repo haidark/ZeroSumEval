@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-
+from sklearn.linear_model import LogisticRegression
 
 # Function from https://lmsys.org/blog/2023-12-07-leaderboard/
 def compute_mle_elo(
@@ -65,11 +65,6 @@ def compute_mle_elo(
     X = X[:cur_row]
     Y = Y[:cur_row]
 
-    try:
-        from sklearn.linear_model import LogisticRegression
-    except ImportError:
-        raise ImportError("scikit-learn is required to calculate ELOs. Please install it with `pip install zero-sum-eval[analysis]`.")
-
     lr = LogisticRegression(fit_intercept=False, penalty=None, tol=1e-6)
     lr.fit(X, Y, sample_weight=sample_weights)
     elo_scores = SCALE * lr.coef_[0] + INIT_RATING
@@ -116,7 +111,7 @@ def convert_matches_to_df(logs_path: str, max_player_attempts: int) -> pd.DataFr
     return matches_df
 
 
-def calculate_elos(logs_path: str, bootstrap_rounds: int, max_player_attempts: int) -> pd.DataFrame:
+def calculate_ratings(logs_path: str, bootstrap_rounds: int, max_player_attempts: int) -> pd.DataFrame:
     match_df = convert_matches_to_df(logs_path, max_player_attempts)
     np.random.seed(1)
     bootstrap_elo_lu = get_bootstrap_result(match_df, compute_mle_elo, bootstrap_rounds)
@@ -138,5 +133,5 @@ if __name__ == "__main__":
     parser.add_argument("--max-player-attempts", "-m", help="Maximum number of player attempts.", type=int, default=5)
     args = parser.parse_args()
 
-    elos = calculate_elos(logs_path=args.logs_path, bootstrap_rounds=args.bootstrap_rounds, max_player_attempts=args.max_player_attempts)
-    print(elos)
+    ratings = calculate_ratings(logs_path=args.logs_path, bootstrap_rounds=args.bootstrap_rounds, max_player_attempts=args.max_player_attempts)
+    print(ratings)
