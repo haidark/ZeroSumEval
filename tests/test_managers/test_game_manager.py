@@ -35,7 +35,8 @@ def mock_config():
     return {
         "max_rounds": 10,
         "max_player_attempts": 3,
-        "output_dir": "/tmp/logs"
+        "output_dir": "/tmp/logs",
+        "max_time_per_player": 10.0
     }
 
 def test_game_manager_initialization(mock_config):
@@ -49,6 +50,22 @@ def test_game_manager_initialization(mock_config):
 @patch('jsonlines.Writer')
 def test_game_manager_start(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager start functionality"""
+    # Create a mock Move with time attribute
+    mock_move = MagicMock()
+    mock_move.time = 0.5
+    mock_move.value = "test move"
+    
+    # Set up player to return our mock move
+    mock_player = MagicMock()
+    mock_player.id = "player1"
+    mock_player.act.return_value = mock_move
+    
+    # Set up game state to return our player
+    mock_action = MagicMock()
+    mock_action.player_key = "player1"
+    mock_game.get_next_action.return_value = mock_action
+    mock_game.players = {"player1": mock_player}
+    
     manager = GameManager(**mock_config)
     manager.game = mock_game
     
@@ -64,39 +81,53 @@ def test_game_manager_start(mock_writer, mock_context, mock_config, mock_game):
 @patch('jsonlines.Writer')
 def test_game_manager_turn_handling(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager turn handling"""
+    # Create a mock Move with time attribute
+    mock_move = MagicMock()
+    mock_move.time = 0.5
+    mock_move.value = "test move"
+    
+    # Set up player to return our mock move
+    mock_player = MagicMock()
+    mock_player.id = "player1"
+    mock_player.act.return_value = mock_move
+    
     manager = GameManager(**mock_config)
     manager.game = mock_game
     
     # Setup mock action
     mock_action = MagicMock()
     mock_action.name = "test_action"  # Set as attribute
-    mock_action.player = MagicMock(
-        id="player1",
-        player_key="test_player",
-        llm_model="mock_model",
-        module_dict={
-            "test_action": MagicMock(  # Match the action name
-                return_value=MagicMock(
-                    items=lambda: [("output", "test")]
-                )
-            )
-        }
-    )
+    mock_action.player_key = "test_player"
     mock_game.get_next_action.return_value = mock_action
+    mock_game.players = {"test_player": mock_player}
     
     # Test turn execution
     result = manager.start(mock_game)
     
     # Verify turn was handled correctly
-    next_action = result["game_state"].get_next_action()
-    assert next_action == mock_action
-    assert next_action.name == "test_action"
-    assert next_action.player.player_key == "test_player"
+    assert mock_player.act.called
+    assert mock_game.update_game.called
 
 @patch('dspy.context')
 @patch('jsonlines.Writer')
 def test_game_manager_logging(mock_writer, mock_context, mock_config, mock_game):
     """Test game manager logging functionality"""
+    # Create a mock Move with time attribute
+    mock_move = MagicMock()
+    mock_move.time = 0.5
+    mock_move.value = "test move"
+    
+    # Set up player to return our mock move
+    mock_player = MagicMock()
+    mock_player.id = "player1"
+    mock_player.act.return_value = mock_move
+    
+    # Set up game state to return our player
+    mock_action = MagicMock()
+    mock_action.player_key = "player1"
+    mock_game.get_next_action.return_value = mock_action
+    mock_game.players = {"player1": mock_player}
+    
     manager = GameManager(**mock_config)
     manager.game = mock_game
     

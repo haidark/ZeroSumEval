@@ -36,16 +36,17 @@ def test_action_config_full():
 
 def test_move_basic():
     """Test basic Move creation"""
-    move = Move(value="test_move")
+    move = Move(value="test_move", time=0.5)
     assert move.value == "test_move"
+    assert move.time == 0.5
     assert move.trace is None
 
 def test_move_with_trace(mock_prediction):
     """Test Move with trace"""
-    move = Move(value="test_move", trace=mock_prediction)
+    move = Move(value="test_move", trace=mock_prediction, time=0.5)
     assert move.value == "test_move"
     assert move.trace == mock_prediction
-    assert move.trace.output == "test"
+    assert move.time == 0.5
 
 def test_action_config_from_dict():
     """Test creating ActionConfig from dictionary"""
@@ -101,9 +102,10 @@ def test_action_config_equality():
 
 def test_move_equality():
     """Test Move equality comparison"""
-    move1 = Move(value="test")
-    move2 = Move(value="test")
-    move3 = Move(value="different")
+    move1 = Move(value="test", time=0.5)
+    move2 = Move(value="test", time=0.5)
+    move3 = Move(value="different", time=0.5)
     
     assert move1 == move2
-    assert move1 != move3 
+    assert move1 != move3
+    assert move2 != move3 
