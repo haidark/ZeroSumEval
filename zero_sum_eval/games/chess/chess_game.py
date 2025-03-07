@@ -5,7 +5,7 @@ from zero_sum_eval.player import Move
 from zero_sum_eval.game_state import GameState, InvalidMoveError, PlayerDefinition
 from zero_sum_eval.type_definitions import Action
 from zero_sum_eval.registry import GAME_REGISTRY
-from typing import Dict, List
+from typing import List
 
 @GAME_REGISTRY.register("chess")
 class ChessGame(GameState):

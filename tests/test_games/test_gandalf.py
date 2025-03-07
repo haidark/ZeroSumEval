@@ -52,3 +52,11 @@ def test_gandalf_game_over(gandalf_game):
 def test_gandalf_invalid_moves(gandalf_game, mock_move):
     with pytest.raises(InvalidMoveError):
         gandalf_game.update_game(mock_move("\n invalid move with newline"))
+    
+def test_gandalf_game_display(gandalf_game):
+    display_str = gandalf_game.display()
+    assert "infiltrator" in display_str
+
+def test_gandalf_game_export(gandalf_game):
+    export_dict = gandalf_game.export()
+    assert "infiltrator" in export_dict["next_action"]
