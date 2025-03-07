@@ -1,16 +1,17 @@
+config_type: pool
 manager:
-  max_matches: 10
+  max_matches: 50
   max_rounds_per_match: 100
   max_player_attempts: 3
-  output_dir: ../output/debate_pool
+  output_dir: debate_llama_pool
 game:
   name: debate
   args:
     judges:
-      - name: gpt-4o-default
+      - name: gpt-4o
         model: openrouter/openai/gpt-4o-2024-11-20
-      - name: llama3.1-70b-default
-        model: openrouter/meta-llama/llama-3.1-70b-instruct
+      - name: claude-3.7-sonnet
+        model: openrouter/anthropic/claude-3.7-sonnet
     players:
       for:
         args:
@@ -19,11 +20,22 @@ game:
         args:
           max_tries: 5
 llms:
-  - name: gpt-4o-optimized-default
-    model: openrouter/openai/chatgpt-4o-latest
+  - name: llama-3.1-405b
+    model: openrouter/meta-llama/llama-3.1-405b-instruct
+    args:
+      cache: false
 
-  - name: llama3.1-70b-optimized-default
-    model: openrouter/meta-llama/Meta-Llama-3.1-70B-Instruct
+  - name: llama3.3-70b
+    model: openrouter/meta-llama/llama-3.3-70b-instruct
+    args:
+      cache: false
 
-  - name: mistral-large-default
-    model: openrouter/mistralai/mistral-large-2411
+  - name: llama3.1-8b
+    model: openrouter/meta-llama/llama-3.1-8b-instruct
+    args:
+      cache: false
+
+  - name: llama3.2-1b
+    model: openrouter/meta-llama/llama-3.2-1b-instruct
+    args:
+      cache: false
