@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression
 
 # Function from https://lmsys.org/blog/2023-12-07-leaderboard/
 def compute_mle_elo(
-    df, SCALE=400, BASE=10, INIT_RATING=1000, sample_weight=None
+    df, SCALE=100, BASE=10, INIT_RATING=1000, sample_weight=None
 ):
     
     models = set(df['model_a']) | set(df['model_b'])
