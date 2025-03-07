@@ -2,6 +2,7 @@ import math
 import json
 import argparse
 from glob import glob
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -101,10 +102,18 @@ def convert_matches_to_df(logs_path: str, max_player_attempts: int) -> pd.DataFr
             if scores[model]['attempts'] >= max_player_attempts:
                 scores[model]['score'] = -math.inf
 
+        def winner(scores: dict, models: List[str]) -> str:
+            advantage_a = scores[models[0]]['score'] - scores[models[1]]['score']
+            if advantage_a > 0:
+                return 'model_a'
+            elif advantage_a < 0:
+                return 'model_b'
+            return 'tie'
+        
         matches.append([
             models[0],
             models[1],
-            "model_a" if scores[models[0]]['score'] > scores[models[1]]['score'] else "model_b",
+            winner(scores, models),
         ])
 
     matches_df = pd.DataFrame(matches, columns=['model_a', 'model_b', 'winner'])
