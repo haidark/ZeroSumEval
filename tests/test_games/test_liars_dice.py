@@ -116,3 +116,9 @@ def test_game_display(liars_dice_game):
     assert "Current bid: 0 0s" in display
     assert "Player 0 dice: [1, 2]" in display
     assert "Player 1 dice: [2, 3]" in display 
+
+def test_game_export(liars_dice_game):
+    """Test the game export dictionary"""
+    export_dict = liars_dice_game.export()
+    assert "MakeBid" in export_dict["next_action"]
+    assert "player_0" in export_dict["player_key"]

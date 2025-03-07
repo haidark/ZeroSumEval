@@ -79,3 +79,11 @@ def test_debate_game_over(debate_game, mock_move):
     scores = debate_game.get_scores()
     assert scores[FOR_KEY] in [0, 1]
     assert scores[AGAINST_KEY] in [0, 1] 
+
+def test_debate_game_display(debate_game):
+    display_str = debate_game.display()
+    assert "OpeningStatement" in display_str
+
+def test_debate_game_export(debate_game):
+    export_dict = debate_game.export()
+    assert "OpeningStatement" in export_dict["next_action"]

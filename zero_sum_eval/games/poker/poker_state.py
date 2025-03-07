@@ -344,7 +344,8 @@ class PokerGame(GameState):
         ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
         return " ".join(f"{ranks[card % 13]}{suits[card // 13]}" for card in cards)
 
-    def player_definitions(self) -> List[PlayerDefinition]:
+    @classmethod
+    def player_definitions(cls) -> List[PlayerDefinition]:
         """Define the players for this game."""
         return [
             PlayerDefinition(player_key=player_key, actions=["MakeMove"], default_player_class=PokerPlayer, optional=i >= 2)

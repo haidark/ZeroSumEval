@@ -160,7 +160,7 @@ class DebateGame(GameState):
         ]
 
     def display(self) -> str:
-        display_str = f"Action: {self.get_next_action().name}, Side: {self.get_next_action().player.player_key}"
+        display_str = f"Action: {self.get_next_action().name}, Side: {self.get_next_action().player_key}"
         display_str += f"\nTopic: {self.topic}"
         display_str += f"\nHistory:\n{self.formatted_move_history()}"
         if self.verdict:
@@ -182,6 +182,6 @@ class DebateGame(GameState):
             "topic": self.topic,
             "verdict": self.verdict,
             "evaluations": self.evaluations,
-            "next_action": self.get_next_action().name + " " + self.get_next_action().player.player_key,
+            "next_action": self.get_next_action().name + " " + self.get_next_action().player_key,
             "scores": self.get_scores(),
         }

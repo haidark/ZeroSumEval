@@ -1,7 +1,11 @@
 import argparse
+import json
 import logging
 
 from collections import defaultdict
+import os
+
+import yaml
 
 from zero_sum_eval.analysis.calculate_ratings import calculate_ratings
 from zero_sum_eval.managers.game_pool_manager import GamePoolManager
@@ -144,6 +148,8 @@ def cli_run():
         config = read_config(args.config)
         if config["config_type"] == "pool":
             args.pool = True
+        elif "llms" in config and not args.pool:
+            raise ValueError("'llms' key is specified in the config but --pool is not set. Add the --pool flag or set the config_type to 'pool' when using a pool config file.")
 
     if args.game is None and not args.calculate_ratings and not args.config:
         parser.print_help()
@@ -175,7 +181,12 @@ def cli_run():
     if not args.config:
         config = config_from_args(args)
 
-    print(f"Running {args.game} with config:\n{config}")
+    print(f"Running {args.game or config.get('game', {}).get('name', None)} with config:\n{json.dumps(config, indent=2)}")
+
+    # Save the config to the output directory
+    os.makedirs(config["manager"]["output_dir"], exist_ok=True)
+    with open(os.path.join(config["manager"]["output_dir"], "pool_config.yaml"), "w") as f:
+        yaml.dump(dict(config), f)
 
     # Run matches if pool mode is enabled
     if args.pool:

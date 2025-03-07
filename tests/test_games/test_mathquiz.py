@@ -62,3 +62,32 @@ def test_mathquiz_invalid_answers(mathquiz_game, mock_move):
     
     with pytest.raises(InvalidMoveError, match="StudentIncorrect"):
         test_mathquiz_game.update_game(mock_move("11"))
+
+def test_mathquiz_game_display(mathquiz_game, mock_move):
+    mathquiz_game.update_game(mock_move("What is 5 + 5?"))
+    display_str = mathquiz_game.display()
+    assert "What is 5 + 5?" in display_str
+
+    mathquiz_game.update_game(mock_move("10"))
+    display_str = mathquiz_game.display()
+    assert "10" in display_str
+
+def test_mathquiz_game_export(mathquiz_game, mock_move):
+    export_dict = mathquiz_game.export()
+    assert "GenerateQuestion" in export_dict["next_action"]
+    assert "teacher" in export_dict["player_key"]
+
+    mathquiz_game.update_game(mock_move("What is 5 + 5?"))
+    export_dict = mathquiz_game.export()
+    assert "What is 5 + 5?" in export_dict["question"]
+    assert "AnswerQuestion" in export_dict["next_action"]
+    assert "teacher" in export_dict["player_key"]
+
+    mathquiz_game.update_game(mock_move("10"))
+    export_dict = mathquiz_game.export()
+    assert "10" in export_dict["teacher_answer"]
+    assert "student" in export_dict["player_key"]
+
+    mathquiz_game.update_game(mock_move("10"))
+    export_dict = mathquiz_game.export()
+    assert "10" in export_dict["student_answer"]
