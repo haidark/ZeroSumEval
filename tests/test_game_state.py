@@ -95,3 +95,31 @@ def test_game_state_logging(mock_player):
     assert exported["player_key"] == "player1"
     assert isinstance(exported["time"], float)
     assert exported["time"] > 0
+
+def test_game_state_version_logging(mock_player):
+    players_config = {
+        "player1": {"args": {}},
+        "player2": {"args": {}}
+    }
+    game = TestGameState(players=players_config, mock_player_class=mock_player, log_moves=True)
+    
+    # Test that version is logged
+    class TestMove:
+        value = "test_move"
+        time = 0.1
+        class MockTrace:
+            def toDict(self):
+                return {}
+        trace = MockTrace()
+    
+    game.update_game(TestMove())
+    exported = game.export()
+    
+    # Check that version is included in the export
+    assert "zseval_version" in exported
+    # Version should be a string
+    assert isinstance(exported["zseval_version"], str)
+    # Version should either be a valid version string or "unknown"
+    import re
+    version_pattern = r"^\d+\.\d+\.\d+$"  # Simple version pattern like "0.1.0"
+    assert re.match(version_pattern, exported["zseval_version"]) or exported["zseval_version"] == "unknown"
