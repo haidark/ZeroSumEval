@@ -3,15 +3,18 @@ manager:
   max_matches: 100
   max_rounds_per_match: 100
   max_player_attempts: 3
-  output_dir: mathquiz_llama_pool
+  output_dir: pyjail_llama_pool
 game:
-  name: mathquiz
+  name: pyjail
   args:
+    # ask_permission: False
     players:
-      teacher:
+      defender:
+        name: pyjail_player
         args:
           max_tries: 5
-      student:
+      attacker:
+        name: pyjail_player
         args:
           max_tries: 5
 llms:
