@@ -12,7 +12,7 @@ from zero_sum_eval.game_state import GameState, InvalidMoveError
 from zero_sum_eval.player import Player, Move
 
 class GameManager:
-    def __init__(self, max_rounds: int, max_player_attempts: int, output_dir: str):
+    def __init__(self, max_rounds: int, max_player_attempts: int, output_dir: str, max_time_per_player: float = None):
         """
         Initialize the GameManager with the given configuration.
 
@@ -20,11 +20,15 @@ class GameManager:
             max_rounds (int): The maximum number of rounds to play in the game.
             max_player_attempts (int): The maximum number of attempts a player can make to generate a valid move.
             output_dir (str): The directory to save game logs and outputs.
+            max_time_per_player (float, optional): The maximum time in seconds allocated to each player.
+                                                  If None, no time limit is enforced.
         """
         self.max_rounds: int = max_rounds
         self.max_player_attempts: int = max_player_attempts
+        self.max_time_per_player: float = max_time_per_player
         self.turns_log_file = os.path.join(output_dir, "turns.jsonl")
         self.player_attempts = defaultdict(int)
+        self.player_time_used = defaultdict(float)
 
     def start(self, game_state: GameState) -> Dict:
         """
@@ -52,6 +56,18 @@ class GameManager:
             logger.info(f"Game State:\n{game_state.display()}\n")
 
             move = player.act(action)
+            
+            # Update the player's time usage
+            self.player_time_used[player] += move.time
+            
+            # Check if player has exceeded their time limit
+            if self.max_time_per_player is not None and self.player_time_used[player] > self.max_time_per_player:
+                logger.info(f"Player {player.id} has exceeded the maximum time limit of {self.max_time_per_player} seconds. Ending game.")
+                game_state.set_timeout_loss(player.id)
+                break
+                
+            logger.info(f"Move took {move.time:.2f} seconds. Total time used by {player.id}: {self.player_time_used[player]:.2f} seconds")
+            
             try:
                 game_state.update_game(move)
                 retrying = False
@@ -72,6 +88,7 @@ class GameManager:
             "game_state": game_state,
             "turns": turns,
             "player_attempts": self.player_attempts,
+            "player_time_used": self.player_time_used,
         }
 
     def _log_game_turns(self, turns):
