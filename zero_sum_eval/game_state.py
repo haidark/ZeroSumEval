@@ -2,7 +2,7 @@
 Abstract class API to represent a game
 '''
 import logging
-
+import importlib.metadata
 from abc import ABC, abstractmethod
 from copy import copy
 import time
@@ -10,6 +10,12 @@ from typing import Dict, List
 
 from zero_sum_eval.type_definitions import ActionConfig, Action
 from zero_sum_eval.player import Move, PlayerDefinition
+
+# Get the package version
+try:
+    __version__ = importlib.metadata.version("zero_sum_eval")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = "unknown"
 
 class InvalidMoveError(Exception):
     pass
@@ -148,6 +154,7 @@ class GameState(ABC):
                     "last_move_time": move.time,
                     "next_action": next_action.name,
                     "player_key": next_action.player_key,
+                    "zseval_version": __version__,
                 }
                 try:
                     start_time = time.time()
