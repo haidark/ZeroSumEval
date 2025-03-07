@@ -59,7 +59,7 @@ The project is organized as follows:
 
 ## Usage
 
-Its possible to run a single game or a series of matches with or without a detailed config file.
+It's possible to run a single game or a series of matches with or without a detailed config file.
 
 ### Running without a config file
 
@@ -85,10 +85,15 @@ pool of matches:
 zseval --pool -c configs/pool/chess.yaml
 ```
 
-### Calculation ratings
-
+### Rating calculation
+Add the ```--calculate_ratings``` flag to output ELO ratings for the models after a pool of matches:
 ```
-python -m zero_sum_eval.main --calculate-ratings -c configs/chess.yaml
+zseval --pool -c configs/pool/chess.yaml --calculate_ratings
+```
+
+Or directly calculate the ratings from a given match pool log directory:
+```
+zseval --calculate_ratings --output_dir match_pool_log/
 ```
 
 ## Games
