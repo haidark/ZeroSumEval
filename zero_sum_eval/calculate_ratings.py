@@ -14,6 +14,10 @@ from sklearn.linear_model import LogisticRegression
 def compute_mle_elo(
     df, SCALE=400, BASE=10, INIT_RATING=1000, sample_weight=None
 ):
+    
+    models = set(df['model_a']) | set(df['model_b'])
+    models = list(sorted(models))
+    
     ptbl_a_win = pd.pivot_table(
         df[df["winner"] == "model_a"],
         index="model_a",
@@ -24,7 +28,7 @@ def compute_mle_elo(
 
     # TODO: patch to fix sets with ties when not all models have ties
     # but currently not optimal due to the iterrows().
-    ptbl_tie = pd.DataFrame(0, index=ptbl_a_win.index, columns=ptbl_a_win.columns)
+    ptbl_tie = pd.DataFrame(0, index=models, columns=models)
     for _, row in df[df["winner"].isin(["tie", "tie (bothbad)"])].iterrows():
         ptbl_tie.loc[row['model_a'],row['model_b']] += 1
         ptbl_tie.loc[row['model_b'],row['model_a']] += 1
@@ -37,6 +41,10 @@ def compute_mle_elo(
         fill_value=0,
     )
     ptbl_win = ptbl_a_win * 2 + ptbl_b_win.T * 2 + ptbl_tie
+
+    # adjust for possible missing models after sampling
+    ptbl_win = ptbl_win.reindex(models, fill_value=0)
+    ptbl_win = ptbl_win.fillna(0)
 
     models = pd.Series(np.arange(len(ptbl_win.index)), index=ptbl_win.index)
 
