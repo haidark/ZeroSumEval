@@ -137,11 +137,11 @@ class Player(ABC):
             with dspy.context(lm=self.llm_model):
                 trace = self.action_fn_dict[action.name](**action.inputs)
             output = trace.items()[-1][1]
-            return Move(value=output, trace=trace, time=time.time() - start_time)
+            return Move(value=output, time=time.time() - start_time, trace=trace)
         else:
             start_time = time.time()
             output = self.action_fn_dict[action.name](**action.inputs)
-            return Move(value=output, trace=None, time=time.time() - start_time)
+            return Move(value=output, time=time.time() - start_time, trace=None)
 
     @abstractmethod
     def init_actions(self) -> Dict[str, Callable]:

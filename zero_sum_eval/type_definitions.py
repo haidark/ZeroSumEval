@@ -16,8 +16,8 @@ class ActionConfig:
 @dataclass
 class Move:
     value: str
+    time: float
     trace: Optional[Prediction] = None
-    time: Optional[float] = None
 
 @dataclass
 class Action:
