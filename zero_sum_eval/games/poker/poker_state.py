@@ -1,9 +1,9 @@
 from collections import Counter
 import random
 from typing import Dict, List
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
-from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.player import Move
+from zero_sum_eval.core.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
+from zero_sum_eval.core.registry import GAME_REGISTRY
+from zero_sum_eval.core.player import Move
 from .poker_player import PokerPlayer
 
 @GAME_REGISTRY.register("poker")

@@ -1,8 +1,8 @@
 import dspy
 import re
 import logging
-from zero_sum_eval.player import Player
-from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
+from zero_sum_eval.core.player import Player
+from zero_sum_eval.core.registry import PLAYER_REGISTRY 
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import dspy
-from zero_sum_eval.player import Player, PlayerDefinition
-from zero_sum_eval.type_definitions import ActionConfig, Action
+from zero_sum_eval.core.player import Player, PlayerDefinition
+from zero_sum_eval.utils.types import ActionConfig, Action
 
 class SimpleTestPlayer(Player):
     """A simple concrete implementation of Player for testing"""
@@ -109,7 +109,7 @@ def test_different_action_formats(action_config, basic_lm_config):
 
 def test_module_paths_loading(basic_lm_config):
     # Use patch instead of mocker
-    with patch('zero_sum_eval.player.load_checkpoint') as mock_load:
+    with patch('zero_sum_eval.core.player.load_checkpoint') as mock_load:
         mock_load.return_value = MagicMock(spec=dspy.Module)
         
         lm_config = basic_lm_config.copy()
@@ -152,12 +152,12 @@ def test_cached_module_loading(basic_lm_config):
     lm_config = basic_lm_config.copy()
     lm_config["optimize"] = True
     
-    with patch('zero_sum_eval.player.get_cached_module_path') as mock_get_cached_path, \
-         patch('zero_sum_eval.player.load_checkpoint') as mock_load_checkpoint, \
-         patch('zero_sum_eval.player.save_checkpoint') as mock_save_checkpoint, \
-         patch('zero_sum_eval.registry.DATASET_REGISTRY.build') as mock_dataset_build, \
-         patch('zero_sum_eval.registry.METRIC_REGISTRY.build') as mock_metric_build, \
-         patch('zero_sum_eval.registry.OPTIMIZER_REGISTRY.build') as mock_optimizer_build:
+    with patch('zero_sum_eval.core.player.get_cached_module_path') as mock_get_cached_path, \
+         patch('zero_sum_eval.core.player.load_checkpoint') as mock_load_checkpoint, \
+         patch('zero_sum_eval.core.player.save_checkpoint') as mock_save_checkpoint, \
+         patch('zero_sum_eval.core.registry.DATASET_REGISTRY.build') as mock_dataset_build, \
+         patch('zero_sum_eval.core.registry.METRIC_REGISTRY.build') as mock_metric_build, \
+         patch('zero_sum_eval.core.registry.OPTIMIZER_REGISTRY.build') as mock_optimizer_build:
         
         # Setup mock returns
         mock_get_cached_path.return_value = "cached/path"
@@ -197,9 +197,9 @@ def test_optimizer_configuration():
         "optimize": True
     }
     
-    with patch('zero_sum_eval.registry.DATASET_REGISTRY.build') as mock_dataset_build, \
-         patch('zero_sum_eval.registry.METRIC_REGISTRY.build') as mock_metric_build, \
-         patch('zero_sum_eval.registry.OPTIMIZER_REGISTRY.build') as mock_optimizer_build:
+    with patch('zero_sum_eval.core.registry.DATASET_REGISTRY.build') as mock_dataset_build, \
+         patch('zero_sum_eval.core.registry.METRIC_REGISTRY.build') as mock_metric_build, \
+         patch('zero_sum_eval.core.registry.OPTIMIZER_REGISTRY.build') as mock_optimizer_build:
         
         # Setup mock returns
         mock_optimizer = MagicMock()
@@ -251,9 +251,9 @@ def test_custom_optimizer_configuration():
         "optimize": True
     }
     
-    with patch('zero_sum_eval.registry.DATASET_REGISTRY.build') as mock_dataset_build, \
-         patch('zero_sum_eval.registry.METRIC_REGISTRY.build') as mock_metric_build, \
-         patch('zero_sum_eval.registry.OPTIMIZER_REGISTRY.build') as mock_optimizer_build:
+    with patch('zero_sum_eval.core.registry.DATASET_REGISTRY.build') as mock_dataset_build, \
+         patch('zero_sum_eval.core.registry.METRIC_REGISTRY.build') as mock_metric_build, \
+         patch('zero_sum_eval.core.registry.OPTIMIZER_REGISTRY.build') as mock_optimizer_build:
         
         # Setup mock returns
         mock_optimizer = MagicMock()

@@ -1,7 +1,7 @@
 import dspy
 
-from zero_sum_eval.player import Player
-from zero_sum_eval.registry import PLAYER_REGISTRY
+from zero_sum_eval.core.player import Player
+from zero_sum_eval.core.registry import PLAYER_REGISTRY
 
 # Player keys
 FOR_KEY = "for"

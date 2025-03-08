@@ -1,6 +1,7 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Optional
-from dspy import Prediction
+from typing import Dict, Iterable, Optional
+from dspy import Prediction, Example
     
 @dataclass
 class ActionConfig:
@@ -32,3 +33,13 @@ class Action:
     name: str
     player_key: str
     inputs: Dict
+
+    
+class Dataset(ABC):
+    def __init__(self, output_key: str) -> None:
+        # the key of the output field for each example
+        self.output_key = output_key
+
+    @abstractmethod
+    def get_dataset(self) -> Iterable[Example]:
+        pass

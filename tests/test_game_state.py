@@ -1,9 +1,9 @@
 import pytest
 import time
 from unittest.mock import MagicMock
-from zero_sum_eval.game_state import GameState, Action, PlayerDefinition
-from zero_sum_eval.player import Player
-from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY
+from zero_sum_eval.core.game_state import GameState, Action, PlayerDefinition
+from zero_sum_eval.core.player import Player
+from zero_sum_eval.core.registry import GAME_REGISTRY, PLAYER_REGISTRY
 
 # Mock the entire Player class
 @pytest.fixture

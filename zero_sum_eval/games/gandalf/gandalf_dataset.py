@@ -1,8 +1,8 @@
 from typing import Iterable, Literal, Union
 import json
 from dspy import Example
-from zero_sum_eval.dataset import Dataset
-from zero_sum_eval.registry import DATASET_REGISTRY
+from zero_sum_eval.utils.types import Dataset
+from zero_sum_eval.core.registry import DATASET_REGISTRY
 from zero_sum_eval.games.gandalf.gandalf_game import GandalfGame
 
 @DATASET_REGISTRY.register("gandalf_dataset")

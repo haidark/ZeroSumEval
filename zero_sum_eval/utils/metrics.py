@@ -1,4 +1,4 @@
-from zero_sum_eval.registry import METRIC_REGISTRY
+from zero_sum_eval.core.registry import METRIC_REGISTRY
 
 @METRIC_REGISTRY.register()
 def exact_match(pred: str, gt: str):

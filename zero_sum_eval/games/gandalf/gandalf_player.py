@@ -1,6 +1,6 @@
 import dspy
-from zero_sum_eval.player import Player
-from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
+from zero_sum_eval.core.player import Player
+from zero_sum_eval.core.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 
 # Player keys
 SENTINEL_KEY = "sentinel"

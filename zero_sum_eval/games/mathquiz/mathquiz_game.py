@@ -1,9 +1,9 @@
 from random import randint
 from zero_sum_eval.games.mathquiz.mathquiz_player import MathQuizStudent, MathQuizTeacher, STUDENT_KEY, TEACHER_KEY
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
-from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.player import Move
-from typing import Dict, List
+from zero_sum_eval.core.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
+from zero_sum_eval.core.registry import GAME_REGISTRY
+from zero_sum_eval.core.player import Move
+from typing import List
 
 from logging import getLogger
 

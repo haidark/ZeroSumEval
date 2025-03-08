@@ -1,11 +1,11 @@
 # I took inspiration from https://github.com/carlini/chess-llm and https://github.com/mlabonne/chessllm
 # Shout out to the maintainers and authors of these repositories!
 
-from zero_sum_eval.player import Player
+from zero_sum_eval.core.player import Player
 import dspy
 import chess
 from chess import IllegalMoveError, InvalidMoveError, AmbiguousMoveError
-from zero_sum_eval.registry import PLAYER_REGISTRY, METRIC_REGISTRY
+from zero_sum_eval.core.registry import PLAYER_REGISTRY, METRIC_REGISTRY
 from stockfish import Stockfish
 
 # TODO: add support for resigning

@@ -1,10 +1,10 @@
 import random
 import json
 
-from zero_sum_eval.type_definitions import Move
+from zero_sum_eval.utils.types import Move
 from zero_sum_eval.games.debate.debate_player import DebatePlayer, FOR_KEY, AGAINST_KEY
-from zero_sum_eval.game_state import Action, GameState, PlayerDefinition, InvalidMoveError
-from zero_sum_eval.registry import GAME_REGISTRY, LM_REGISTRY
+from zero_sum_eval.core.game_state import Action, GameState, PlayerDefinition, InvalidMoveError
+from zero_sum_eval.core.registry import GAME_REGISTRY, LM_REGISTRY
 from typing import Dict, List, Optional, Union
 import dspy
 from .debate_judge import DebateJudge, RubricWeights

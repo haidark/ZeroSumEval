@@ -1,6 +1,6 @@
 import pytest
 from zero_sum_eval.games.poker import PokerGame
-from zero_sum_eval.game_state import InvalidMoveError
+from zero_sum_eval.core.game_state import InvalidMoveError
 
 @pytest.fixture
 def poker_game(base_player_config):

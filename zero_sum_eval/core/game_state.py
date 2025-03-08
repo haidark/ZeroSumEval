@@ -8,8 +8,8 @@ from copy import copy
 import time
 from typing import Dict, List
 
-from zero_sum_eval.type_definitions import ActionConfig, Action
-from zero_sum_eval.player import Move, PlayerDefinition
+from zero_sum_eval.utils.types import ActionConfig, Action
+from zero_sum_eval.core.player import Move, PlayerDefinition
 
 # Get the package version
 try:
@@ -36,7 +36,7 @@ class GameState(ABC):
         Args:
             players_config (Dict): Configuration dictionary containing player settings.
         """
-        from zero_sum_eval.registry import PLAYER_REGISTRY
+        from zero_sum_eval.core.registry import PLAYER_REGISTRY
         self.players = {}
         loaded_player_keys = []
         for player_key, config in players_config.items():

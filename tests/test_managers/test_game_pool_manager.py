@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from zero_sum_eval.managers.game_pool_manager import GamePoolManager
-from zero_sum_eval.registry import GAME_REGISTRY
+from zero_sum_eval.core.registry import GAME_REGISTRY
 
 class DummyPlayerDef:
     def __init__(self, player_key, optional=False):

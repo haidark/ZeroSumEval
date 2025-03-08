@@ -1,7 +1,7 @@
 import pytest
 from zero_sum_eval.games.gandalf import GandalfGame
 from zero_sum_eval.games.gandalf.gandalf_player import SENTINEL_KEY, INFILTRATOR_KEY
-from zero_sum_eval.game_state import InvalidMoveError
+from zero_sum_eval.core.game_state import InvalidMoveError
 
 @pytest.fixture
 def gandalf_game(base_player_config):

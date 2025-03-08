@@ -4,8 +4,8 @@ from dspy import Example
 import re
 import chess
 from datasets import load_dataset
-from zero_sum_eval.dataset import Dataset
-from zero_sum_eval.registry import DATASET_REGISTRY
+from zero_sum_eval.utils.types import Dataset
+from zero_sum_eval.core.registry import DATASET_REGISTRY
 
 
 @DATASET_REGISTRY.register("chess_dataset")

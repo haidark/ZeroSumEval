@@ -1,6 +1,6 @@
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
-from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.player import Move
+from zero_sum_eval.core.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
+from zero_sum_eval.core.registry import GAME_REGISTRY
+from zero_sum_eval.core.player import Move
 from zero_sum_eval.games.gandalf.gandalf_player import is_jailbroken, SENTINEL_KEY, INFILTRATOR_KEY, SentinelPlayer, InfiltratorPlayer
 from typing import Dict, List
 from random_word import RandomWords

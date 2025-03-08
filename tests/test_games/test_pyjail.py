@@ -1,7 +1,7 @@
 import pytest
 import textwrap
 from zero_sum_eval.games.pyjail import PyJailGame
-from zero_sum_eval.game_state import InvalidMoveError
+from zero_sum_eval.core.game_state import InvalidMoveError
 
 @pytest.fixture
 def pyjail_game(base_player_config):

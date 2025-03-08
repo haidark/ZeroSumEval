@@ -1,7 +1,7 @@
 import pytest
 import os
 import tempfile
-from zero_sum_eval.config_utils import load_yaml_with_env_vars
+from zero_sum_eval.utils.config import load_yaml_with_env_vars
 
 def test_load_yaml_with_env_vars():
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
