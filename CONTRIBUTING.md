@@ -55,7 +55,14 @@ To add a new game to ZeroSumEval:
 1. Create a new module in the `zero_sum_eval/games/` directory
 2. Implement the game logic following the existing patterns
 3. Create a configuration file in the `configs/` directory
-4. Add tests for your game
+4. Add tests for your game, Make sure to add a test for each of the functions extended from the GameState class. Namely:
+    - `update_game`
+    - `get_scores`
+    - `get_next_action`
+    - `is_over`
+    - `player_definitions`
+    - `display`
+    - `export`
 5. Update documentation to include your new game
 6. Submit a PR with your changes
 

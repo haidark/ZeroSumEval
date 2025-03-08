@@ -49,8 +49,9 @@ class GandalfGame(GameState):
         player_key = INFILTRATOR_KEY if self.conversation[-1]["name"] == SENTINEL_KEY else SENTINEL_KEY
         inputs = {
             'conversation': GandalfGame.format_conversation(self.conversation, len(self.conversation)),
-            'secret_password': self.secret_password
         }
+        if player_key == SENTINEL_KEY:
+            inputs['secret_password'] = self.secret_password
         return Action(name=player_key, player_key=player_key, inputs=inputs)
         
 

@@ -80,3 +80,14 @@ def test_game_over_conditions(poker_game, mock_move):
     # For testing purposes, manually reduce one player's chips.
     poker_game.chips["player_0"] = 0
     assert poker_game.is_over()
+
+def test_poker_game_display(poker_game, mock_move):
+    poker_game.update_game(mock_move("Call"))
+    display_str = poker_game.display()
+    assert "Call" in display_str
+
+def test_poker_game_export(poker_game, mock_move):
+    poker_game.update_game(mock_move("Call"))
+    export_dict = poker_game.export()
+    assert "MakeMove" in export_dict["next_action"]
+    assert "Call" in export_dict["history"][0]

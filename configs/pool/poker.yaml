@@ -3,15 +3,19 @@ manager:
   max_matches: 100
   max_rounds_per_match: 100
   max_player_attempts: 3
-  output_dir: mathquiz_llama_pool
+  output_dir: poker_llama_pool
 game:
-  name: mathquiz
+  name: poker
   args:
+    starting_chips: 1000
+    small_blind: 10
     players:
-      teacher:
+      player_0:
+        name: poker_player
         args:
           max_tries: 5
-      student:
+      player_1:
+        name: poker_player
         args:
           max_tries: 5
 llms:

@@ -88,7 +88,8 @@ class PyJailGame(GameState):
         elif self.attacker_solution is None:
             return Action(name="SolvePyJail", player_key="attacker", inputs={'pyjail_code': self.pyjail_code, 'history': "\n".join(self.history)})
 
-    def player_definitions(self):
+    @classmethod
+    def player_definitions(cls):
         return [
             PlayerDefinition(player_key="defender", actions=["GeneratePyJail", "SolvePyJail"], default_player_class=PyJailPlayer),
             PlayerDefinition(player_key="attacker", actions=["SolvePyJail"], default_player_class=PyJailPlayer)

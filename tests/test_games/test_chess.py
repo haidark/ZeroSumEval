@@ -45,3 +45,11 @@ def test_chess_game_over_conditions(chess_game, mock_move):
     assert chess_game.is_over()
     scores = chess_game.get_scores()
     assert scores["black"] > scores["white"] 
+
+def test_chess_game_display(chess_game):
+    display_str = chess_game.display()
+    assert "white to move" in display_str
+
+def test_chess_game_export(chess_game):
+    export_dict = chess_game.export()
+    assert "MakeMove" in export_dict["next_action"]

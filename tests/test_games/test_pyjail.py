@@ -117,3 +117,16 @@ def test_display_and_export(pyjail_game, valid_pyjail_code, mock_move):
     export_data = pyjail_game.export()
     for key in ["pyjail_code", "defender_solution", "attacker_solution", "history", "flag"]:
         assert key in export_data
+
+def test_pyjail_game_display(pyjail_game):
+    display_str = pyjail_game.display()
+    assert "Defender Code: Not set" in display_str
+
+def test_pyjail_game_export(pyjail_game):
+    export_dict = pyjail_game.export()
+    assert "GeneratePyJail" in export_dict["next_action"]
+    assert "flag" in export_dict
+    assert "history" in export_dict
+    assert "pyjail_code" in export_dict
+    assert "defender_solution" in export_dict
+    assert "attacker_solution" in export_dict

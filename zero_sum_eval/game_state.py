@@ -25,6 +25,7 @@ class GameState(ABC):
     def __init__(self, players: Dict, log_moves: bool = True):
         self._init_players(players)
         self.log_moves = log_moves
+        self._log = {}
 
     def _init_players(self, players_config: Dict):
         """
@@ -147,14 +148,10 @@ class GameState(ABC):
         
         def move_logging_wrapper(fn):
             def wrapped(self: GameState, move: Move):
-                next_action = self.get_next_action()
                 _log = {
                     "last_move": move.value,
                     "last_trace": move.trace.toDict() if move.trace else None,
                     "last_move_time": move.time,
-                    "next_action": next_action.name,
-                    "player_key": next_action.player_key,
-                    "zseval_version": __version__,
                 }
                 try:
                     start_time = time.time()
@@ -175,9 +172,15 @@ class GameState(ABC):
 
         def export_logging_wrapper(fn):
             def wrapped(self):
+                # automatically add the next action and zseval version to the export
+                next_action = self.get_next_action()
                 new_dict = fn(self)
+                log = self._log
+                log["next_action"] = next_action.name
+                log["player_key"] = next_action.player_key
+                log["zseval_version"] = __version__
                 if self.log_moves:
-                    new_dict.update(self._log)
+                    new_dict.update(log)
                 return new_dict
             return wrapped
         
