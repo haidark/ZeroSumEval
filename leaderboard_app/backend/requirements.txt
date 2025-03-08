@@ -1,5 +1,0 @@
-jsonlines
-fastapi[standard]
-huggingface_hub
-pandas
-gradio_fastapi
