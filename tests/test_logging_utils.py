@@ -1,7 +1,7 @@
 import os
 import logging
 import pytest
-from zero_sum_eval.utils.logging_utils import setup_logging, cleanup_logging, DEFAULT_OUTPUT_DIR
+from zero_sum_eval.utils.logging import setup_logging, cleanup_logging, DEFAULT_OUTPUT_DIR
 
 @pytest.fixture
 def test_output_dir():
