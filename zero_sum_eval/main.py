@@ -3,11 +3,11 @@ import logging
 
 from collections import defaultdict
 
-from zero_sum_eval.calculate_ratings import calculate_ratings
+from zero_sum_eval.analysis.calculate_ratings import calculate_ratings
 from zero_sum_eval.managers.game_pool_manager import GamePoolManager
-from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.logging_utils import cleanup_logging, setup_logging
-from zero_sum_eval.config_utils import load_yaml_with_env_vars
+from zero_sum_eval.core.registry import GAME_REGISTRY
+from zero_sum_eval.utils.logging_utils import cleanup_logging, setup_logging
+from zero_sum_eval.utils.config_utils import load_yaml_with_env_vars
 from zero_sum_eval.managers import GameManager
 
 logger = logging.getLogger(__name__)

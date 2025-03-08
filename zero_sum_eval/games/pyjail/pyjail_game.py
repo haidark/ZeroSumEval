@@ -3,10 +3,10 @@ import textwrap
 import ast
 import secrets
 from typing import Dict
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError
-from zero_sum_eval.player import PlayerDefinition
-from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.type_definitions import Move
+from zero_sum_eval.core.game_state import Action, GameState, InvalidMoveError
+from zero_sum_eval.core.player import PlayerDefinition
+from zero_sum_eval.core.registry import GAME_REGISTRY
+from zero_sum_eval.utils.types import Move
 
 from .pyjail_player import PyJailPlayer
 import io

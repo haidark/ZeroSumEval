@@ -2,7 +2,7 @@ import pytest
 import os
 import json
 import dspy
-from zero_sum_eval.checkpointing import get_cached_module_path, save_checkpoint, load_checkpoint
+from zero_sum_eval.utils.checkpointing import get_cached_module_path, save_checkpoint, load_checkpoint
 
 def test_get_cached_module_path(temp_cache_dir):
     model = "gpt-4"

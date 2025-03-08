@@ -1,8 +1,8 @@
 import random
 from typing import Dict, List
-from zero_sum_eval.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
-from zero_sum_eval.registry import GAME_REGISTRY
-from zero_sum_eval.player import Move
+from zero_sum_eval.core.game_state import Action, GameState, InvalidMoveError, PlayerDefinition
+from zero_sum_eval.core.registry import GAME_REGISTRY
+from zero_sum_eval.core.player import Move
 from .liars_dice_player import LiarsDicePlayer, PLAYER_0_KEY, PLAYER_1_KEY
 
 @GAME_REGISTRY.register("liars_dice")

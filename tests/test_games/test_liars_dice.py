@@ -1,7 +1,7 @@
 import pytest
 from zero_sum_eval.games.liars_dice.liars_dice_game import LiarsDiceGame
 from zero_sum_eval.games.liars_dice.liars_dice_player import PLAYER_0_KEY, PLAYER_1_KEY
-from zero_sum_eval.game_state import InvalidMoveError
+from zero_sum_eval.core.game_state import InvalidMoveError
 from unittest.mock import MagicMock
 
 @pytest.fixture

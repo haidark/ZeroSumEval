@@ -1,13 +1,12 @@
 from typing import Optional
 
-from zero_sum_eval.player import Player
-from zero_sum_eval.game_state import GameState
-from zero_sum_eval.dataset import Dataset
+from zero_sum_eval.core.player import Player
+from zero_sum_eval.core.game_state import GameState
+from zero_sum_eval.utils.types import Dataset
 import inspect
 
 from collections import defaultdict
 from dsp.modules.lm import LM
-from dspy import Module
 from dspy.teleprompt import Teleprompter
 
 

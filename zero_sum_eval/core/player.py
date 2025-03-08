@@ -6,8 +6,8 @@ from dataclasses import dataclass
 import dspy
 import time
 from dspy.primitives import assert_transform_module, backtrack_handler
-from zero_sum_eval.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
-from zero_sum_eval.type_definitions import Action, ActionConfig, Move
+from zero_sum_eval.utils.checkpointing import save_checkpoint, load_checkpoint, get_cached_module_path
+from zero_sum_eval.utils.types import Action, ActionConfig, Move
 
 # Disable debugging logs of litellm
 import litellm
@@ -31,7 +31,7 @@ class Player(ABC):
         use_cache: bool = True,
         cache_dir: Optional[str] = None,
     ):
-        from zero_sum_eval.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
+        from zero_sum_eval.core.registry import LM_REGISTRY, DATASET_REGISTRY, METRIC_REGISTRY, OPTIMIZER_REGISTRY
 
         self.player_key = player_key
 

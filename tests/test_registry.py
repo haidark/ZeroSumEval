@@ -3,13 +3,13 @@ from unittest.mock import MagicMock
 from typing import List, Dict, Any
 from dataclasses import dataclass
 
-from zero_sum_eval.registry import (
+from zero_sum_eval.core.registry import (
     Registry, GAME_REGISTRY, PLAYER_REGISTRY, 
     DATASET_REGISTRY, METRIC_REGISTRY
 )
-from zero_sum_eval.game_state import GameState
-from zero_sum_eval.dataset import Dataset
-from zero_sum_eval.player import Player
+from zero_sum_eval.core.game_state import GameState
+from zero_sum_eval.utils.types import Dataset
+from zero_sum_eval.core.player import Player
 
 # Test fixtures and base classes
 @pytest.fixture

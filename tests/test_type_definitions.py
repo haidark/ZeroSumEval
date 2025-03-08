@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from dspy import Prediction
-from zero_sum_eval.type_definitions import ActionConfig, Move
+from zero_sum_eval.utils.types import ActionConfig, Move
 
 @pytest.fixture
 def mock_prediction():

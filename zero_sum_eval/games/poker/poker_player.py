@@ -1,7 +1,7 @@
 from typing import Dict
 import dspy
-from zero_sum_eval.player import Player
-from zero_sum_eval.registry import PLAYER_REGISTRY
+from zero_sum_eval.core.player import Player
+from zero_sum_eval.core.registry import PLAYER_REGISTRY
 
 class MakeMoveSignature(dspy.Signature):
     """You are an expert poker player and you need to make a move in a poker game."""

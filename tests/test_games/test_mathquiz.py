@@ -1,6 +1,6 @@
 import pytest
 from zero_sum_eval.games.mathquiz import MathQuizGame
-from zero_sum_eval.game_state import InvalidMoveError
+from zero_sum_eval.core.game_state import InvalidMoveError
 from copy import deepcopy
 
 @pytest.fixture

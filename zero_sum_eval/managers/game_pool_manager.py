@@ -10,7 +10,7 @@ from typing import Dict, List
 
 from zero_sum_eval.managers.game_manager import GameManager
 from zero_sum_eval.managers.match_manager import RoundRobin
-from zero_sum_eval.registry import GAME_REGISTRY
+from zero_sum_eval.core.registry import GAME_REGISTRY
 
 class GamePoolManager:
 

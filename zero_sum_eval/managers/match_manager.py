@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Tuple
 
 from logging import getLogger
-from zero_sum_eval.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
+from zero_sum_eval.core.registry import GAME_REGISTRY, PLAYER_REGISTRY, LM_REGISTRY
 from .game_manager import GameManager
 from tabulate import tabulate
 from collections import defaultdict
