@@ -3,7 +3,7 @@ manager:
   max_matches: 100
   max_rounds_per_match: 100
   max_player_attempts: 3
-  output_dir: liars_dice_llama_pool
+  output_dir: rankings-3-9-25_liars_dice
 game:
   name: liars_dice
   args:

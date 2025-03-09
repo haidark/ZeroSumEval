@@ -3,7 +3,7 @@ manager:
   max_matches: 100
   max_rounds_per_match: 100
   max_player_attempts: 1
-  output_dir: rankings-3-9-25_chess
+  output_dir: rankings-3-9-25_chess_predict
 game:
   name: chess
   args:
