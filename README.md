@@ -165,7 +165,7 @@ game:
 ```
 </details>
 
-[![GitHub stars](https://img.shields.io/github/stars/haidark/ZeroSumEval.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/haidark/ZeroSumEval/stargazers/)
+[![Star History Chart](https://api.star-history.com/svg?repos=haidark/ZeroSumEval&type=Date)](https://star-history.com/#haidark/ZeroSumEval&Date)
 
 ## Citation
 
