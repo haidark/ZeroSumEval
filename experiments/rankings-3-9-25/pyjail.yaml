@@ -1,0 +1,85 @@
+config_type: pool
+manager:
+  max_matches: 100
+  max_rounds_per_match: 100
+  max_player_attempts: 3
+  output_dir: pyjail_llama_pool
+game:
+  name: pyjail
+  args:
+    # ask_permission: False
+    players:
+      defender:
+        name: pyjail_player
+        args:
+          max_tries: 5
+      attacker:
+        name: pyjail_player
+        args:
+          max_tries: 5
+llms:
+  - name: deepseek-chat
+    model: openrouter/deepseek/deepseek-chat
+    args:
+      cache: false
+
+  - name: deepseek-r1
+    model: openrouter/deepseek/deepseek-r1
+    args:
+      cache: false
+
+  - name: gpt-4o
+    model: openrouter/openai/gpt-4o-2024-11-20
+    args:
+      cache: false
+
+  - name: o3-mini-high
+    model: openrouter/openai/o3-mini-high
+    args:
+      cache: false
+
+  - name: claude-3.7-sonnet
+    model: openrouter/anthropic/claude-3.7-sonnet
+    args:
+      cache: false
+
+  - name: claude-3.7-sonnet-thinking
+    model: openrouter/anthropic/claude-3.7-sonnet:thinking
+    args:
+      cache: false
+
+  - name: llama-3.1-70b
+    model: openrouter/meta-llama/llama-3.1-70b-instruct
+    args:
+      cache: false
+
+  - name: llama-3.1-405b
+    model: openrouter/meta-llama/llama-3.1-405b-instruct
+    args:
+      cache: false
+
+  - name: llama-3.3-70b
+    model: openrouter/meta-llama/llama-3.3-70b-instruct
+    args:
+      cache: false
+
+  - name: gemini-2.0-flash
+    model: openrouter/google/gemini-2.0-flash-001
+    args:
+      cache: false
+
+  - name: gemini-2.0-flash-thinking
+    model: openrouter/google/gemini-2.0-flash-thinking-exp:free
+    args:
+      cache: false
+
+  - name: qwq-32b
+    model: openrouter/qwen/qwq-32b
+    args:
+      cache: false
+
+  - name: qwen2.5-32b
+    model: openrouter/qwen/qwen2.5-32b-instruct
+    args:
+      cache: false
+
