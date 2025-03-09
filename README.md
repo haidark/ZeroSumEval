@@ -5,6 +5,8 @@
 
 ZeroSumEval is a framework for evaluating Large Language Models (LLMs) using zero-sum multi-agent simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) under the hood to ensure evaluations are fair.
 
+
+
 <!-- omit in toc -->
 ## Table of Contents
 
@@ -162,6 +164,8 @@ game:
           max_tries: 5
 ```
 </details>
+
+[![GitHub stars](https://img.shields.io/github/stars/haidark/zero-sum-eval.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/haidark/zero-sum-eval/stargazers/)
 
 ## Citation
 
