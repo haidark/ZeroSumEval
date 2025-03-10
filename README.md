@@ -52,10 +52,13 @@ TODO: barcharts should go here
 
 The project is organized as follows:
 
-- `zero_sum_eval/`: Main package containing the core framework
-  - `games/`: Individual game implementations
-  - `managers/`: Game and match management classes
-  - `main.py`: Entry point for running games and matches
+- `zero_sum_eval/`: Main package containing the core framework  
+  - `analysis/`: Modules for analyzing game performance and calculating ratings  
+  - `core/`: Core game-related components, including player and game state management  
+  - `games/`: Individual game implementations  
+  - `managers/`: Game and match management classes  
+  - `utils/`: Utility functions for logging, configuration, checkpointing, and type definitions  
+  - `main.py`: Entry point for running games and matches  
 - `data/`: Game-specific data and examples
 - `configs/`: Configuration files for different games and scenarios
 
