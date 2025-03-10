@@ -7,6 +7,10 @@ name = "zero-sum-eval"
 version = "0.2.0"
 authors = [
     { name="Haidar Khan", email="haidark@gmail.com" },
+    { name="Hisham Alyahya", email="hisham.alyahya@outlook.com" },
+    { name="Yazeed Alnumay", email="yalnumay1@gmail.com" },
+    { name="M Saiful Bari", email="sbmaruf@gmail.com" },
+    { name="Bülent Yener", email="byener@gmail.com" }
 ]
 description = "A framework for evaluating LLMs using zero-sum multiplayer simulations"
 readme = "README.md"
@@ -50,8 +54,8 @@ dev = [
 zseval = "zero_sum_eval.main:cli_run"
 
 [project.urls]
-"Homepage" = "https://github.com/haidark/ZeroSumEval/"
-"Bug Tracker" = "https://github.com/haidark/ZeroSumEval/issues"
+"Homepage" = "https://github.com/ZeroSumEval/ZeroSumEval/"
+"Bug Tracker" = "https://github.com/ZeroSumEval/ZeroSumEval/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
