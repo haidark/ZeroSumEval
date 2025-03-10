@@ -165,8 +165,6 @@ game:
 ```
 </details>
 
-[![Star History Chart](https://api.star-history.com/svg?repos=haidark/ZeroSumEval&type=Date)](https://star-history.com/#haidark/ZeroSumEval&Date)
-
 ## Citation
 
 If you use ZeroSumEval in your work, please cite it as follows:
@@ -185,3 +183,5 @@ Contributions to ZeroSumEval are welcome! Please follow the [contribution guidel
 ## License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=haidark/ZeroSumEval&type=Date)](https://star-history.com/#haidark/ZeroSumEval&Date)
