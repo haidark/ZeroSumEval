@@ -3,9 +3,21 @@
 </p>
 <p align="left">
 
-ZeroSumEval is a framework for evaluating Large Language Models (LLMs) using zero-sum multi-agent simulations. ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) under the hood to ensure evaluations are fair.
+<div align="center">
 
+<b>ZeroSumEval:</b> <em>An extensible framework for evaluating LLMs using games! ⚔</em>
 
+</div>
+
+<div align="center">
+
+![Version](https://img.shields.io/pypi/v/zero-sum-eval)
+![Pypi Downloads](https://img.shields.io/pypi/dm/zero_sum_eval)
+[![Discord](https://img.shields.io/discord/1348445678589968466)](https://discord.gg/7Dk6jYyk8H)
+[![Python package](https://github.com/ZeroSumEval/ZeroSumEval/actions/workflows/tests.yml/badge.svg)](https://github.com/haidark/ZeroSumEval/actions/workflows/tests.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/license/apache-2-0)
+
+</div>
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -22,9 +34,9 @@ ZeroSumEval is a framework for evaluating Large Language Models (LLMs) using zer
 
 ## Overview
 
-ZeroSumEval is a dynamic evaluation benchmark for LLMs using competitive scenarios that scales with model capabilities (i.e. as models get better, the benchmark gets harder). Instead of fixed evaluation benchmarks or subjective judging criteria, ZSEval uses multi-agent simulations with clear win conditions to pit models against each other. 
+ZeroSumEval is a dynamic evaluation benchmark for LLMs using competitive scenarios that scales with model capabilities (i.e. as models get better, the benchmark gets harder). Instead of fixed evaluation benchmarks or subjective judging criteria, ZeroSumEval uses multi-agent simulations with clear win conditions to pit models against each other. 
 
-The framework tests various model capabilities, including knowledge, reasoning, and planning. In addition, ZSEval uses [DSPy](https://github.com/stanfordnlp/dspy) optimization to test the self-improvement capability of models and ensure the competition between models is fair.
+The framework tests various model capabilities, including knowledge, reasoning, and planning. In addition, ZeroSumEval uses [DSPy](https://github.com/stanfordnlp/dspy) optimization to test the self-improvement capability of models and ensure the competition between models is fair.
 
 The eval suite consists of a growing number of simulations, including text-based challenges, board games, and Capture The Flag (CTF) competitions.
 
@@ -178,10 +190,18 @@ If you use ZeroSumEval in your work, please cite it as follows:
 
 ## Contributing
 
-Contributions to ZeroSumEval are welcome! Please follow the [contribution guidelines](CONTRIBUTING.md) and open a pull request or issue on the [GitHub repository](https://github.com/haidark/zero-sum-eval).
+Contributions to ZeroSumEval are welcome! Please follow the [contribution guidelines](CONTRIBUTING.md) and open a pull request or issue on the [GitHub repository](https://github.com/ZeroSumEval/ZeroSumEval).
 
 ## License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
 
-[![Star History Chart](https://api.star-history.com/svg?repos=haidark/ZeroSumEval&type=Date)](https://star-history.com/#haidark/ZeroSumEval&Date)
+## Star History
+
+<a href="https://www.star-history.com/#ZeroSumEval/ZeroSumEval&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=ZeroSumEval/ZeroSumEval&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=ZeroSumEval/ZeroSumEval&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=ZeroSumEval/ZeroSumEval&type=Date" />
+ </picture>
+</a>

@@ -17,8 +17,8 @@ Thank you for your interest in contributing to ZeroSumEval! This document provid
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```
-   git clone https://github.com/your-username/zero-sum-eval.git
-   cd zero-sum-eval
+   git clone https://github.com/your-username/ZeroSumEval.git
+   cd ZeroSumEval
    ```
 3. Set up the development environment:
    ```
