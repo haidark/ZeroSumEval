@@ -61,13 +61,13 @@ def visualize_ratings(chess_ratings: pd.DataFrame, debate_ratings: pd.DataFrame)
     plt.bar(
         x, debate_ratings["rating"] - y_start, width,
         bottom=y_start, yerr=debate_errors, capsize=2,
-        color=COLORS[0], alpha=0.8, edgecolor='black',
+        color=COLORS[0], alpha=0.65, edgecolor='black',
         label='Debate', zorder=3
     )
     plt.bar(
         x + width, chess_ratings["rating"] - y_start, width,
         bottom=y_start, yerr=chess_errors, capsize=2,
-        color=COLORS[1], alpha=0.8, edgecolor='black',
+        color=COLORS[1], alpha=0.65, edgecolor='black',
         label='Chess', zorder=3
     )
     
