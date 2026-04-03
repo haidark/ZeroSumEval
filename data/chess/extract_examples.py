@@ -24,7 +24,7 @@ if __name__ == "__main__":
             transcript = game_obj['transcript']
             game = chess.pgn.read_game(io.StringIO(transcript))
             moves = [str(move) for move in game.mainline_moves()]
-            for i in range(0, len(moves)-1):
+            for i in range(0, len(moves)):
                 board = game.board()
                 for move in moves[:i]:
                     board.push_san(move)
